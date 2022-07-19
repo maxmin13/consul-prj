@@ -1,0 +1,18 @@
+
+
+create a docker-prj project in github
+
+generate and upload an SSH key to the project:
+
+	ssh-keygen -t ed25519 -C "minardi.massimiliano@libero.it"
+
+Upload the project:
+
+	cd docker-prj
+	git init
+	git add . && git commit -m "Initial commit"
+	git remote add origin git@github.com:maxmin13/docker-prj.git
+	eval `ssh-agent -s`
+        ssh-add /home/vagrant/.ssh/docker-prj
+        git push origin master
+

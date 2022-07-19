@@ -290,7 +290,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USE
     "${SERVICES_DIR}"/redisdb/redis.conf
     
 scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
-    "${LIBRARY_DIR}"/app_consts.sh \
+    "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \

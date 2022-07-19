@@ -1,0 +1,10 @@
+#cloud-config
+users:
+  - name: awsadmin
+    gecos: Aws user
+    passwd: $6$rounds=4096$3XNiTQrciyOiF2X/$KGqwaSpW0QBDqqeRfaD4i8DriyNZpaWmO/U.YM6rHeR1GbaZEzYKURW6tXkziOTwGUmWzrKbQTsv5UmgVn7.k/
+    lock_passwd: false
+    sudo: ALL=(ALL) PASSWD:ALL
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuQWT/L23RRY6iNeMHJ3qdSJewBDPvf25Mad9mRcbHwYU/C84elnu1bcRGv8/nyHZJ6vGUwenBziAZb4/+0JQkDYNokhHt05R3ZmyWIBk23OHTf9xwGfJVR0Cyf1NS4YbN48YX0lAIimuGEEOojVgyFnSXnkyXmJeEYkXn0sNcLFx/jiFDPBmiYHayyOo56jsmopApO+4aGvj5glS4B1A7gKh75VCm22HpxRtsaVoyIZbwWe0+pQmmjU0OI6uW5Dbhty+jjEqN6lNcvh69rA80Tg0infTFJIzBjR1qFEn9Gl0IT3L+x5FfhEzCgJyhoXyajjRAI7jPffIR6inIqt8P
+hostname: nginx.maxmin.it

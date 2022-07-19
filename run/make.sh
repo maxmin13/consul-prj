@@ -7,7 +7,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
  
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../aws && pwd)"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../docker-prj && pwd)"
 
 source "${PROJECT_DIR}"/amazon/lib/constants/app_consts.sh
 source "${PROJECT_DIR}"/amazon/lib/constants/project_dirs.sh
@@ -20,11 +20,6 @@ source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
 source "${PROJECT_DIR}"/amazon/lib/iam.sh
 
 echo
-
-. "${PROJECT_DIR}"/amazon/ec2/redisdb/delete.sh
-. "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
-exit
-exit
 
 # Datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh  

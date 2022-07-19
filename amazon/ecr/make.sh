@@ -166,7 +166,7 @@ scp_upload_file "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "
     "${SERVICES_DIR}"/base/centos/Dockerfile  
     
 scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/centos \
-    "${LIBRARY_DIR}"/app_consts.sh \
+    "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -201,7 +201,7 @@ scp_upload_file "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "
     "${ecr_tmp_dir}"/ruby/Dockerfile
      
 scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/ruby \
-    "${LIBRARY_DIR}"/app_consts.sh \
+    "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
