@@ -1,0 +1,10 @@
+#cloud-config
+users:
+  - name: SEDuser_nameSED
+    gecos: Aws user
+    passwd: SEDhashed_passwordSED
+    lock_passwd: false
+    sudo: ALL=(ALL) PASSWD:ALL
+    ssh-authorized-keys:
+      - SEDpublic_keySED
+hostname: SEDhostnameSED

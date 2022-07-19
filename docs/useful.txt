@@ -1,0 +1,11 @@
+sed -i 's/\r$//g' *.sh
+sed -i 's/\r$//g' Dockerfile
+
+
+find ./ -type f -exec sed -i 's/ADMIN_ROLE_NM/ADMIN_ROLE_NM/g' {} \;
+find ./ -type f -exec sed -i 's/NGINX_ROLE_NM/NGINX_ROLE_NM/g' {} \;
+find ./ -type f -exec sed -i 's/JENKINS_ROLE_NM/JENKINS_ROLE_NM/g' {} \;
+find ./ -type f -exec sed -i 's/REDIS_ROLE_NM/REDIS_ROLE_NM/g' {} \;
+find ./ -type f -exec sed -i 's/REGISTRY_POLICY_NM/REGISTRY_POLICY_NM/g' {} \;
+
+
