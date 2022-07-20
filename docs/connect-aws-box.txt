@@ -24,7 +24,7 @@ connect ec2 instance:
 connect ec2 instance:
 
 	cd access/
-	rm -f ~/.ssh/known_hosts && ssh -i jenkins-key -p 38142 awsadmin@34.243.105.138
+	rm -f ~/.ssh/known_hosts && ssh -i jenkins-key -p 38142 awsadmin@34.253.67.125
 
 attach to the Jenkins container:
 
