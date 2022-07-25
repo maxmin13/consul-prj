@@ -123,4 +123,24 @@ else
    echo 'Redis db repository already deleted.'
 fi
 
+#
+# Sinatra 
+#
+
+# Check if an ECR repository by the name of the image exists.
+set +e
+ecr_check_repository_exists "${SINATRA_DOCKER_IMG_NM}"
+set -e
+
+sinatra_repository_exists="${__RESULT}"
+
+if [[ 'true' == "${sinatra_repository_exists}" ]]
+then
+   ecr_delete_repository "${SINATRA_DOCKER_IMG_NM}"
+   
+   echo 'Sinatra repository deleted.'
+else
+   echo 'Sinatra repository already deleted.'
+fi
+
 echo

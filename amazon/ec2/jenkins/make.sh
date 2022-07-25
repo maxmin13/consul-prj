@@ -266,7 +266,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDjenkins_docker_container_nmSED/${JENKINS_DOCKER_CONTAINER_NM}/g" \
     -e "s/SEDjenkins_http_addressSED/${eip}/g" \
     -e "s/SEDjenkins_http_portSED/${JENKINS_HTTP_PORT}/g" \
-    -e "s/SEDjenkins_homeSED/$(escape "${JENKINS_HOME}")/g" \
+    -e "s/SEDjenkins_inst_home_dirSED/$(escape "${JENKINS_INST_HOME_DIR}")/g" \
        "${SERVICES_DIR}"/jenkins/jenkins.sh > "${jenkins_tmp_dir}"/jenkins.sh       
   
 echo 'Jenkins ready.'  

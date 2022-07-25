@@ -5,7 +5,7 @@ require "redis"
 
 class App < Sinatra::Application
 
-      # Connection to redisdb instance.
+      # Webapp that connects to a redisdb instance.
       
       # Docker’s own network stack.
       # Docker containers exposing ports and binding interfaces so that container services are published on the local Docker host’s external 
@@ -19,7 +19,7 @@ class App < Sinatra::Application
       # The docker0 interface is a virtual Ethernet bridge that connects our containers and the local host network.
       
       # redis = Redis.new(:host => '172.18.0.2', :port => '6379') 
-      redis = Redis.new(:host => 'redisdb', :port => '6379') 
+      #redis = Redis.new(:host => 'redisdb', :port => '6379') 
 
       set :bind, '0.0.0.0'
 
@@ -27,15 +27,15 @@ class App < Sinatra::Application
         "<h1>DockerBook Test Redis-enabled Sinatra app</h1>"
       end
 
-      get '/json' do
-        params = redis.get "params"
-        params.to_json
-      end
+      #get '/json' do
+      #  params = redis.get "params"
+      #  params.to_json
+     # end
 
-      post '/json/?' do
-        redis.set "params", [params].to_json
+     # post '/json/?' do
+     #   redis.set "params", [params].to_json
         #params.to_json
-      end
+     # end
 end
 
 

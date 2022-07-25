@@ -20,7 +20,7 @@ JENKINS_DOCKER_IMG_TAG='SEDjenkins_docker_img_tagSED'
 JENKINS_DOCKER_CONTAINER_NM='SEDjenkins_docker_container_nmSED'
 JENKINS_HTTP_ADDRESS='SEDjenkins_http_addressSED' 
 JENKINS_HTTP_PORT='SEDjenkins_http_portSED'
-JENKINS_HOME='SEDjenkins_homeSED'
+JENKINS_INST_HOME_DIR='SEDjenkins_inst_home_dirSED'
  
 source "${SCRIPTS_DIR}"/app_consts.sh
 source "${SCRIPTS_DIR}"/general_utils.sh
@@ -90,10 +90,10 @@ docker_push_image "${JENKINS_DOCKER_REPOSITORY_URI}" "${JENKINS_DOCKER_IMG_TAG}"
 echo 'Image pushed to ECR.'
 
 # Create a volume directory where to store Jenkins configuration.
-mkdir -p "${JENKINS_HOME}" 
+mkdir -p "${JENKINS_INST_HOME_DIR}" 
 
 # 1000 is the UID of the jenkins user inside the image.
-chown -R 1000:1000 "${JENKINS_HOME}"
+chown -R 1000:1000 "${JENKINS_INST_HOME_DIR}"
 
 echo 'Running Jenkins container ...'
 
@@ -101,7 +101,7 @@ docker_run_jenkins_container "${JENKINS_DOCKER_CONTAINER_NM}" \
                              "${JENKINS_DOCKER_REPOSITORY_URI}" \
                              "${JENKINS_DOCKER_IMG_TAG}" \
                              "${JENKINS_HTTP_PORT}" \
-                             "${JENKINS_HOME}" 
+                             "${JENKINS_INST_HOME_DIR}" 
                              
 echo 'Jenkins container running.'
                              
@@ -112,11 +112,11 @@ echo 'Logged out of ECR registry.'
 echo
 echo "http://${JENKINS_HTTP_ADDRESS}:${JENKINS_HTTP_PORT}/jenkins"
 
-if [[ -f "${JENKINS_HOME}"/secrets/initialAdminPassword ]]
+if [[ -f "${JENKINS_INST_HOME_DIR}"/secrets/initialAdminPassword ]]
 then
    echo
    echo 'Access code:'
-   cat "${JENKINS_HOME}"/secrets/initialAdminPassword
+   cat "${JENKINS_INST_HOME_DIR}"/secrets/initialAdminPassword
 fi
 
 echo

@@ -31,6 +31,7 @@ ADMIN_ROLE_NM='AdminECRrole'
 NGINX_ROLE_NM='NginxECRrole'
 JENKINS_ROLE_NM='JenkinsECRrole'
 REDIS_ROLE_NM='RedisECRrole'
+SINATRA_ROLE_NM='SinatraECRrole'
 REGISTRY_POLICY_NM='AmazonEC2ContainerRegistryFullAccess'
 
 ## ************** ##
@@ -63,45 +64,57 @@ ADMIN_INST_PRIVATE_IP='10.0.10.9'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_SEC_GRP_NM='admin-sgp'
 ADMIN_INST_KEY_PAIR_NM='admin-key'
-ADMIN_INST_PROFILE_NM="MaxminAdminInstanceProfile"
+ADMIN_INST_PROFILE_NM='MaxminAdminInstanceProfile'
 
 ## **************** ##
 ## AWS Jenkins box  ##
 ## **************** ##
 
-JENKINS_INST_NM='jenkins-box'
+JENKINS_INST_NM='jenkins-box2'
 JENKINS_INST_PRIVATE_IP='10.0.10.10'
 JENKINS_HTTP_PORT='80'
 JENKINS_INST_HOSTNAME='jenkins.maxmin.it'
 JENKINS_INST_SEC_GRP_NM='jenkins-sgp'
 JENKINS_INST_KEY_PAIR_NM='jenkins-key'
-JENKINS_INST_PROFILE_NM="MaxminJenkinsInstanceProfile"
-JENKINS_HOME='/var/jenkins_home'
+JENKINS_INST_PROFILE_NM='MaxminJenkinsInstanceProfile'
+JENKINS_INST_HOME_DIR='/var/jenkins_home'
 
 ## **************** ##
 ##  AWS Nginx box   ##
 ## **************** ##
 
-NGINX_INST_NM='nginx-box'
+NGINX_INST_NM='nginx-box2'
 NGINX_INST_PRIVATE_IP='10.0.10.20'
 NGINX_HTTP_PORT='80'
 NGINX_INST_HOSTNAME='nginx.maxmin.it'
 NGINX_INST_SEC_GRP_NM='nginx-sgp'
 NGINX_INST_KEY_PAIR_NM='nginx-key'
-NGINX_INST_PROFILE_NM="MaxminNginxInstanceProfile"
-NGINX_INST_WEBAPPS_DIR='/opt/webapps'
+NGINX_INST_PROFILE_NM='MaxminNginxInstanceProfile'
+NGINX_INST_WEBAPPS_DIR='/opt/nginx/webapps'
 
 ## **************** ##
 ## AWS Redis db box ##
 ## **************** ##
 
-REDIS_INST_NM='redis-box'
+REDIS_INST_NM='redis-box3'
 REDIS_INST_PRIVATE_IP='10.0.10.30'
 REDIS_IP_PORT='6379'
 REDIS_INST_HOSTNAME='redis.maxmin.it'
 REDIS_INST_SEC_GRP_NM='redis-sgp'
 REDIS_INST_KEY_PAIR_NM='redis-key'
-REDIS_INST_PROFILE_NM="MaxminRedisInstanceProfile"
-REDIS_INST_WEBAPPS_DIR='/opt/webapps'
+REDIS_INST_PROFILE_NM='MaxminRedisInstanceProfile'
+
+## **************** ##
+## AWS Sinatra box  ##
+## **************** ##
+
+SINATRA_INST_NM='sinatra-box'
+SINATRA_INST_PRIVATE_IP='10.0.10.33'
+SINATRA_HTTP_PORT='4567'
+SINATRA_INST_HOSTNAME='sinatra.maxmin.it'
+SINATRA_INST_SEC_GRP_NM='sinatra-sgp'
+SINATRA_INST_KEY_PAIR_NM='sinatra-key'
+SINATRA_INST_PROFILE_NM='MaxminSinatraInstanceProfile'
+SINATRA_INST_DIR='/opt/sinatra'
 
 

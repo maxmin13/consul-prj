@@ -5,15 +5,18 @@
 #   docker run -d --net appnet --name webapp -v $PWD/webapp:/opt/webapp maxmin13/sinatra:v1
 #
 
-#####################FROM maxmin13/ruby:v1
-FROM FROM SEDrepository_uriSED:SEDimg_tagSED
+#####################
+
+FROM SEDrepository_uriSED:SEDimg_tagSED
 LABEL maintainer="maxmin@example.com"
 ENV REFRESHED_AT 2022-05-15
+ARG SINATRA_HTTP_PORT
 
-RUN  yum update -y && gem install sinatra redis
+RUN yum update -y && gem install sinatra redis 
+RUN mkdir -p SEDcontainer_volume_dirSED
 
-RUN mkdir -p /opt/webapp 
+EXPOSE $SINATRA_HTTP_PORT
 
-EXPOSE 4567 
-CMD [ "/opt/webapp/bin/webapp" ]
+CMD SEDcontainer_volume_dirSED/webapp/bin/run
+
 

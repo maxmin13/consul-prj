@@ -61,6 +61,19 @@ else
    echo "* Redis role ARN: ${redis_role_arn}"
 fi
 
+check_role_exists "${SINATRA_ROLE_NM}"
+sinatra_role_exists="${__RESULT}"
+
+if [[ 'false' == "${sinatra_role_exists}" ]]
+then
+   echo '* WARN: Sinatra role not found.'
+else
+   get_role_arn "${SINATRA_ROLE_NM}" > /dev/null
+   sinatra_role_arn="${__RESULT}"
+
+   echo "* Sinatra role ARN: ${sinatra_role_arn}"
+fi
+
 echo
 
 #
@@ -121,6 +134,21 @@ then
    echo 'Redis role deleted.'
 else
    echo 'WARN: Redis role already deleted.'
+fi
+
+#
+# Sinatra role
+#
+   
+echo 'Deleting Sinatra role ...'
+
+if [[ 'true' == "${sinatra_role_exists}" ]]
+then
+   delete_role "${SINATRA_ROLE_NM}" > /dev/null
+   
+   echo 'Sinatra role deleted.'
+else
+   echo 'WARN: Sinatra role already deleted.'
 fi
 
 echo

@@ -143,6 +143,34 @@ else
    echo 'WARN: ECR permission policy already attached to the Redis db role.'
 fi
 
+#
+# Sinatra role
+#
+
+check_role_exists "${SINATRA_ROLE_NM}"
+sinatra_role_exists="${__RESULT}"
+
+if [[ 'false' == "${sinatra_role_exists}" ]]
+then
+   create_role "${SINATRA_ROLE_NM}" 'ECR full access role for the Sinatra instance.' "${trust_policy_document}" > /dev/null
+   
+   echo 'Sinatra db role created.'
+else
+   echo 'WARN: Sinatra db role already created.'
+fi
+
+check_role_has_permission_policy_attached "${SINATRA_ROLE_NM}" "${REGISTRY_POLICY_NM}"
+admn_policy_attached="${__RESULT}"
+
+if [[ 'false' == "${admn_policy_attached}" ]]
+then
+   attach_permission_policy_to_role "${SINATRA_ROLE_NM}" "${REGISTRY_POLICY_NM}"
+   
+   echo 'ECR permission policy attached to the Sinatra db role.'
+else
+   echo 'WARN: ECR permission policy already attached to the Sinatra db role.'
+fi
+
 echo
 echo 'AWS permissions configured.'
 

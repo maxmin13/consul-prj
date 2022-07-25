@@ -14,7 +14,6 @@ set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
 NGINX_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
-NGINX_WEBSITE_DIR='/var/www/html'
 WEBSITE_ARCHIVE='welcome.zip'
 WEBSITE_NM='welcome'
 
@@ -270,7 +269,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDnginx_http_addressSED/${eip}/g" \
     -e "s/SEDnginx_http_portSED/${NGINX_HTTP_PORT}/g" \
     -e "s/SEDnginx_inst_webapps_dirSED/$(escape "${NGINX_INST_WEBAPPS_DIR}")/g" \
-    -e "s/SEDnginx_website_dirSED/$(escape "${NGINX_WEBSITE_DIR}")/g" \
+    -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
     -e "s/SEDwebsite_archiveSED/${WEBSITE_ARCHIVE}/g" \
     -e "s/SEDwebsite_nmSED/${WEBSITE_NM}/g" \
        "${SERVICES_DIR}"/nginx/nginx.sh > "${nginx_tmp_dir}"/nginx.sh  
@@ -283,12 +282,12 @@ centos_docker_repository_uri="${__RESULT}"
 
 sed -e "s/SEDrepository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
     -e "s/SEDimg_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDnginx_website_dirSED/$(escape "${NGINX_WEBSITE_DIR}")/g" \
+    -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
        "${SERVICES_DIR}"/nginx/Dockerfile > "${nginx_tmp_dir}"/Dockerfile
 
 echo 'Dockerfile ready.'
 
-sed -e "s/SEDnginx_website_dirSED/$(escape "${NGINX_WEBSITE_DIR}")/g" \
+sed -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
        "${SERVICES_DIR}"/nginx/global.conf > "${nginx_tmp_dir}"/global.conf
     
 echo 'global.conf ready.'  
@@ -326,7 +325,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/nginx.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" && echo 'Nnginx successfully installed.' ||
+    "${USER_PWD}" && echo 'Nginx successfully installed.' ||
     {
     
        echo 'The role may not have been associated to the profile yet.'
@@ -341,7 +340,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/nginx.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" && echo 'Nnginx successfully installed.' ||
+          "${USER_PWD}" && echo 'Nginx successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -379,7 +378,7 @@ is_ecr_role_associated="${__RESULT}"
    ##
 
    set +e
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+  revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    
    # Make Nginx accessible from anywhere in the internet.
    allow_access_from_cidr "${sgp_id}" "${NGINX_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1

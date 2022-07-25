@@ -21,6 +21,10 @@ source "${PROJECT_DIR}"/amazon/lib/iam.sh
 
 echo
 
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
+exit
+exit
+
 # Datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
 
@@ -42,7 +46,7 @@ echo
 . "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
 . "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
 . "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
-
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
 
 
 

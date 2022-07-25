@@ -16,6 +16,19 @@ connect ec2 instance:
 
 	cd access/
 	rm -f ~/.ssh/known_hosts && ssh -i admin-key -p 38142 awsadmin@54.246.229.227
+	
+#################
+##  Nginx box  ##
+#################
+
+connect ec2 instance:
+
+	cd access/
+	rm -f ~/.ssh/known_hosts && ssh -i nginx-key -p 38142 awsadmin@3.249.179.238
+	
+	attach to the Nginx container:
+
+	docker exec -t -i nginx /bin/bash	
 
 #################
 ## Jenkins box ##
@@ -42,4 +55,20 @@ connect ec2 instance:
 	
 attach to the Redis container:
 
-	docker exec -t -i nginx /bin/bash
+	docker exec -t -i redis /bin/bash
+	
+
+#################
+##  Sinatra box  ##
+#################
+
+connect ec2 instance:
+
+	cd access/
+	rm -f ~/.ssh/known_hosts && ssh -i sinatra-key -p 38142 awsadmin@34.249.231.227
+	
+attach to the Sinatra container:
+
+	docker exec -t -i sinatra /bin/bash	
+	
+	

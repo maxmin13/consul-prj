@@ -21,7 +21,7 @@ NGINX_DOCKER_CONTAINER_NM='SEDnginx_docker_container_nmSED'
 NGINX_HTTP_ADDRESS='SEDnginx_http_addressSED'
 NGINX_HTTP_PORT='SEDnginx_http_portSED'  
 NGINX_INST_WEBAPPS_DIR='SEDnginx_inst_webapps_dirSED'
-NGINX_WEBSITE_DIR='SEDnginx_website_dirSED'
+NGINX_CONTAINER_VOLUME_DIR='SEDnginx_container_volume_dirSED'
 WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_NM='SEDwebsite_nmSED'
 
@@ -91,9 +91,14 @@ docker_tag_image "${NGINX_DOCKER_IMG_NM}" "${NGINX_DOCKER_IMG_TAG}" "${NGINX_DOC
 docker_push_image "${NGINX_DOCKER_REPOSITORY_URI}" "${NGINX_DOCKER_IMG_TAG}"
 
 echo 'Image pushed to ECR.'
+                           
+docker_logout_ecr_registry "${ecr_registry_uri}" 
+   
+echo 'Logged out of ECR registry.'   
 
 # Create a volume directory for the website to mount into the Nginx container.
 mkdir -p "${NGINX_INST_WEBAPPS_DIR}" 
+chmod 755 "${NGINX_INST_WEBAPPS_DIR}" 
 
 echo 'Running Nginx container ...'
 
@@ -102,17 +107,14 @@ docker_run_nginx_container "${NGINX_DOCKER_CONTAINER_NM}" \
                            "${NGINX_DOCKER_IMG_TAG}" \
                            "${NGINX_HTTP_PORT}" \
                            "${NGINX_INST_WEBAPPS_DIR}" \
-                           "${NGINX_WEBSITE_DIR}" 
+                           "${NGINX_CONTAINER_VOLUME_DIR}" 
 
-echo 'Nginx container running.'
-                           
-docker_logout_ecr_registry "${ecr_registry_uri}" 
-   
-echo 'Logged out of ECR registry.'                             
-                           
+echo 'Nginx container running.'                                                  
 echo 'Deploying the welcome website ...'
 
 unzip -o "${SCRIPTS_DIR}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_INST_WEBAPPS_DIR}"/"${WEBSITE_NM}"
+find "${NGINX_INST_WEBAPPS_DIR}" -type d -exec chmod 755 {} + 
+find "${NGINX_INST_WEBAPPS_DIR}" -type f -exec chmod 644 {} +
 
 echo 'Welcome website deployed.'
 

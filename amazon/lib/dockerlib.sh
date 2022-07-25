@@ -544,19 +544,19 @@ function docker_delete_container()
 }  
 
 #===============================================================================
-# Runs a Jenkins container on port 80. The Jenkins status is persisted on host
-# by mounting a volume in the container. 
+# Runs a Jenkins container exposing port 80. The Jenkins status is persisted on 
+# host by mounting a volume in the container. 
 # docker.sock it’s the Unix socket the Docker daemon listens on by default and
 # it's mounted in the container.
 # 
 # Globals:
 #  None
 # Arguments:
-# +container_nm   -- the container name.
-# +img_repository -- Jenkins image name.
-# +img_tag        -- Jenkins image tag.
-# +jenkins_port   -- Jenkins HTTP port.
-# +jenkins_home   -- a volume mounted in the container to persist Jenkins status.
+# +container_nm    -- the container name.
+# +img_repository  -- image name.
+# +img_tag         -- image tag.
+# +jenkins_port    -- website HTTP port.
+# +host_volume_dir -- Jenkins home volume mounted to the container.
 #
 # Returns:      
 #  none.  
@@ -574,12 +574,13 @@ function docker_run_jenkins_container()
    local -r img_repository="${2}"
    local -r img_tag="${3}" 
    local -r jenkins_port="${4}"  
-   local -r jenkins_home="${5}"
+   local -r host_volume_dir="${5}"
+   
    
    docker run -d \
               -p "${jenkins_port}":8080 \
               -p 5000:5000 \
-              -v "${jenkins_home}":/var/jenkins_home \
+              -v "${host_volume_dir}":/var/jenkins_home \
               -v /var/run/docker.sock:/var/run/docker.sock \
               --name "${container_nm}" \
               "${img_repository}":"${img_tag}" > /dev/null        
@@ -595,19 +596,18 @@ function docker_run_jenkins_container()
 }  
   
 #===============================================================================
-# Runs a Nginx container on port 80. 
-# the directory inst_website_dir in the host is mounted in the direcotory 
-# website_dir inside the container.
+# Runs a Nginx container exposing port 80. 
+# The website directory is a host volume mounted in the container.
 # 
 # Globals:
 #  None
 # Arguments:
-# +container_nm     -- the container name.
-# +img_repository   -- Nginx image name.
-# +img_tag          -- Nginx image tag.
-# +port             -- website HTTP port.
-# +inst_website_dir -- website volume mounted in the container.
-# +website_dir      -- Nginx website direcotry in the container.
+# +container_nm         -- the container name.
+# +img_repository       -- image name.
+# +img_tag              -- image tag.
+# +port                 -- website HTTP port.
+# +host_volume_dir      -- website volume mounted to the container.
+# +container_volume_dir -- website directory in the container.
 # Returns:      
 #  none.  
 #===============================================================================
@@ -624,12 +624,12 @@ function docker_run_nginx_container()
    local -r img_repository="${2}"
    local -r img_tag="${3}"   
    local -r port="${4}"
-   local -r inst_website_dir="${5}"   
-   local -r website_dir="${6}" 
+   local -r host_volume_dir="${5}"   
+   local -r container_volume_dir="${6}" 
 
    docker run -d \
               -p "${port}":"${port}" \
-              -v "${inst_website_dir}":"${website_dir}":ro \
+              -v "${host_volume_dir}":"${container_volume_dir}":ro \
               --name "${container_nm}" \
               "${img_repository}":"${img_tag}" > /dev/null       
    exit_code=$?    
@@ -644,7 +644,7 @@ function docker_run_nginx_container()
 }    
   
 #===============================================================================
-# Runs a Redis database container on port 6379. 
+# Runs a Redis database container exposing port 6379. 
 # 
 # Globals:
 #  None
@@ -688,4 +688,53 @@ function docker_run_redis_container()
    return "${exit_code}"
 }   
   
+#===============================================================================
+# Runs a Sinatra container exposing port 4567. 
+# The Sinatra sources and website are in a host volume mounted in the container.
+# 
+# Globals:
+#  None
+# Arguments:
+# +container_nm         -- the container name.
+# +img_repository       -- image name.
+# +img_tag              -- image tag.
+# +port                 -- website HTTP port.
+# +host_volume_dir      -- Sinatra volume mounted in the container.
+# +container_volume_dir -- sinatra directory in the container.
+# +network_nm           -- container network name.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_run_sinatra_container()
+{
+   if [[ $# -lt 7 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r container_nm="${1}"
+   local -r img_repository="${2}"
+   local -r img_tag="${3}"   
+   local -r port="${4}"
+   local -r host_volume_dir="${5}"   
+   local -r container_volume_dir="${6}" 
+   local -r network_nm="${7}"   
+
+########--net "${network_nm}" \
+   docker run -d \
+              -p "${port}":"${port}" \
+              -v "${host_volume_dir}":"${container_volume_dir}":ro \
+              --name "${container_nm}" \
+              "${img_repository}":"${img_tag}" ##################> /dev/null        
+   exit_code=$?    
   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: running Sinatra container.'
+      return "${exit_code}"
+   fi     
+            
+   return "${exit_code}"
+}    

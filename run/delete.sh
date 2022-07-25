@@ -28,6 +28,7 @@ echo
 . "${PROJECT_DIR}"/amazon/ec2/jenkins/delete.sh
 . "${PROJECT_DIR}"/amazon/ec2/nginx/delete.sh
 . "${PROJECT_DIR}"/amazon/ec2/redisdb/delete.sh
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/delete.sh
 
 # Jumpbox.
 . "${PROJECT_DIR}"/amazon/ec2/admin/delete.sh
