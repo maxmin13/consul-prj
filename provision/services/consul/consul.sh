@@ -22,8 +22,12 @@ set +o xtrace
 SCRIPTS_DIR='SEDscripts_dirSED'
 INSTANCE_EIP_ADDRESS='SEDinstance_eip_addressSED'
 INSTANCE_PRIVATE_ADDRESS='SEDinstance_private_addressSED'
+CONSUL_CONFIG_FILE_NM='SEDconsul_config_file_nmSED'
+CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
 CONSUL_HTTP_PORT='SEDconsul_http_portSED'
 CONSUL_DNS_PORT='SEDconsul_dns_portSED'
+
+source "${SCRIPTS_DIR}"/general_utils.sh
 
 yum update -y && yum install -y jq
 
@@ -36,10 +40,11 @@ yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/has
 yum -y install consul
 mkdir -p /etc/consul.d/scripts
 mkdir -p /var/consul
+
 consul_key="$(consul keygen)"
 cd "${SCRIPTS_DIR}"
-jq --arg key "${consul_key}" '.encrypt = $key' consul-server.json > /etc/consul.d/consul-server.json
-cp consul.service /etc/systemd/system/
+jq --arg key "${consul_key}" '.encrypt = $key' "${CONSUL_CONFIG_FILE_NM}" > /etc/consul.d/"${CONSUL_CONFIG_FILE_NM}"
+cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
 echo 'Consul installed.'
 
@@ -48,9 +53,18 @@ systemctl restart consul
 systemctl status consul 
 consul version
 
-echo 'Consul server started.'     
-
-consul members
+consul members 2>&1 > /dev/null && echo 'Consul server successfully started.' || 
+{
+   echo 'Waiting for Consul server to start' 
+      
+   wait 60
+   
+   consul members  && echo 'Consul server successfully started.' || 
+   {
+      echo 'ERROR: Consul server not started after 3 minutes.'
+      exit 1
+   }
+}
 
 yum remove -y jq
 

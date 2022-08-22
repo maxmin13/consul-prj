@@ -6,6 +6,8 @@
 # 
 # The script configures the Docker engine to use the Key-Value Store in the Admin host for Clustering and
 # creates a Docker overlay network.
+#
+# TODO building after Consul cluster is in plade TODO
 # 
 ##########################################################################################################
 

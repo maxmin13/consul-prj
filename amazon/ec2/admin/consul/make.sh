@@ -137,6 +137,8 @@ echo 'Provisioning Consul scripts ...'
 sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDinstance_eip_addressSED/${admin_eip}/g" \
     -e "s/SEDinstance_private_addressSED/${ADMIN_INST_PRIVATE_IP}/g" \
+    -e "s/SEDconsul_config_file_nmSED/consul-server.json/g" \
+    -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
     -e "s/SEDconsul_http_portSED/${ADMIN_CONSUL_SERVER_HTTP_PORT}/g" \
     -e "s/SEDconsul_dns_portSED/${ADMIN_CONSUL_SERVER_DNS_PORT}/g" \
        "${SERVICES_DIR}"/consul/consul.sh > "${admin_tmp_dir}"/consul.sh  
@@ -152,7 +154,8 @@ echo 'consul-server.json ready.'
 scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
     "${admin_tmp_dir}"/consul.sh \
     "${admin_tmp_dir}"/consul-server.json \
-    "${SERVICES_DIR}"/consul/consul.service
+    "${SERVICES_DIR}"/consul/consul.service \
+    "${LIBRARY_DIR}"/general_utils.sh 
          
 echo 'Consul scripts provisioned.'
 echo
@@ -182,7 +185,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
 ##
 
 set +e
-  ############################## revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+  revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
 
 echo 'Revoked SSH access to the Admin box.'  

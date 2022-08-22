@@ -22,10 +22,6 @@ source "${PROJECT_DIR}"/amazon/lib/network.sh
 
 echo
 
-. "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
-exit
-exit
-
 # Datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
 
@@ -42,11 +38,11 @@ exit
 . "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
 
 # Docker base images.
-##. "${PROJECT_DIR}"/amazon/ecr/make.sh 
+. "${PROJECT_DIR}"/amazon/ecr/make.sh 
 
 # AWS instances.
-##. "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
-##. "${PROJECT_DIR}"/amazon/ec2/redisdb/network/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
+##. "${PROJECT_DIR}"/amazon/ec2/redisdb/consul/make.sh
 ##. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
 ##. "${PROJECT_DIR}"/amazon/ec2/sinatra/network/make.sh
 
