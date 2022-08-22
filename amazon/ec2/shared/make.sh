@@ -211,7 +211,7 @@ sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
 echo 'sshd_config ready.' 
 
 sed -e "s/SEDuser_nmSED/${USER_NM}/g" \
-       "${PROVISION_DIR}"/docker.sh > "${TMP_DIR}"/docker.sh    
+       "${PROVISION_DIR}"/docker/docker.sh > "${TMP_DIR}"/docker.sh    
        
 echo 'docker.sh ready.'     
 

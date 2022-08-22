@@ -4,7 +4,8 @@
 
 #####################################################
 # Creates an EC2 Linux Sinatra box.
-# Install a Sinatra server in a Docker container.
+# Install a Sinatra server in a Docker container and
+# runs it in the default Docker bridge network.
 #####################################################
 
 set -o errexit
@@ -15,6 +16,7 @@ set +o xtrace
 SCRIPTS_DIR=/home/"${USER_NM}"/script
 SINATRA_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 SINATRA_ARCHIVE='webapp.zip'
+SINATRA_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
 STEP 'AWS Sinatra box'
@@ -265,12 +267,12 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDsinatra_docker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
     -e "s/SEDsinatra_docker_img_tagSED/${SINATRA_DOCKER_IMG_TAG}/g" \
     -e "s/SEDsinatra_docker_container_nmSED/${SINATRA_DOCKER_CONTAINER_NM}/g" \
+    -e "s/SEDsinatra_docker_container_volume_dirSED/$(escape "${SINATRA_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
+    -e "s/SEDsinatra_docker_host_volume_dirSED/$(escape "${SINATRA_DOCKER_HOST_VOLUME_DIR}")/g" \
+    -e "s/SEDsinatra_docker_container_network_nmSED/${SINATRA_DOCKER_CONTAINER_NETWORK_NM}/g" \
     -e "s/SEDsinatra_http_addressSED/${eip}/g" \
     -e "s/SEDsinatra_http_portSED/${SINATRA_HTTP_PORT}/g" \
-    -e "s/SEDsinatra_inst_dirSED/$(escape "${SINATRA_INST_DIR}")/g" \
-    -e "s/SEDsinatra_container_volume_dirSED/$(escape "${SINATRA_CONTAINER_VOLUME_DIR}")/g" \
     -e "s/SEDsinatra_archiveSED/${SINATRA_ARCHIVE}/g" \
-    -e "s/SEDsinatra_docker_container_network_nmSED/${SINATRA_DOCKER_CONTAINER_NETWORK_NM}/g" \
        "${SERVICES_DIR}"/sinatra/sinatra.sh > "${sinatra_tmp_dir}"/sinatra.sh  
                         
 echo 'sinatra.sh ready.'  
@@ -281,7 +283,7 @@ ruby_docker_repository_uri="${__RESULT}"
 
 sed -e "s/SEDrepository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
     -e "s/SEDimg_tagSED/${RUBY_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDcontainer_volume_dirSED/$(escape "${SINATRA_CONTAINER_VOLUME_DIR}")/g" \
+    -e "s/SEDcontainer_volume_dirSED/$(escape "${SINATRA_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
        "${SERVICES_DIR}"/sinatra/Dockerfile > "${sinatra_tmp_dir}"/Dockerfile
 
 echo 'Dockerfile ready.' 
@@ -338,11 +340,11 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/sinatra.sh" \
           }
     }
 
-########ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
-########    "${private_key_file}" \
-########    "${eip}" \
-########    "${SHARED_INST_SSH_PORT}" \
-########    "${USER_NM}" 
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${SHARED_INST_SSH_PORT}" \
+    "${USER_NM}" 
     
 #
 # Instance profile
@@ -369,7 +371,7 @@ is_ecr_role_associated="${__RESULT}"
    ##
 
    set +e
-########   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    
    # Make Sinatra accessible from anywhere in the internet.
    allow_access_from_cidr "${sgp_id}" "${SINATRA_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1

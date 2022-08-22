@@ -17,6 +17,7 @@ RUN mkdir -p SEDcontainer_volume_dirSED
 
 EXPOSE $SINATRA_HTTP_PORT
 
-CMD SEDcontainer_volume_dirSED/webapp/bin/run
+ENTRYPOINT [ "SEDcontainer_volume_dirSED/webapp/bin/run" ] 
+CMD []
 
 

@@ -18,10 +18,11 @@ source "${PROJECT_DIR}"/amazon/lib/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/ecr.sh
 source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
 source "${PROJECT_DIR}"/amazon/lib/iam.sh
+source "${PROJECT_DIR}"/amazon/lib/network.sh
 
 echo
 
-. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
 exit
 exit
 
@@ -38,16 +39,18 @@ exit
 
 # Linux jumpbox.
 . "${PROJECT_DIR}"/amazon/ec2/admin/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
 
 # Docker base images.
-. "${PROJECT_DIR}"/amazon/ecr/make.sh 
+##. "${PROJECT_DIR}"/amazon/ecr/make.sh 
 
 # AWS instances.
-. "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
+##. "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
+##. "${PROJECT_DIR}"/amazon/ec2/redisdb/network/make.sh
+##. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
+##. "${PROJECT_DIR}"/amazon/ec2/sinatra/network/make.sh
 
-
+##. "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
+##. "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
 
 

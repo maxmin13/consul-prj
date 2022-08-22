@@ -18,6 +18,7 @@ source "${PROJECT_DIR}"/amazon/lib/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/ecr.sh
 source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
 source "${PROJECT_DIR}"/amazon/lib/iam.sh
+source "${PROJECT_DIR}"/amazon/lib/network.sh
 
 echo
 

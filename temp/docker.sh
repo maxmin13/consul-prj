@@ -1,8 +1,26 @@
 #!/bin/bash
 
-####################################
-# Installs Docker server.
-####################################
+########################################################################
+#
+# Installs a Docker engine.
+#
+# see:
+#
+#   systemctl show --property=FragmentPath docker
+#   
+# To customize the Docker daemon options using override files:
+#
+#   mkdir -p /etc/systemd/system/docker.service.d
+#   touch /etc/systemd/system/docker.service.d/http-proxy.conf
+#
+#  [Service]
+#  Environment="HTTP_PROXY=http://proxy.example.com:80/" "NO_PROXY=localhost,127.0.0.1,docker-registry.somecorporation.com"
+#
+#  sudo systemctl daemon-reload
+#  systemctl show 
+#  systemctl restart docker
+#
+########################################################################
 
 set -o errexit
 set -o pipefail
@@ -41,5 +59,9 @@ docker rmi hello-world
 #else
 #   echo "${LOGIN_USER} already added to docker group."
 #fi
+
+
+echo 'Installed networks:'
+docker network ls
 
 echo

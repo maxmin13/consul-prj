@@ -114,7 +114,7 @@ echo 'Deploying the welcome website ...'
 
 unzip -o "${SCRIPTS_DIR}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_INST_WEBAPPS_DIR}"/"${WEBSITE_NM}"
 find "${NGINX_INST_WEBAPPS_DIR}" -type d -exec chmod 755 {} + 
-find "${NGINX_INST_WEBAPPS_DIR}" -type f -exec chmod 644 {} +
+find "${NGINX_INST_WEBAPPS_DIR}" -type f -exec chmod 744 {} +
 
 echo 'Welcome website deployed.'
 

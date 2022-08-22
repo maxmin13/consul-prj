@@ -15,6 +15,7 @@ set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
 REDIS_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
+REDIS_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
 STEP 'AWS Redis db box'
@@ -265,14 +266,11 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDredis_docker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
     -e "s/SEDredis_docker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
     -e "s/SEDredis_docker_container_nmSED/${REDIS_DOCKER_CONTAINER_NM}/g" \
-    -e "s/SEDredis_docker_container_nmSED/${REDIS_DOCKER_CONTAINER_NM}/g" \
     -e "s/SEDredis_docker_container_network_nmSED/${REDIS_DOCKER_CONTAINER_NETWORK_NM}/g" \
-    -e "s/SEDredis_docker_container_network_cidrSED/$(escape ${REDIS_DOCKER_CONTAINER_NETWORK_CIDR})/g" \
-    -e "s/SEDredis_docker_container_network_gateSED/${REDIS_DOCKER_CONTAINER_NETWORK_GATE}/g" \
     -e "s/SEDredis_ip_addressSED/${eip}/g" \
     -e "s/SEDredis_ip_portSED/${REDIS_IP_PORT}/g" \
        "${SERVICES_DIR}"/redisdb/redis.sh > "${redis_tmp_dir}"/redis.sh  
-                        
+  
 echo 'redis.sh ready.'  
 
 # The Redis db image is built from a base Centos image.
@@ -309,8 +307,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" && echo 'Redis db successfully installed.' ||
-    {
-    
+    {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
       

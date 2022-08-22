@@ -1,0 +1,92 @@
+
+ mkdir -p /etc/systemd/system/docker.service.d
+ /etc/systemd/system/docker.service.d/consul.conf
+ 
+[Service]
+Environment="DOCKER_OPTS=-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --cluster-advertise eth0:2375 --cluster-store consul://52.209.115.124:8500"
+
+
+
+/lib/systemd/system/docker.service
+
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock $OPTIONS $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES $DOCKER_OPTS
+
+ 
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+ 
+sudo systemctl show --property=Environment docker
+
+
+
+On any Docker Host connected to the Consul Key-Value store (i.e. Docker Host 2 to 4), 
+create the overlay network by using the overlay driver, and define your own subnet and subnet mask.
+
+
+docker network create -d overlay --subnet=192.168.3.0/24 my-overlay
+docker network ls
+
+docker exec 77b97d803d8c ping 172.16.16.131
+
+***************************************************************************************************************************************
+***************************
+
+
+
+
+
+
+Firewall rules for Docker daemons using overlay networks
+
+You need the following ports open to traffic to and from each Docker host participating on an overlay network:
+TCP port 2377 for cluster management communications
+TCP and UDP port 7946 for communication among nodes
+UDP port 4789 for overlay network traffic
+
+Before you can create an overlay network, you need to either initialize your Docker daemon as a swarm manager using docker swarm init or join it to an existing swarm using docker swarm join. Either of these creates the default ingress overlay network which is used by swarm services by default. You need to do this even if you never plan to use swarm services. Afterward, you can create additional user-defined overlay networks.
+
+
+On host1:
+
+	docker swarm init
+
+Note the token that the command output as you will need it later. Host1 becomes the swarm manager.
+
+On host2 and host3:
+
+	 docker swarm join --token <TOKEN> <IP-ADDRESS-OF-MANAGER>:2377
+	 docker swarm join --token SWMTKN-1-2n4dcu2ka7qmo1zvjwa1npk0feskflvypagkv9ovxwst4jhquf-cqwiqast7cffo8lm8nqw6p2i2 10.0.10.33:2377
+
+	 
+On host1 (because it’s the manager), verify that the swarm is ready:
+
+	docker node ls
+	
+On host1 (because it’s the manager), verify the default networks:
+
+	docker network ls
+	
+If you do not need data encryption: 
+On host1 (because it’s the manager), create the overlay network (for instance my_net). The attachable flag is needed to allow standalone containers to connect to my_net:		 
+
+	docker network create -d overlay my_net
+	
+	
+All swarm management traffic is encrypted by default using AES in GCM mode. 
+To encrypt application data traffic as well add –opt encrypted to the command above. 
+This will build IPSEC tunnels among the docker hosts. 
+Encryption will also use AES-GCM with 12 hour key rotation.
+Overlay encryption is not supported on Windows hosts.	
+
+	docker network create –-opt encrypted -d overlay  my_net
+	
+	
+After all these steps you will have successfully built an overlay network called my_net spanning three docker different hosts.	
+	
+	
+	
+	
+	
+	
+	
+	

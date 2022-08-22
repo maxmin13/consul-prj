@@ -91,6 +91,7 @@ echo 'Image pushed to ECR.'
 
 # Create a volume directory where to store Jenkins configuration.
 mkdir -p "${JENKINS_INST_HOME_DIR}" 
+chmod 700 "${JENKINS_INST_HOME_DIR}" 
 
 # 1000 is the UID of the jenkins user inside the image.
 chown -R 1000:1000 "${JENKINS_INST_HOME_DIR}"
@@ -104,6 +105,9 @@ docker_run_jenkins_container "${JENKINS_DOCKER_CONTAINER_NM}" \
                              "${JENKINS_INST_HOME_DIR}" 
                              
 echo 'Jenkins container running.'
+
+find "${JENKINS_INST_HOME_DIR}" -type d -exec chmod 700 {} + 
+find "${JENKINS_INST_HOME_DIR}" -type f -exec chmod 700 {} +
                              
 docker_logout_ecr_registry "${ecr_registry_uri}" 
    

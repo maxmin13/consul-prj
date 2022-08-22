@@ -3,7 +3,8 @@
 # shellcheck disable=SC1091
 
 ############################################################
-# Installs a Redis database in a Docker container.
+# Installs a Redis database in a Docker container and runs 
+# it in the default Docker bridge network.
 ############################################################
 
 set -o errexit
@@ -18,8 +19,6 @@ REDIS_DOCKER_IMG_NM='SEDredis_docker_img_nmSED'
 REDIS_DOCKER_IMG_TAG='SEDredis_docker_img_tagSED'
 REDIS_DOCKER_CONTAINER_NM='SEDredis_docker_container_nmSED'
 REDIS_DOCKER_CONTAINER_NETWORK_NM='SEDredis_docker_container_network_nmSED'
-REDIS_DOCKER_CONTAINER_NETWORK_CIDR='SEDredis_docker_container_network_cidrSED'
-REDIS_DOCKER_CONTAINER_NETWORK_GATE='SEDredis_docker_container_network_gateSED'
 REDIS_IP_ADDRESS='SEDredis_ip_addressSED'
 REDIS_IP_PORT='SEDredis_ip_portSED'  
 
@@ -89,24 +88,6 @@ docker_tag_image "${REDIS_DOCKER_IMG_NM}" "${REDIS_DOCKER_IMG_TAG}" "${REDIS_DOC
 docker_push_image "${REDIS_DOCKER_REPOSITORY_URI}" "${REDIS_DOCKER_IMG_TAG}"
 
 echo 'Image pushed to ECR.'
-
-set +e
-docker_network_exists "${REDIS_DOCKER_CONTAINER_NETWORK_NM}" > /dev/null 2>&1
-set -e
-
-network_exists="${__RESULT}"
-
-if [[ 'false' == "${network_exists}" ]]
-then
-   docker_network_create "${REDIS_DOCKER_CONTAINER_NETWORK_NM}" \
-                         "${REDIS_DOCKER_CONTAINER_NETWORK_CIDR}" \
-                         "${REDIS_DOCKER_CONTAINER_NETWORK_GATE}"
-                         
-   echo "Network ${REDIS_DOCKER_CONTAINER_NETWORK_NM} created."
-else    
-   echo "Network ${REDIS_DOCKER_CONTAINER_NETWORK_NM} already created."                   
-fi
-
 echo 'Running Redis container ...'
 
 docker_run_redis_container "${REDIS_DOCKER_CONTAINER_NM}" \

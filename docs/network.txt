@@ -1,0 +1,13 @@
+
+ip a
+ip address
+ip address show eth0
+ip address list eth0
+ip address show dev eth0
+
+ip link ls up   ## only show running interfaces
+
+
+
+docker network ls
+docker network inspect bridge

@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 
 ############################################################
-# Installs Sinatra server in a Docker container.
+# Installs a Sinatra server in a Docker container.
 # Mounts a sample webapp in the container.
 ############################################################
 
@@ -18,12 +18,12 @@ SINATRA_DOCKER_REPOSITORY_URI='SEDsinatra_docker_repository_uriSED'
 SINATRA_DOCKER_IMG_NM='SEDsinatra_docker_img_nmSED'
 SINATRA_DOCKER_IMG_TAG='SEDsinatra_docker_img_tagSED'
 SINATRA_DOCKER_CONTAINER_NM='SEDsinatra_docker_container_nmSED'
+SINATRA_DOCKER_CONTAINER_VOLUME_DIR='SEDsinatra_docker_container_volume_dirSED'
+SINATRA_DOCKER_HOST_VOLUME_DIR='SEDsinatra_docker_host_volume_dirSED'
+SINATRA_DOCKER_CONTAINER_NETWORK_NM='SEDsinatra_docker_container_network_nmSED'
 SINATRA_HTTP_ADDRESS='SEDsinatra_http_addressSED'
 SINATRA_HTTP_PORT='SEDsinatra_http_portSED'  
-SINATRA_INST_DIR='SEDsinatra_inst_dirSED'
-SINATRA_CONTAINER_VOLUME_DIR='SEDsinatra_container_volume_dirSED'
 SINATRA_ARCHIVE='SEDsinatra_archiveSED'
-SINATRA_DOCKER_CONTAINER_NETWORK_NM='SEDsinatra_docker_container_network_nmSED'
 
 source "${SCRIPTS_DIR}"/app_consts.sh
 source "${SCRIPTS_DIR}"/general_utils.sh
@@ -97,26 +97,26 @@ docker_logout_ecr_registry "${ecr_registry_uri}"
 echo 'Logged out of ECR registry.' 
 
 # Create a volume directory to mount the Sinatra sources into the container.
-mkdir -p "${SINATRA_INST_DIR}" 
-chmod 755 "${SINATRA_INST_DIR}" 
+mkdir -p "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
+chmod 700 "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
 
 echo 'Deploying the Sinatra sources ...'
 
-unzip -o "${SCRIPTS_DIR}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_INST_DIR}" > /dev/null
-find "${SINATRA_INST_DIR}" -type d -exec chmod 755 {} + 
-find "${SINATRA_INST_DIR}" -type f -exec chmod 744 {} +
+unzip -o "${SCRIPTS_DIR}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_DOCKER_HOST_VOLUME_DIR}" > /dev/null
+find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type d -exec chmod 755 {} + 
+find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type f -exec chmod 744 {} +
 
 echo 'Sinatra sources deployed.'  
 echo 'Running Sinatra container ...'
-
+  
 docker_run_sinatra_container "${SINATRA_DOCKER_CONTAINER_NM}" \
-                           "${SINATRA_DOCKER_REPOSITORY_URI}" \
-                           "${SINATRA_DOCKER_IMG_TAG}" \
-                           "${SINATRA_HTTP_PORT}" \
-                           "${SINATRA_INST_DIR}" \
-                           "${SINATRA_CONTAINER_VOLUME_DIR}" \
-                           "${SINATRA_DOCKER_CONTAINER_NETWORK_NM}"
-                           
+                             "${SINATRA_DOCKER_REPOSITORY_URI}" \
+                             "${SINATRA_DOCKER_IMG_TAG}" \
+                             "${SINATRA_HTTP_PORT}" \
+                             "${SINATRA_DOCKER_HOST_VOLUME_DIR}" \
+                             "${SINATRA_DOCKER_CONTAINER_VOLUME_DIR}" \
+                             "${SINATRA_DOCKER_CONTAINER_NETWORK_NM}"
+                             
 echo 'Sinatra container running.'                          
                            
 echo

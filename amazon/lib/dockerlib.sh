@@ -53,7 +53,6 @@ if [[ $# -lt 2 ]]
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: logging into AWS registry.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -65,7 +64,7 @@ if [[ $# -lt 2 ]]
 # Globals:
 #  None
 # Arguments:
-# +registry_uri  -- ECR registry url.
+# +registry_uri -- ECR registry url.
 # Returns:      
 #  None 
 #===============================================================================
@@ -87,7 +86,6 @@ if [[ $# -lt 1 ]]
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: logging out from the AWS registry.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -151,10 +149,6 @@ function docker_build_img()
    fi
 
    local exit_code=0
-   local -r repository="${1}"
-   local -r tag="${2}"
-   local -r docker_ctx="${3}"
-   local -r build_args=''
    local cmd=''
    
    __get_docker_build_command "${@}"
@@ -236,7 +230,6 @@ function docker_delete_img()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: deleting image.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -279,7 +272,6 @@ function docker_tag_image()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: tagging the image.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -316,7 +308,6 @@ function docker_push_image()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: pushing the image to the registry.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -352,19 +343,32 @@ function docker_pull_image()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: pulling the image from the registry.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
 }
 
 #===============================================================================
-# Create a Docker bridge network and assign a network segment to it.  
+# Creates a Docker network and assign a network segment to it.  
+#
+# Overlay network:
+# all swarm service management traffic is encrypted by default, manager nodes in 
+# the swarm rotate the key used to encrypt gossip data every 12 hours.
+# To encrypt application data as well, add '--opt encrypted' when creating the 
+# overlay network. This enables IPSEC encryption at the level of the vxlan. 
+# This encryption imposes a non-negligible performance penalty, so you should 
+# test this option before using it in production.
+#
+# Useful commands:
+#
+#  sudo docker network ls
+#  sudo docker network inspect <network name>
 # 
 # Globals:
 #  None
 # Arguments:
 # +network_nm  -- the network name.
+# +driver      -- the network type, eg. bridge, overlay.
 # +subnet_cidr -- subnet in CIDR format that represents a network segment.
 # +gateway_add -- IPv4 address of the gateway.
 # Returns:      
@@ -372,28 +376,60 @@ function docker_pull_image()
 #===============================================================================
 function docker_network_create()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
    fi
 
    local exit_code=0
-   local -r network_nm="${1}"  
-   local -r subnet_cidr="${2}"
-   local -r gateway_add="${3}"
+   local -r network_nm="${1}" 
+   local -r driver="${2}"  
+   local -r subnet_cidr="${3}"
+   local -r gateway_add="${4}"
 
    docker network create "${network_nm}" \
                          --subnet "${subnet_cidr}" \
                          --gateway "${gateway_add}" \
-                         --driver 'bridge' \
+                         --driver "${driver}" \
                          --attachable        
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: creating network.'
-      return "${exit_code}"
+   fi     
+            
+   return "${exit_code}"
+} 
+
+#===============================================================================
+# Removes a Docker network.  
+#
+# Globals:
+#  None
+# Arguments:
+# +network_nm -- the network name.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_network_remove()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r network_nm="${1}" 
+
+   docker network remove "${network_nm}"         
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: removing network.'
    fi     
             
    return "${exit_code}"
@@ -405,7 +441,7 @@ function docker_network_create()
 # Globals:
 #  None
 # Arguments:
-# +network_nm  -- the network name.
+# +network_nm -- the network name.
 # Returns:      
 #  true/false in the __RESULT variable.
 #===============================================================================
@@ -423,11 +459,12 @@ function docker_network_exists()
    local exists='false'
    local net=''
 
-   net="$(docker network ls | awk '{print $2}' |grep "${network_nm}")"    
+   net="$(docker network ls | awk -v nm="${network_nm}" '$2==nm {print $2}')"
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
+      echo 'ERROR: looking for network.'
       return "${exit_code}"
    fi     
    
@@ -504,7 +541,6 @@ function docker_stop_container()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: stopping container.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -537,7 +573,6 @@ function docker_delete_container()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: deleting container.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -575,21 +610,18 @@ function docker_run_jenkins_container()
    local -r img_tag="${3}" 
    local -r jenkins_port="${4}"  
    local -r host_volume_dir="${5}"
-   
-   
-   docker run -d \
-              -p "${jenkins_port}":8080 \
-              -p 5000:5000 \
+
+   docker run -d --name "${container_nm}" \
               -v "${host_volume_dir}":/var/jenkins_home \
               -v /var/run/docker.sock:/var/run/docker.sock \
-              --name "${container_nm}" \
+              -p "${jenkins_port}":8080 \
+              -p 5000:5000 \
               "${img_repository}":"${img_tag}" > /dev/null        
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: running Jenkins container.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -627,17 +659,16 @@ function docker_run_nginx_container()
    local -r host_volume_dir="${5}"   
    local -r container_volume_dir="${6}" 
 
-   docker run -d \
-              -p "${port}":"${port}" \
+   docker run -d --name "${container_nm}" \
               -v "${host_volume_dir}":"${container_volume_dir}":ro \
-              --name "${container_nm}" \
+              -p "${port}":"${port}" \
               "${img_repository}":"${img_tag}" > /dev/null       
+              
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: running Nginx container.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -672,17 +703,16 @@ function docker_run_redis_container()
    local -r port="${4}"
    local -r network_nm="${5}"   
 
-   docker run -d \
+   docker run -d --name "${container_nm}" \
               -p "${port}":"${port}" \
-              --name "${container_nm}" \
               --net "${network_nm}" \
-              "${img_repository}":"${img_tag}" > /dev/null       
+              "${img_repository}":"${img_tag}" > /dev/null  
+                   
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: running Redis container.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -721,20 +751,122 @@ function docker_run_sinatra_container()
    local -r host_volume_dir="${5}"   
    local -r container_volume_dir="${6}" 
    local -r network_nm="${7}"   
-
-########--net "${network_nm}" \
-   docker run -d \
-              -p "${port}":"${port}" \
+ 
+   docker run -d --name "${container_nm}" \
               -v "${host_volume_dir}":"${container_volume_dir}":ro \
-              --name "${container_nm}" \
-              "${img_repository}":"${img_tag}" ##################> /dev/null        
+              -p "${port}":"${port}" \
+              "${img_repository}":"${img_tag}" \
+              --net "${network_nm}" > /dev/null                
+                  
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: running Sinatra container.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
 }    
+
+#===============================================================================
+# Runs a command in a running container.
+# 
+# Globals:
+#  None
+# Arguments:
+#  +container_nm -- the container name.
+#  +command      -- the command to run in the container.
+#  +options      -- the command's options.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_exec()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local exit_code=0
+   local -r container_nm="${1}"
+   local -r command="${2}"
+   local options=''
+   
+   if [[ 3 -eq "${#}" ]]
+   then
+      options="${3}"
+   fi
+
+   docker exec "${container_nm}" "${command}" "${options}" 
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: running Docker command.'
+   fi     
+            
+   return "${exit_code}"
+} 
+
+#===============================================================================
+# Returns 'active' if the Docker node is part of a swarm, 'inactive' if not.  
+# 
+# Globals:
+#  None
+# Arguments:
+#  none.
+# Returns:      
+#  active/inactive in the __RESULT variable.
+#===============================================================================
+function docker_swarm_status()
+{
+   if [[ $# -lt 0 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT='false'
+   local exit_code=0
+   local swarm_status=''
+
+   swarm_status="$(docker info | awk -v nm="Swarm" '$1~nm {print $2}')"
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      return "${exit_code}"
+   fi     
+   
+   __RESULT="${swarm_status}"
+            
+   return "${exit_code}"
+} 
+
+#===============================================================================
+# Initializes a swarm.  
+# 
+# Globals:
+#  None
+# Arguments:
+#  none.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_swarm_init()
+{
+   local exit_code=0
+
+
+   docker swarm init      
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: initializing swarm.'
+   fi     
+            
+   return "${exit_code}"
+} 
+

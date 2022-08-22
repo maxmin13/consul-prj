@@ -206,6 +206,16 @@ else
    echo 'WARN: Admin instance profile already associated to the instance.'
 fi
 
+## 
+## Instance access.
+##
+
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
+
+echo 'Revoked SSH access to the Admin box.' 
+
 echo 'Admin box created.'       
 echo
 

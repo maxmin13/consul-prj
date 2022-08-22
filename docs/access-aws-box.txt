@@ -1,0 +1,19 @@
+
+
+	aws ec2 authorize-security-group-ingress --group-id "sg-07ea51ccca00b5458" --protocol 'tcp' --port "38142" --cidr  '0.0.0.0/0'
+
+	cd access/
+	
+	rm -f ~/.ssh/known_hosts && ssh -i shared-key -p 38142 awsadmin@34.248.144.166
+	rm -f ~/.ssh/known_hosts && ssh -i admin-key -p 38142 awsadmin@34.241.183.124
+	rm -f ~/.ssh/known_hosts && ssh -i nginx-key -p 38142 awsadmin@3.250.154.190
+	rm -f ~/.ssh/known_hosts && ssh -i jenkins-key -p 38142 awsadmin@34.253.228.198
+	rm -f ~/.ssh/known_hosts && ssh -i redis-key -p 38142 awsadmin@54.216.183.186
+	rm -f ~/.ssh/known_hosts && ssh -i sinatra-key -p 38142 awsadmin@52.30.223.123
+
+	docker exec -t -i redis /bin/bash
+	
+
+
+	
+	
