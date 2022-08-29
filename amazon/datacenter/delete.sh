@@ -48,16 +48,6 @@ else
    echo "* main subnet ID: ${main_subnet_id}."
 fi
 
-get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
-backup_subnet_id="${__RESULT}"
-
-if [[ -z "${backup_subnet_id}" ]]
-then
-   echo '* WARN: backup subnet not found.'
-else
-   echo "* backup subnet ID: ${backup_subnet_id}."
-fi
-
 get_route_table_id "${DTC_ROUTE_TABLE_NM}"
 rtb_id="${__RESULT}"
 
@@ -101,17 +91,6 @@ then
    
    echo 'Main subnet deleted.'
 fi
-
-# 
-# Backup subnet 
-# 
-
-if [[ -n "${backup_subnet_id}" ]]
-then
-   delete_subnet "${backup_subnet_id}"
-   
-   echo 'Backup subnet deleted.'
-fi		
 
 #
 # Route table

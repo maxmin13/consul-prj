@@ -6,10 +6,10 @@ set -o nounset
 set +o xtrace
 
 ####
-STEP 'AWS Sinatra box'
+STEP 'Sinatra box'
 ####
 
-echo 'Deleting AWS Sinatra box ...'
+echo 'Deleting Sinatra box ...'
 echo
 
 get_instance_id "${SINATRA_INST_NM}"
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: AWS Sinatra box not found.'
+   echo '* WARN: Sinatra box not found.'
 else
    get_instance_state "${SINATRA_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* AWS Sinatra box ID: ${instance_id} (${instance_st})."
+   echo "* Sinatra box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${SINATRA_INST_SEC_GRP_NM}"
@@ -30,9 +30,9 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: AWS Sinatra security group not found.'
+   echo '* WARN: security group not found.'
 else
-   echo "* AWS Sinatra security group ID: ${sgp_id}."
+   echo "* Security group ID: ${sgp_id}."
 fi
 
 get_public_ip_address_associated_with_instance "${SINATRA_INST_NM}"
@@ -40,9 +40,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: AWS Sinatra public IP address not found.'
+   echo '* WARN: public IP address not found.'
 else
-   echo "* AWS Sinatra public IP address: ${eip}."
+   echo "* public IP address: ${eip}."
 fi
 
 get_instance_profile_id "${SINATRA_INST_PROFILE_NM}"
@@ -50,15 +50,15 @@ profile_id="${__RESULT}"
 
 if [[ -z "${profile_id}" ]]
 then
-   echo '* WARN: AWS Sinatra instance profile not found.'
+   echo '* WARN: instance profile not found.'
 else
-   echo "* AWS Sinatra instance profile ID: ${profile_id}."
+   echo "* instance profile ID: ${profile_id}."
 fi
 
 echo
 
 ##
-## Instance profile.
+## Permissions.
 ##
 
 check_instance_profile_exists "${SINATRA_INST_PROFILE_NM}" > /dev/null
@@ -68,7 +68,7 @@ if [[ 'true' == "${instance_profile_exists}" ]]
 then
    delete_instance_profile "${SINATRA_INST_PROFILE_NM}"
 
-   echo 'Sinatra instance profile deleted.'
+   echo 'Instance profile deleted.'
 fi
 
 #
@@ -100,7 +100,7 @@ if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Sinatra security group deleted.'
+   echo 'Security group deleted.'
 fi
 
 if [[ -n "${eip}" ]]

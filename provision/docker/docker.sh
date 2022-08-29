@@ -30,10 +30,9 @@ set +o xtrace
 STEP() { echo ; echo ; echo "==\\" ; echo "===>" "$@" ; echo "==/" ; echo ; }
 
 LOGIN_USER='SEDuser_nmSED'
+SCRIPTS_DIR='SEDscript_dirSED'
 
-####
-STEP "Docker"
-####
+source "${SCRIPTS_DIR}"/dockerlib.sh
 
 # kernel version 3.10 or greater is needed.
 uname -r
@@ -47,9 +46,9 @@ then
    systemctl enable docker
 fi 
 
-docker run --name test -i -t hello-world
-docker rm test
-docker rmi hello-world
+docker_run_helloworld_container test
+docker_delete_container test
+docker_delete_img hello-world:latest
 
 #if ! groups "${LOGIN_USER}" | grep docker
 #then

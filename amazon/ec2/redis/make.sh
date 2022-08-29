@@ -18,7 +18,7 @@ REDIS_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 REDIS_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
-STEP 'AWS Redis db box'
+STEP 'AWS Redis box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -71,23 +71,23 @@ sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Redis db security group is already created.'
+   echo 'WARN: the Redis security group is already created.'
 else
    create_security_group "${dtc_id}" "${REDIS_INST_SEC_GRP_NM}" "${REDIS_INST_SEC_GRP_NM}" 
    get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
-   echo 'Created Redis db security group.'
+   echo 'Created Redis security group.'
 fi
 
 set +e
 allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Granted SSH access to the Redis db box.'
+echo 'Granted SSH access to the Redis box.'
 
 # 
-# Redis db box
+# Redis box
 #
 
 check_aws_public_key_exists "${REDIS_INST_KEY_PAIR_NM}" 
@@ -117,7 +117,7 @@ awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${USER_NM}" -v hostna
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
     sub(/SEDhostnameSED/,hostname)
-}1' "${INSTANCE_DIR}"/redisdb/config/cloud_init_template.yml > "${redis_tmp_dir}"/cloud_init.yml
+}1' "${INSTANCE_DIR}"/redis/config/cloud_init_template.yml > "${redis_tmp_dir}"/cloud_init.yml
  
 echo 'cloud_init.yml ready.' 
 
@@ -133,14 +133,14 @@ then
          'stopped' == "${instance_st}" || \
          'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Redis db box already created (${instance_st})."
+      echo "WARN: Redis box already created (${instance_st})."
    else
-      echo "ERROR: Redis db box already created (${instance_st})."
+      echo "ERROR: Redis box already created (${instance_st})."
       
       exit 1
    fi
 else
-   echo "Creating the Redis db box ..."
+   echo "Creating the Redis box ..."
 
    run_instance \
        "${REDIS_INST_NM}" \
@@ -153,17 +153,17 @@ else
    get_instance_id "${REDIS_INST_NM}"
    instance_id="${__RESULT}"    
 
-   echo "Redis db box created."
+   echo "Redis box created."
 fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
 eip="${__RESULT}"
 
-echo "Redis db box public address: ${eip}."
+echo "Redis box public address: ${eip}."
 
 #
-# Instance profile.
+# Permissions.
 #
 
 # Applications that run on EC2 instances must sign their API requests with AWS credentials.
@@ -173,74 +173,108 @@ echo "Redis db box public address: ${eip}."
 # service and use them. 
 # see: aws sts get-caller-identity
 
-echo 'Creating instance profile ...'
 check_instance_profile_exists "${REDIS_INST_PROFILE_NM}"
 instance_profile_exists="${__RESULT}"
 
 if [[ 'false' == "${instance_profile_exists}" ]]
 then
+   echo 'Creating instance profile ...'
+
    create_instance_profile "${REDIS_INST_PROFILE_NM}" 
 
-   echo 'Redis db instance profile created.'
+   echo 'Instance profile created.'
 else
-   echo 'WARN: Redis db instance profile already created.'
+   echo 'WARN: instance profile already created.'
 fi
 
 get_instance_profile_id "${REDIS_INST_PROFILE_NM}"
-redis_instance_profile_id="${__RESULT}"
+instance_profile_id="${__RESULT}"
 
-echo 'Associating instance profile to the instance ...'
-check_instance_has_instance_profile_associated "${REDIS_INST_NM}" "${redis_instance_profile_id}"
+check_instance_has_instance_profile_associated "${REDIS_INST_NM}" "${instance_profile_id}"
 is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   # Associate the instance profile with the Redis db instance. The instance profile doesn't have a role
+   # Associate the instance profile with the instance. The instance profile doesn't have a role
    # associated, the role has to added when needed. 
+   echo 'Associating instance profile to the instance ...'
+   
    associate_instance_profile_to_instance "${REDIS_INST_NM}" "${REDIS_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-   echo 'Redis db instance profile associated to the instance.' ||
+   echo 'Instance profile associated to the instance.' ||
    {
       wait 30
       associate_instance_profile_to_instance "${REDIS_INST_NM}" "${REDIS_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-      echo 'Redis db instance profile associated to the instance.' ||
+      echo 'Instance profile associated to the instance.' ||
       {
-         echo 'ERROR: associating the Redis db instance profile to the instance.'
+         echo 'ERROR: associating the instance profile to the instance.'
          exit 1
       }
    }
 else
-   echo 'WARN: Redis db instance profile already associated to the instance.'
+   echo 'WARN: instance profile already associated to the instance.'
 fi
 
-echo 'Associating role the instance profile ...'
-check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_ROLE_NM}" 
-is_ecr_role_associated="${__RESULT}"
+check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_AWS_ROLE_NM}" 
+is_role_associated="${__RESULT}"
 
-if [[ 'false' == "${is_ecr_role_associated}" ]]
+if [[ 'false' == "${is_role_associated}" ]]
 then
-   associate_role_to_instance_profile "${REDIS_INST_PROFILE_NM}" "${REDIS_ROLE_NM}"
+   echo 'Associating role to instance profile ...'
+   
+   associate_role_to_instance_profile "${REDIS_INST_PROFILE_NM}" "${REDIS_AWS_ROLE_NM}"
       
    # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_ROLE_NM}" && \
-   echo 'ECR role associated to the Redis db instance profile.' ||
+   check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_AWS_ROLE_NM}" && \
+   echo 'Role associated to the instance profile.' ||
    {
       echo 'The role has not been associated to the profile yet.'
-      echo 'Let''s wait a bit and check again (second time).' 
+      echo 'Let''s wait a bit and check again (first time).' 
       
       wait 180  
       
       echo 'Let''s try now.' 
       
-      check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_ROLE_NM}" && \
-      echo 'ECR role associated to the instance profile.' ||
+      check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_AWS_ROLE_NM}" && \
+      echo 'Role associated to the instance profile.' ||
       {
-         echo 'ERROR: the role has not been associated to the profile after 3 minuts.'
+         echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
          exit 1
       }
    } 
 else
-   echo 'WARN: ECR role already associated to the instance profile.'
-fi    
+   echo 'WARN: role already associated to the instance profile.'
+fi 
+
+check_role_has_permission_policy_attached "${REDIS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
+
+if [[ 'false' == "${is_permission_policy_associated}" ]]
+then
+   echo 'Attaching permission policy to the role ...'
+
+   attach_permission_policy_to_role "${REDIS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   # IAM is a bit slow, progress only when the role is associated to the profile. 
+   check_role_has_permission_policy_attached "${REDIS_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
+   echo 'Permission policy associated to the role.' ||
+   {
+      echo 'The permission policy has not been associated to the role yet.'
+      echo 'Let''s wait a bit and check again (first time).' 
+      
+      wait 180  
+      
+      echo 'Let''s try now.' 
+      
+      check_role_has_permission_policy_attached "${REDIS_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
+      echo 'Permission policy associated to the role.' ||
+      {
+         echo 'ERROR: the permission policy has not been associated to the role after 3 minutes.'
+         exit 1
+      }
+   } 
+else
+   echo 'WARN: permission policy already associated to the role.'
+fi 
 
 #
 echo 'Provisioning the instance ...'
@@ -269,23 +303,23 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDredis_docker_container_network_nmSED/${REDIS_DOCKER_CONTAINER_NETWORK_NM}/g" \
     -e "s/SEDredis_ip_addressSED/${eip}/g" \
     -e "s/SEDredis_ip_portSED/${REDIS_IP_PORT}/g" \
-       "${SERVICES_DIR}"/redisdb/redis.sh > "${redis_tmp_dir}"/redis.sh  
+       "${SERVICES_DIR}"/redis/redis.sh > "${redis_tmp_dir}"/redis.sh  
   
 echo 'redis.sh ready.'  
 
-# The Redis db image is built from a base Centos image.
+# The Redis image is built from a base Centos image.
 ecr_get_repostory_uri "${CENTOS_DOCKER_IMG_NM}"
 centos_docker_repository_uri="${__RESULT}"
 
 sed -e "s/SEDrepository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
     -e "s/SEDimg_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
-       "${SERVICES_DIR}"/redisdb/Dockerfile > "${redis_tmp_dir}"/Dockerfile
+       "${SERVICES_DIR}"/redis/Dockerfile > "${redis_tmp_dir}"/Dockerfile
 
 echo 'Dockerfile ready.'
    
 scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${REDIS_DOCKER_CTX}" \
     "${redis_tmp_dir}"/Dockerfile \
-    "${SERVICES_DIR}"/redisdb/redis.conf
+    "${SERVICES_DIR}"/redis/redis.conf
     
 scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
     "${LIBRARY_DIR}"/constants/app_consts.sh \
@@ -306,7 +340,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" && echo 'Redis db successfully installed.' ||
+    "${USER_PWD}" && echo 'Redis successfully installed.' ||
     {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
@@ -320,7 +354,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" && echo 'Redis db successfully installed.' ||
+          "${USER_PWD}" && echo 'Redis successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -334,40 +368,37 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
     "${USER_NM}" 
     
 #
-# Instance profile
+# Permissions.
 #
 
-check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_ROLE_NM}"
-is_ecr_role_associated="${__RESULT}"
+check_role_has_permission_policy_attached "${REDIS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
 
-   if [[ 'true' == "${is_ecr_role_associated}" ]]
-   then
-      ####
-      #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
-      #### to the role.
-      ####
-      remove_role_from_instance_profile "${REDIS_INST_PROFILE_NM}" "${REDIS_ROLE_NM}"
-     
-      echo 'ECR role removed from the instance profile.'
-   else
-      echo 'WARN: ECR role already removed from the instance profile.'
-   fi
-
-   ## 
-   ## SSH Access.
-   ##
-
-   set +e
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   set -e
+if [[ 'true' == "${is_permission_policy_associated}" ]]
+then
+   echo 'Detaching permission policy from role ...'
    
-   echo 'Revoked SSH access to the Redis db box.'      
+   detach_permission_policy_from_role "${REDIS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   echo 'Permission policy detached.'
+else
+   echo 'WARN: permission policy already detached from the role.'
+fi 
 
-echo 'Redis db box created.'
+## 
+## SSH Access.
+##
+
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
+   
+echo 'Revoked SSH access to the Redis box.'      
+
+echo 'Redis box created.'
 echo
 
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${redis_tmp_dir:?}"
-
 

@@ -14,163 +14,110 @@ set +o xtrace
 #################################################################################
 
 #
-STEP 'AWS Permissions'
+STEP 'Permissions'
 #
-
-# Create an IAM role that has full access to the ECR service. 
-# The role is entrusted to EC2 instances. 
 
 # Create the trust relationship policy document that grants the EC2 instances the
 # permission to assume the role.
-build_assume_role_policy_document_for_ec2_entities 
+build_assume_role_trust_policy_document_for_ec2_entities 
 trust_policy_document="${__RESULT}"
+
+check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" > /dev/null
+secretsmanager_persmission_policy_exists="${__RESULT}"
+
+if [[ 'false' == "${secretsmanager_persmission_policy_exists}" ]]
+then
+   # Create permission policy that allows entities to create, list, retrieve a secret from SecretsManager.
+   build_secretsmanager_permission_policy_document 
+   secretsmanager_permission_policy_document="${__RESULT}"
+
+   create_permission_policy "${SECRETSMANAGER_POLICY_NM}" "${secretsmanager_permission_policy_document}"
+   
+   echo 'SecretsManager permission policy created.'
+else
+   echo 'WARN: SecretsManager permission policy already created.'
+fi
 
 #
 # Admin role
 #
 
-check_role_exists "${ADMIN_ROLE_NM}"
-admin_role_exists="${__RESULT}"
+check_role_exists "${ADMIN_AWS_ROLE_NM}"
+admin_aws_role_exists="${__RESULT}"
 
-if [[ 'false' == "${admin_role_exists}" ]]
+if [[ 'false' == "${admin_aws_role_exists}" ]]
 then
-   create_role "${ADMIN_ROLE_NM}" 'ECR full access role for the Admin instance.' "${trust_policy_document}" > /dev/null
+   create_role "${ADMIN_AWS_ROLE_NM}" 'Admin instance role' "${trust_policy_document}" > /dev/null
    
    echo 'Admin role created.'
 else
    echo 'WARN: Admin role already created.'
 fi
 
-check_role_has_permission_policy_attached "${ADMIN_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-admn_policy_attached="${__RESULT}"
+#
+# Redis role
+#
 
-if [[ 'false' == "${admn_policy_attached}" ]]
+check_role_exists "${REDIS_AWS_ROLE_NM}"
+redis_aws_role_exists="${__RESULT}"
+
+if [[ 'false' == "${redis_aws_role_exists}" ]]
 then
-   attach_permission_policy_to_role "${ADMIN_ROLE_NM}" "${REGISTRY_POLICY_NM}"
+   create_role "${REDIS_AWS_ROLE_NM}" 'Redis instance role' "${trust_policy_document}" > /dev/null
    
-   echo 'ECR permission policy attached to the Admin role.'
+   echo 'Redis role created.'
 else
-   echo 'WARN: ECR permission policy already attached to the Admin role.'
+   echo 'WARN: Redis role already created.'
 fi
-
-echo
 
 #
 # Nginx role
 #
 
-check_role_exists "${NGINX_ROLE_NM}"
-nginx_role_exists="${__RESULT}"
+check_role_exists "${NGINX_AWS_ROLE_NM}"
+nginx_aws_role_exists="${__RESULT}"
 
-if [[ 'false' == "${nginx_role_exists}" ]]
+if [[ 'false' == "${nginx_aws_role_exists}" ]]
 then
-   create_role "${NGINX_ROLE_NM}" 'ECR full access role for the Nginx instance.' "${trust_policy_document}" > /dev/null
+   create_role "${NGINX_AWS_ROLE_NM}" 'Nginx instance role' "${trust_policy_document}" > /dev/null
    
    echo 'Nginx role created.'
 else
    echo 'WARN: Nginx role already created.'
 fi
 
-check_role_has_permission_policy_attached "${NGINX_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-admn_policy_attached="${__RESULT}"
-
-if [[ 'false' == "${admn_policy_attached}" ]]
-then
-   attach_permission_policy_to_role "${NGINX_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-   
-   echo 'ECR permission policy attached to the Nginx role.'
-else
-   echo 'WARN: ECR permission policy already attached to the Nginx role.'
-fi
-
-echo
-
 #
 # Jenkins role
 #
 
-check_role_exists "${JENKINS_ROLE_NM}"
-jenkins_role_exists="${__RESULT}"
+check_role_exists "${JENKINS_AWS_ROLE_NM}"
+jenkins_aws_role_exists="${__RESULT}"
 
-if [[ 'false' == "${jenkins_role_exists}" ]]
+if [[ 'false' == "${jenkins_aws_role_exists}" ]]
 then
-   create_role "${JENKINS_ROLE_NM}" 'ECR full access role for the Jenkins instance.' "${trust_policy_document}" > /dev/null
+   create_role "${JENKINS_AWS_ROLE_NM}" 'Jenkins instance role.' "${trust_policy_document}" > /dev/null
    
    echo 'Jenkins role created.'
 else
    echo 'WARN: Jenkins role already created.'
 fi
 
-check_role_has_permission_policy_attached "${JENKINS_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-admn_policy_attached="${__RESULT}"
-
-if [[ 'false' == "${admn_policy_attached}" ]]
-then
-   attach_permission_policy_to_role "${JENKINS_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-   
-   echo 'ECR permission policy attached to the Jenkins role.'
-else
-   echo 'WARN: ECR permission policy already attached to the Jenkins role.'
-fi
-
-echo
-
-#
-# Redis db role
-#
-
-check_role_exists "${REDIS_ROLE_NM}"
-redis_role_exists="${__RESULT}"
-
-if [[ 'false' == "${redis_role_exists}" ]]
-then
-   create_role "${REDIS_ROLE_NM}" 'ECR full access role for the Redis instance.' "${trust_policy_document}" > /dev/null
-   
-   echo 'Redis db role created.'
-else
-   echo 'WARN: Redis db role already created.'
-fi
-
-check_role_has_permission_policy_attached "${REDIS_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-admn_policy_attached="${__RESULT}"
-
-if [[ 'false' == "${admn_policy_attached}" ]]
-then
-   attach_permission_policy_to_role "${REDIS_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-   
-   echo 'ECR permission policy attached to the Redis db role.'
-else
-   echo 'WARN: ECR permission policy already attached to the Redis db role.'
-fi
-
 #
 # Sinatra role
 #
 
-check_role_exists "${SINATRA_ROLE_NM}"
-sinatra_role_exists="${__RESULT}"
+check_role_exists "${SINATRA_AWS_ROLE_NM}"
+sinatra_aws_role_exists="${__RESULT}"
 
-if [[ 'false' == "${sinatra_role_exists}" ]]
+if [[ 'false' == "${sinatra_aws_role_exists}" ]]
 then
-   create_role "${SINATRA_ROLE_NM}" 'ECR full access role for the Sinatra instance.' "${trust_policy_document}" > /dev/null
+   create_role "${SINATRA_AWS_ROLE_NM}" 'Sinatra instance role' "${trust_policy_document}" > /dev/null
    
-   echo 'Sinatra db role created.'
+   echo 'Sinatra role created.'
 else
-   echo 'WARN: Sinatra db role already created.'
-fi
-
-check_role_has_permission_policy_attached "${SINATRA_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-admn_policy_attached="${__RESULT}"
-
-if [[ 'false' == "${admn_policy_attached}" ]]
-then
-   attach_permission_policy_to_role "${SINATRA_ROLE_NM}" "${REGISTRY_POLICY_NM}"
-   
-   echo 'ECR permission policy attached to the Sinatra db role.'
-else
-   echo 'WARN: ECR permission policy already attached to the Sinatra db role.'
+   echo 'WARN: Sinatra role already created.'
 fi
 
 echo
-echo 'AWS permissions configured.'
+echo 'Permissions configured.'
 

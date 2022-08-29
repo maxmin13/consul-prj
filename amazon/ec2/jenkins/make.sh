@@ -61,7 +61,7 @@ mkdir -p "${jenkins_tmp_dir}"
 echo
 
 #
-# Security group
+# Firewall
 #
 
 get_security_group_id "${JENKINS_INST_SEC_GRP_NM}"
@@ -69,20 +69,20 @@ sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Jenkins security group is already created.'
+   echo 'WARN: the security group is already created.'
 else
    create_security_group "${dtc_id}" "${JENKINS_INST_SEC_GRP_NM}" "${JENKINS_INST_SEC_GRP_NM}" 
    get_security_group_id "${JENKINS_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
-   echo 'Created Jenkins security group.'
+   echo 'Created security group.'
 fi
 
 set +e
 allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Granted SSH access to the Jenkins box.'
+echo 'Granted SSH access to the box.'
 
 # 
 # Jenkins box
@@ -161,7 +161,7 @@ eip="${__RESULT}"
 echo "Jenkins box public address: ${eip}."
 
 #
-# Instance profile.
+# Permissions.
 #
 
 # Applications that run on EC2 instances must sign their API requests with AWS credentials.
@@ -171,73 +171,107 @@ echo "Jenkins box public address: ${eip}."
 # service and use them. 
 # see: aws sts get-caller-identity
 
-echo 'Creating instance profile ...'
 check_instance_profile_exists "${JENKINS_INST_PROFILE_NM}"
 instance_profile_exists="${__RESULT}"
 
 if [[ 'false' == "${instance_profile_exists}" ]]
 then
+   echo 'Creating instance profile ...'
+
    create_instance_profile "${JENKINS_INST_PROFILE_NM}" 
 
-   echo 'Jenkins instance profile created.'
+   echo 'Instance profile created.'
 else
-   echo 'WARN: Jenkins instance profile already created.'
+   echo 'WARN: instance profile already created.'
 fi
 
 get_instance_profile_id "${JENKINS_INST_PROFILE_NM}"
-jenkins_instance_profile_id="${__RESULT}"
+instance_profile_id="${__RESULT}"
 
-echo 'Associating instance profile to the instance ...'
-check_instance_has_instance_profile_associated "${JENKINS_INST_NM}" "${jenkins_instance_profile_id}"
+check_instance_has_instance_profile_associated "${JENKINS_INST_NM}" "${instance_profile_id}"
 is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   # Associate the instance profile with the Jenkins instance. The instance profile doesn't have a role
+   # Associate the instance profile with the instance. The instance profile doesn't have a role
    # associated, the role has to added when needed. 
+   echo 'Associating instance profile to the instance ...'
+   
    associate_instance_profile_to_instance "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-   echo 'Jenkins instance profile associated to the instance.' ||
+   echo 'Instance profile associated to the instance.' ||
    {
       wait 30
       associate_instance_profile_to_instance "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-      echo 'Jenkins instance profile associated to the instance.' ||
+      echo 'Instance profile associated to the instance.' ||
       {
-         echo 'ERROR: associating the Jenkins instance profile to the instance.'
+         echo 'ERROR: associating the instance profile to the instance.'
          exit 1
       }
    }
 else
-   echo 'WARN: Jenkins instance profile already associated to the instance.'
+   echo 'WARN: instance profile already associated to the instance.'
 fi
 
-echo 'Associating role the instance profile ...'
-check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_ROLE_NM}" 
-is_ecr_role_associated="${__RESULT}"
+check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}" 
+is_role_associated="${__RESULT}"
 
-if [[ 'false' == "${is_ecr_role_associated}" ]]
+if [[ 'false' == "${is_role_associated}" ]]
 then
-   associate_role_to_instance_profile "${JENKINS_INST_PROFILE_NM}" "${JENKINS_ROLE_NM}"
+   echo 'Associating role to instance profile ...'
+   
+   associate_role_to_instance_profile "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}"
       
    # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_ROLE_NM}" && \
-   echo 'ECR role associated to the Jenkins instance profile.' ||
+   check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}" && \
+   echo 'Role associated to the instance profile.' ||
    {
       echo 'The role has not been associated to the profile yet.'
-      echo 'Let''s wait a bit and check again (second time).' 
+      echo 'Let''s wait a bit and check again (first time).' 
       
       wait 180  
       
       echo 'Let''s try now.' 
       
-      check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_ROLE_NM}" && \
-      echo 'ECR role associated to the instance profile.' ||
+      check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}" && \
+      echo 'Role associated to the instance profile.' ||
       {
          echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
          exit 1
       }
    } 
 else
-   echo 'WARN: ECR role already associated to the instance profile.'
+   echo 'WARN: role already associated to the instance profile.'
+fi 
+
+check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
+
+if [[ 'false' == "${is_permission_policy_associated}" ]]
+then
+   echo 'Attaching permission policy to the role ...'
+
+   attach_permission_policy_to_role "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   # IAM is a bit slow, progress only when the role is associated to the profile. 
+   check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
+   echo 'Permission policy associated to the role.' ||
+   {
+      echo 'The permission policy has not been associated to the role yet.'
+      echo 'Let''s wait a bit and check again (first time).' 
+      
+      wait 180  
+      
+      echo 'Let''s try now.' 
+      
+      check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
+      echo 'Permission policy associated to the role.' ||
+      {
+         echo 'ERROR: the permission policy has not been associated to the role after 3 minutes.'
+         exit 1
+      }
+   } 
+else
+   echo 'WARN: permission policy already associated to the role.'
 fi   
 
 #
@@ -323,37 +357,35 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
     "${USER_NM}" 
     
 #
-# Instance profile.
+# Permissions.
 #
 
-check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_ROLE_NM}"
-is_ecr_role_associated="${__RESULT}"
+check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
 
-   if [[ 'true' == "${is_ecr_role_associated}" ]]
-   then
-      ####
-      #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
-      #### to the role.
-      ####
-      remove_role_from_instance_profile "${JENKINS_INST_PROFILE_NM}" "${JENKINS_ROLE_NM}"
-     
-      echo 'ECR role removed from the instance profile.'
-   else
-      echo 'WARN: ECR role already removed from the instance profile.'
-   fi
-
-   ## 
-   ## Instance access.
-   ##
-
-   set +e
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+if [[ 'true' == "${is_permission_policy_associated}" ]]
+then
+   echo 'Detaching permission policy from role ...'
    
-   # Make Jenkins accessible from anywhere in the internet.
-   allow_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   set -e
+   detach_permission_policy_from_role "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   echo 'Permission policy detached.'
+else
+   echo 'WARN: permission policy already detached from the role.'
+fi 
+
+## 
+## Firewall.
+##
+
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    
-   echo 'Revoked SSH access to the Jenkins box.'      
+# Make Jenkins accessible from anywhere in the internet.
+allow_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
+   
+echo 'Revoked SSH access to the Jenkins box.'      
 
 echo 'Jenkins box created.'
 echo

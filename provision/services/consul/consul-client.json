@@ -1,0 +1,14 @@
+{
+    "client_addr": "0.0.0.0",
+    "bind_addr": "SEDbind_addressSED",
+    "server": false,
+    "datacenter": "Dublin-Central",
+    "data_dir": "/var/consul",
+    "encrypt": "SEDencryptSED",
+    "log_level": "INFO",
+    "enable_syslog": true,
+    "leave_on_terminate": true,
+    "start_join": [
+        "SEDstart_join_bind_addressSED"
+    ]
+}

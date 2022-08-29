@@ -18,9 +18,7 @@ source "${PROJECT_DIR}"/amazon/lib/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/ecr.sh
 source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
 source "${PROJECT_DIR}"/amazon/lib/iam.sh
-source "${PROJECT_DIR}"/amazon/lib/network.sh
-
-echo
+source "${PROJECT_DIR}"/amazon/lib/secretsmanager.sh
 
 # Datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
@@ -41,12 +39,10 @@ echo
 . "${PROJECT_DIR}"/amazon/ecr/make.sh 
 
 # AWS instances.
-. "${PROJECT_DIR}"/amazon/ec2/redisdb/make.sh
-##. "${PROJECT_DIR}"/amazon/ec2/redisdb/consul/make.sh
-##. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
-##. "${PROJECT_DIR}"/amazon/ec2/sinatra/network/make.sh
-
-##. "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
-##. "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/redis/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/redis/consul/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
 
 

@@ -14,6 +14,131 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
+# Builds the permission policy document to allow an entity to create, list and 
+# retrieve a secret from AWS Secretsmanager.
+#
+# Globals:
+#  None
+# Arguments:
+#  None
+# Returns:      
+#  The policy JSON document in the __RESULT global variable.  
+#===============================================================================
+function build_secretsmanager_permission_policy_document()
+{
+   __RESULT=''
+   local policy_document=''
+
+   policy_document=$(cat <<-EOF
+	{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+			"Effect": "Allow",
+			"Action": [
+				"secretsmanager:CreateSecret",
+				"secretsmanager:DeleteSecret",
+				"secretsmanager:ListSecrets",
+				"secretsmanager:DescribeSecret",
+				"secretsmanager:GetSecretValue"
+			],
+			"Resource": "*"
+			}
+		]
+	}      
+	EOF
+   )
+    
+   __RESULT="${policy_document}"
+   
+   return 0
+}
+
+#===============================================================================
+# Creates a permission policy.
+#
+# Globals:
+#  None
+# Arguments:
+# +policy_nm -- the policy name.
+# +policy_doc -- JSON policy document with the content for the new policy.
+# Returns:      
+#  none.  
+#===============================================================================
+function create_permission_policy()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r policy_nm="${1}"
+   local -r policy_doc="${2}"
+    
+   aws iam create-policy --policy-name "${policy_nm}" --policy-document "${policy_doc}" > /dev/null
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating permission policy.'     
+   fi 
+   
+   return "${exit_code}" 
+}
+
+#===============================================================================
+# Deletes a permission policy.
+#
+# Globals:
+#  None
+# Arguments:
+# +policy_nm -- the policy name.
+# Returns:      
+#  none.  
+#===============================================================================
+function delete_permission_policy()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r policy_nm="${1}"
+   local policy_arn;
+   
+   get_permission_policy_arn "${policy_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleteing permission policy.' 
+      return "${exit_code}"
+   fi 
+   
+   policy_arn="${__RESULT}"
+   
+   if [[ -z "${policy_arn}" ]] 
+   then
+      echo 'Permission policy not found.'
+      exit 1
+   fi
+    
+   aws iam delete-policy --policy-arn "${policy_arn}" 
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting permission policy.'     
+   fi 
+   
+   return "${exit_code}" 
+}
+
+#===============================================================================
 # Returns the policy ARN.
 #
 # Globals:
@@ -38,17 +163,10 @@ function get_permission_policy_arn()
 
    policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='${policy_nm}' ].Arn" \
        --output text)"
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting permission policy ARN.' 
-      return "${exit_code}"
-   fi 
    
    if [[ -z "${policy_arn}" ]] 
    then
-      echo 'Policy not found.'
+      echo 'Permission policy not found.'
    fi
 
    __RESULT="${policy_arn}"
@@ -168,7 +286,7 @@ function attach_permission_policy_to_role()
 }
 
 #===============================================================================
-# Checks if the specified IAM role has a managed permission policy attached.
+# Checks if the specified IAM role has a permission policy attached.
 #
 # Globals:
 #  None
@@ -264,7 +382,7 @@ function check_role_has_permission_policy_attached()
 # Returns:      
 #  none.  
 #=================$==============================================================
-function __detach_permission_policy_from_role()
+function detach_permission_policy_from_role()
 {
    if [[ $# -lt 2 ]]
    then
@@ -353,20 +471,20 @@ function __detach_permission_policy_from_role()
 # Returns:      
 #  The policy JSON document in the __RESULT global variable.  
 #===============================================================================
-function build_assume_role_policy_document_for_ec2_entities()
+function build_assume_role_trust_policy_document_for_ec2_entities()
 {
    __RESULT=''
    local policy_document=''
 
-   policy_document=$(cat <<-'EOF' 
-{
-  "Version": "2012-10-17",
-  "Statement": {
-    "Effect": "Allow",
-    "Principal": {"Service": "ec2.amazonaws.com"},
-    "Action": "sts:AssumeRole"
-  }
-}       
+   policy_document=$(cat <<-EOF
+	{
+		"Version": "2012-10-17",
+		"Statement": {
+			"Effect": "Allow",
+			"Principal": {"Service": "ec2.amazonaws.com"},
+			"Action": "sts:AssumeRole"
+		}
+	}       
 	EOF
    )
     
@@ -405,7 +523,6 @@ function create_role()
    aws iam create-role --role-name "${role_nm}" --description "${role_desc}" \
        --assume-role-policy-document "${role_policy_document}" \
        
-
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -466,7 +583,7 @@ function delete_role()
 
    if [[ 0 -ne "${exit_code}" ]]
    then
-      echo 'ERROR: retrieving instance profiles to which the role is attached.' 
+      echo 'ERROR: retrieving instance profiles.' 
       return "${exit_code}"
    fi
    
@@ -499,7 +616,7 @@ function delete_role()
    # Detach the policies from role.
    for policy_nm in ${policies}
    do
-      __detach_permission_policy_from_role "${role_nm}" "${policy_nm}" 
+      detach_permission_policy_from_role "${role_nm}" "${policy_nm}" 
       exit_code=$?
       
       if [[ 0 -ne "${exit_code}" ]]
@@ -688,7 +805,7 @@ function create_instance_profile()
 
 #===============================================================================
 # Deletes the specified instance profile. If the instance profile has a role 
-# associated, the role is removed.
+# associated, the role is detached.
 #
 # Globals:
 #  None

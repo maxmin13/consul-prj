@@ -20,14 +20,18 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR='SEDscripts_dirSED'
+DTC_REGION='SEDdtc_regionSED'
 INSTANCE_EIP_ADDRESS='SEDinstance_eip_addressSED'
 INSTANCE_PRIVATE_ADDRESS='SEDinstance_private_addressSED'
 CONSUL_CONFIG_FILE_NM='SEDconsul_config_file_nmSED'
 CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
 CONSUL_HTTP_PORT='SEDconsul_http_portSED'
 CONSUL_DNS_PORT='SEDconsul_dns_portSED'
+AGENT_MODE='SEDagent_modeSED'
+CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 
 source "${SCRIPTS_DIR}"/general_utils.sh
+source "${SCRIPTS_DIR}"/secretsmanager.sh
 
 yum update -y && yum install -y jq
 
@@ -41,9 +45,44 @@ yum -y install consul
 mkdir -p /etc/consul.d/scripts
 mkdir -p /var/consul
 
-consul_key="$(consul keygen)"
+set +e
+sm_check_secret_exists "${CONSUL_SECRET_NM}" "${DTC_REGION}"
+set -e
+
+secret_exists="${__RESULT}"
+
+if [[ 'server' == "${AGENT_MODE}" ]]
+then   
+   echo 'Server mode.'
+
+   if [[ 'false' == "${secret_exists}" ]]
+   then
+      echo 'Generating Consul key ...'
+   
+      ## Generate and save the secret in AWS secret manager.
+      key_value="$(consul keygen)"
+      sm_create_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}" 'consul' "${key_value}" 
+   
+      echo 'Consul key generated.' 
+   else
+      echo 'WARN: Consul key already generated.'  
+   fi
+else
+   echo 'Client mode.'
+   
+   if [[ 'false' == "${secret_exists}" ]]
+   then
+      echo 'ERROR: Consul key not found.'
+      exit 1
+   fi
+fi
+
+## Retrieve the secret from AWS secret manager.
+sm_get_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}"
+secret="${__RESULT}"
+
 cd "${SCRIPTS_DIR}"
-jq --arg key "${consul_key}" '.encrypt = $key' "${CONSUL_CONFIG_FILE_NM}" > /etc/consul.d/"${CONSUL_CONFIG_FILE_NM}"
+jq --arg secret "${secret}" '.encrypt = $secret' "${CONSUL_CONFIG_FILE_NM}" > /etc/consul.d/"${CONSUL_CONFIG_FILE_NM}"
 cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
 echo 'Consul installed.'
@@ -53,24 +92,27 @@ systemctl restart consul
 systemctl status consul 
 consul version
 
-consul members 2>&1 > /dev/null && echo 'Consul server successfully started.' || 
+consul members 2>&1 > /dev/null && echo "Consul ${AGENT_MODE} successfully started." || 
 {
-   echo 'Waiting for Consul server to start' 
+   echo "Waiting for Consul ${AGENT_MODE} to start" 
       
    wait 60
    
-   consul members  && echo 'Consul server successfully started.' || 
+   consul members && echo "Consul ${AGENT_MODE} successfully started." || 
    {
-      echo 'ERROR: Consul server not started after 3 minutes.'
+      echo "ERROR: Consul ${AGENT_MODE} not started after 1 minute."
       exit 1
    }
 }
 
 yum remove -y jq
 
-node_name="$(consul members |awk -v address="${INSTANCE_PRIVATE_ADDRESS}" '$2~address {print $1}')"
+node_name="$(consul members |awk -v address="${INSTANCE_PRIVATE_ADDRESS}" '$2 ~ address {print $1}')"
 
 echo
-echo "http://${INSTANCE_EIP_ADDRESS}:${CONSUL_HTTP_PORT}/ui"
-echo "dig @${INSTANCE_EIP_ADDRESS} -p ${CONSUL_DNS_PORT} ${node_name}.node.consul"
-echo
+if [[ 'server' == "${AGENT_MODE}" ]]
+then  
+   echo "http://${INSTANCE_EIP_ADDRESS}:${CONSUL_HTTP_PORT}/ui"
+   echo "dig @${INSTANCE_EIP_ADDRESS} -p ${CONSUL_DNS_PORT} ${node_name}.node.consul"
+   echo
+fi

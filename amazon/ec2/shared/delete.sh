@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 #
-STEP 'AWS shared box'
+STEP 'AWS Shared box'
 #
 
 shared_dir='shared'
@@ -58,7 +58,7 @@ then
 fi
 
 ## 
-## Security group 
+## Firewall 
 ## 
   
 if [[ -n "${sgp_id}" ]]

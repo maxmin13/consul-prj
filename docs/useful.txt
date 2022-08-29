@@ -2,10 +2,8 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -exec sed -i 's/NETWORK_OVERLAY_CIDR/NETWORK_OVERLAY_CIDR/g' {} \;
-find ./ -type f -exec sed -i 's/NETWORK_OVERLAY_GATE/NETWORK_OVERLAY_GATE/g' {} \;
-find ./ -type f -exec sed -i 's/NETWORK_OVERLAY_CIDR/NETWORK_OVERLAY_CIDR/g' {} \;
-find ./ -type f -exec sed -i 's/NETWORK_OVERLAY_GATE/NETWORK_OVERLAY_GATE/g' {} \;
+find ./ -type f -exec sed -i 's/detach_permission_policy_from_role/detach_permission_policy_from_role/g' {} \;
+
 
    sudo docker events&
    sudo docker logs <container id>

@@ -616,7 +616,8 @@ function docker_run_jenkins_container()
               -v /var/run/docker.sock:/var/run/docker.sock \
               -p "${jenkins_port}":8080 \
               -p 5000:5000 \
-              "${img_repository}":"${img_tag}" > /dev/null        
+              "${img_repository}":"${img_tag}" > /dev/null     
+               
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
@@ -766,7 +767,30 @@ function docker_run_sinatra_container()
    fi     
             
    return "${exit_code}"
-}    
+} 
+
+#===============================================================================
+# Runs hello world container.
+# 
+# Globals:
+#  none
+# Arguments:
+#  none
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_run_helloworld_container()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local -r container_nm="${1}"
+   
+   docker run --name "${container_nm}" -i -t hello-world
+}     
 
 #===============================================================================
 # Runs a command in a running container.
@@ -857,7 +881,6 @@ function docker_swarm_status()
 function docker_swarm_init()
 {
    local exit_code=0
-
 
    docker swarm init      
    exit_code=$?    

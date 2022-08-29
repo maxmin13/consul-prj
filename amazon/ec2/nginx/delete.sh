@@ -6,10 +6,10 @@ set -o nounset
 set +o xtrace
 
 ####
-STEP 'AWS Nginx box'
+STEP 'Nginx box'
 ####
 
-echo 'Deleting AWS Nginx box ...'
+echo 'Deleting Nginx box ...'
 echo
 
 get_instance_id "${NGINX_INST_NM}"
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: AWS Nginx box not found.'
+   echo '* WARN: Nginx box not found.'
 else
    get_instance_state "${NGINX_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* AWS Nginx box ID: ${instance_id} (${instance_st})."
+   echo "* Nginx box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${NGINX_INST_SEC_GRP_NM}"
@@ -30,9 +30,9 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: AWS Nginx security group not found.'
+   echo '* WARN: security group not found.'
 else
-   echo "* AWS Nginx security group ID: ${sgp_id}."
+   echo "* security group ID: ${sgp_id}."
 fi
 
 get_public_ip_address_associated_with_instance "${NGINX_INST_NM}"
@@ -40,9 +40,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: AWS Nginx public IP address not found.'
+   echo '* WARN: public IP address not found.'
 else
-   echo "* AWS Nginx public IP address: ${eip}."
+   echo "* public IP address: ${eip}."
 fi
 
 get_instance_profile_id "${NGINX_INST_PROFILE_NM}"
@@ -50,15 +50,15 @@ profile_id="${__RESULT}"
 
 if [[ -z "${profile_id}" ]]
 then
-   echo '* WARN: AWS Nginx instance profile not found.'
+   echo '* WARN: instance profile not found.'
 else
-   echo "* AWS Nginx instance profile ID: ${profile_id}."
+   echo "* instance profile ID: ${profile_id}."
 fi
 
 echo
 
 ##
-## Instance profile.
+## Permissions.
 ##
 
 check_instance_profile_exists "${NGINX_INST_PROFILE_NM}" > /dev/null
@@ -68,7 +68,7 @@ if [[ 'true' == "${instance_profile_exists}" ]]
 then
    delete_instance_profile "${NGINX_INST_PROFILE_NM}"
 
-   echo 'Nginx instance profile deleted.'
+   echo 'Instance profile deleted.'
 fi
 
 #
@@ -100,7 +100,7 @@ if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Nginx security group deleted.'
+   echo 'Security group deleted.'
 fi
 
 if [[ -n "${eip}" ]]

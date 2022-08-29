@@ -5,11 +5,13 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+CONSUL_SECRET_NM='consulkey'
+
 ####
-STEP 'AWS Redis db box'
+STEP 'Redis box'
 ####
 
-echo 'Deleting AWS Redis db box ...'
+echo 'Deleting Redis box ...'
 echo
 
 get_instance_id "${REDIS_INST_NM}"
@@ -17,12 +19,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: AWS Redis db box not found.'
+   echo '* WARN: Redis box not found.'
 else
    get_instance_state "${REDIS_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* AWS Redis db box ID: ${instance_id} (${instance_st})."
+   echo "* Redis box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
@@ -30,9 +32,9 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: AWS Redis db security group not found.'
+   echo '* WARN: security group not found.'
 else
-   echo "* AWS Redis db security group ID: ${sgp_id}."
+   echo "* security group ID: ${sgp_id}."
 fi
 
 get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
@@ -40,9 +42,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: AWS Redis db public IP address not found.'
+   echo '* WARN: public IP address not found.'
 else
-   echo "* AWS Redis db public IP address: ${eip}."
+   echo "* public IP address: ${eip}."
 fi
 
 get_instance_profile_id "${REDIS_INST_PROFILE_NM}"
@@ -50,15 +52,15 @@ profile_id="${__RESULT}"
 
 if [[ -z "${profile_id}" ]]
 then
-   echo '* WARN: AWS Redis db instance profile not found.'
+   echo '* WARN: instance profile not found.'
 else
-   echo "* AWS Redis db instance profile ID: ${profile_id}."
+   echo "* instance profile ID: ${profile_id}."
 fi
 
 echo
 
 ##
-## Instance profile.
+## Permissions.
 ##
 
 check_instance_profile_exists "${REDIS_INST_PROFILE_NM}" > /dev/null
@@ -68,7 +70,7 @@ if [[ 'true' == "${instance_profile_exists}" ]]
 then
    delete_instance_profile "${REDIS_INST_PROFILE_NM}"
 
-   echo 'Redis db instance profile deleted.'
+   echo 'Instance profile deleted.'
 fi
 
 #
@@ -82,25 +84,25 @@ then
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo "Deleting Redis db box ..."
+      echo "Deleting Redis box ..."
       
       delete_instance "${instance_id}" 'and_wait' > /dev/null
       
-      echo 'Redis db box deleted.'
+      echo 'Redis box deleted.'
    else
-      echo 'Redis db box already deleted.'
+      echo 'Redis box already deleted.'
    fi
 fi
 
 #
-# Security group
+# Firewall
 # 
   
 if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Redis db security group deleted.'
+   echo 'Security group deleted.'
 fi
 
 if [[ -n "${eip}" ]]
@@ -130,5 +132,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Redis db box deleted.'
+echo 'Redis box deleted.'
 echo

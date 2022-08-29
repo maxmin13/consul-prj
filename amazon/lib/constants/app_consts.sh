@@ -16,23 +16,19 @@ DTC_AZ_1='eu-west-1a'
 DTC_SUBNET_MAIN_NM='main-subnet'
 DTC_SUBNET_MAIN_CIDR='10.0.10.0/24'
 DTC_SUBNET_MAIN_INTERNAL_GATEWAY_IP='10.0.10.1'
-DTC_AZ_2='eu-west-1b'
-DTC_SUBNET_BACKUP_NM='backup-subnet'
-DTC_SUBNET_BACKUP_CIDR='10.0.20.0/24'
-DTC_SUBNET_BACKUP_INTERNAL_GATEWAY_IP='10.0.20.1'
-DTC_SUBNET_BACKUP_RESERVED_IPS='10.0.20.1-10.0.20.29'
 DTC_ROUTE_TABLE_NM='route-table'
 
 ## ************ ##
 ## Permissions  ##
 ## ************ ##
 
-ADMIN_ROLE_NM='AdminECRrole'
-NGINX_ROLE_NM='NginxECRrole'
-JENKINS_ROLE_NM='JenkinsECRrole'
-REDIS_ROLE_NM='RedisECRrole'
-SINATRA_ROLE_NM='SinatraECRrole'
-REGISTRY_POLICY_NM='AmazonEC2ContainerRegistryFullAccess'
+ADMIN_AWS_ROLE_NM='AdminAWSrole'
+NGINX_AWS_ROLE_NM='NginxAWSrole'
+JENKINS_AWS_ROLE_NM='JenkinsAWSrole'
+SINATRA_AWS_ROLE_NM='SinatraAWSrole'
+REDIS_AWS_ROLE_NM='RedisAWSrole'
+ECR_POLICY_NM='AmazonEC2ContainerRegistryFullAccess'
+SECRETSMANAGER_POLICY_NM="AmazonSecretsManagerAccess"
 
 ## ************** ##
 ##   AWS common   ##
@@ -59,7 +55,7 @@ SHARED_IMG_DESC='Linux secured Image'
 ##  AWS Admin box   ##
 ## **************** ##
 
-ADMIN_INST_NM='admin-box2'
+ADMIN_INST_NM='admin-box'
 ADMIN_INST_PRIVATE_IP='10.0.10.9'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_SEC_GRP_NM='admin-sgp'
@@ -101,19 +97,24 @@ NGINX_INST_WEBAPPS_DIR='/opt/nginx/webapps'
 ## AWS Redis db box ##
 ## **************** ##
 
-REDIS_INST_NM='redis-box'
+REDIS_INST_NM='redis-box2'
 REDIS_INST_PRIVATE_IP='10.0.10.30'
 REDIS_IP_PORT='6379'
 REDIS_INST_HOSTNAME='redis.maxmin.it'
 REDIS_INST_SEC_GRP_NM='redis-sgp'
 REDIS_INST_KEY_PAIR_NM='redis-key'
 REDIS_INST_PROFILE_NM='MaxminRedisInstanceProfile'
+REDIS_CONSUL_SERVER_RPC_PORT='8300'
+REDIS_CONSUL_SERVER_SERF_LAN_PORT='8301'
+REDIS_CONSUL_SERVER_SERF_WAN_PORT='8302'
+REDIS_CONSUL_SERVER_HTTP_PORT='8500' 
+REDIS_CONSUL_SERVER_DNS_PORT='8600' 
 
 ## **************** ##
 ## AWS Sinatra box  ##
 ## **************** ##
 
-SINATRA_INST_NM='sinatra-box2'
+SINATRA_INST_NM='sinatra-box'
 SINATRA_INST_PRIVATE_IP='10.0.10.33'
 SINATRA_HTTP_PORT='4567'
 SINATRA_INST_HOSTNAME='sinatra.maxmin.it'

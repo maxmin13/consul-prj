@@ -211,11 +211,13 @@ sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
 echo 'sshd_config ready.' 
 
 sed -e "s/SEDuser_nmSED/${USER_NM}/g" \
+    -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
        "${PROVISION_DIR}"/docker/docker.sh > "${TMP_DIR}"/docker.sh    
        
 echo 'docker.sh ready.'     
 
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${remote_dir}" \
+    "${LIBRARY_DIR}"/dockerlib.sh \
     "${PROVISION_DIR}"/security/secure-linux.sh \
     "${PROVISION_DIR}"/security/check-linux.sh \
     "${PROVISION_DIR}"/yumupdate.sh \

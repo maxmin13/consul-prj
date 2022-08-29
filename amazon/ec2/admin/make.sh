@@ -157,7 +157,7 @@ eip="${__RESULT}"
 echo "Admin box public address: ${eip}."
 
 #
-# Instance profile.
+# Permissions.
 #
 
 # Applications that run on EC2 instances must sign their API requests with AWS credentials.
@@ -167,54 +167,87 @@ echo "Admin box public address: ${eip}."
 # service and use them. 
 # see: aws sts get-caller-identity
 
-echo 'Creating instance profile ...'
 check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
 instance_profile_exists="${__RESULT}"
 
 if [[ 'false' == "${instance_profile_exists}" ]]
 then
+   echo 'Creating instance profile ...'
+
    create_instance_profile "${ADMIN_INST_PROFILE_NM}" 
 
-   echo 'Admin instance profile created.'
+   echo 'instance profile created.'
 else
-   echo 'WARN: Admin instance profile already created.'
+   echo 'WARN: instance profile already created.'
 fi
 
 get_instance_profile_id "${ADMIN_INST_PROFILE_NM}"
 admin_instance_profile_id="${__RESULT}"
 
-echo 'Associating instance profile to the instance ...'
 check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${admin_instance_profile_id}"
 is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   # Associate the instance profile with the Admin instance. The instance profile doesn't have a role
+   # Associate the instance profile with the instance. The instance profile doesn't have a role
    # associated, the role has to added when needed. 
+   echo 'Associating instance profile to the instance ...'
+   
    associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-   echo 'Admin instance profile associated to the instance.' ||
+   echo 'Instance profile associated to the instance.' ||
    {
       wait 30
       associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-      echo 'Admin instance profile associated to the instance.' ||
+      echo 'Instance profile associated to the instance.' ||
       {
-         echo 'ERROR: associating the Admin instance profile to the instance.'
+         echo 'ERROR: associating the instance profile to the instance.'
          exit 1
       }
    }
 else
-   echo 'WARN: Admin instance profile already associated to the instance.'
+   echo 'WARN: instance profile already associated to the instance.'
 fi
 
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" 
+is_role_associated="${__RESULT}"
+
+if [[ 'false' == "${is_role_associated}" ]]
+then
+   echo 'Associating role to instance profile ...'
+   
+   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}"
+      
+   # IAM is a bit slow, progress only when the role is associated to the profile. 
+   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
+   echo 'Role associated to the instance profile.' ||
+   {
+      echo 'The role has not been associated to the profile yet.'
+      echo 'Let''s wait a bit and check again (first time).' 
+      
+      wait 180  
+      
+      echo 'Let''s try now.' 
+      
+      check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
+      echo 'Role associated to the instance profile.' ||
+      {
+         echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
+         exit 1
+      }
+   } 
+else
+   echo 'WARN: role already associated to the instance profile.'
+fi 
+
 ## 
-## Instance access.
+## Firewall.
 ##
 
 set +e
 revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
 
-echo 'Revoked SSH access to the Admin box.' 
+echo 'Revoked SSH access to the box.' 
 
 echo 'Admin box created.'       
 echo

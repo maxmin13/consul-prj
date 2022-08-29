@@ -94,17 +94,22 @@ set -e
    
 echo 'Granted SSH access to the Admin box.'
 
-echo 'Associating role the Admin instance profile ...'
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_ROLE_NM}" 
-is_ecr_role_associated="${__RESULT}"
+#
+# Permissions.
+#
 
-if [[ 'false' == "${is_ecr_role_associated}" ]]
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" 
+is_role_associated="${__RESULT}"
+
+if [[ 'false' == "${is_role_associated}" ]]
 then
-   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_ROLE_NM}"
+   echo 'Associating permission policy the Admin instance role ...'
+
+   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}"
       
    # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_ROLE_NM}" && \
-   echo 'ECR role associated to the Admin instance profile.' ||
+   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
+   echo 'Role associated to the Admin instance profile.' ||
    {
       echo 'The role has not been associated to the profile yet.'
       echo 'Let''s wait a bit and check again (first time).' 
@@ -113,26 +118,54 @@ then
       
       echo 'Let''s try now.' 
       
-      check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_ROLE_NM}" && \
-      echo 'ECR role associated to the instance profile.' ||
+      check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
+      echo 'Role associated to the instance profile.' ||
       {
          echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
          exit 1
       }
    } 
 else
-   echo 'WARN: ECR role already associated to the instance profile.'
-fi  
+   echo 'WARN: role already associated to the instance profile.'
+fi 
+
+check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
+
+if [[ 'false' == "${is_permission_policy_associated}" ]]
+then
+   echo 'Attaching permission policy to the role ...'
+   
+   attach_permission_policy_to_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   # IAM is a bit slow, progress only when the role is associated to the profile. 
+   check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
+   echo 'Permission policy associated to the role.' ||
+   {
+      echo 'The permission policy has not been associated to the role yet.'
+      echo 'Let''s wait a bit and check again (first time).' 
+      
+      wait 180  
+      
+      echo 'Let''s try now.' 
+      
+      check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
+      echo 'Permission policy associated to the role.' ||
+      {
+         echo 'ERROR: the permission policy has not been associated to the role after 3 minutes.'
+         exit 1
+      }
+   } 
+else
+   echo 'WARN: permission policy already associated to the role.'
+fi 
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
 admin_eip="${__RESULT}"
 
 echo "Admin box public address: ${admin_eip}."
-
-#
 echo 'Provisioning the Admin instance ...'
-# 
 
 private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
@@ -226,8 +259,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" && echo 'Centos Docker image successfully built.' ||
-    {
-    
+    {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
       
@@ -278,26 +310,22 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
     "${USER_NM}"  
     
 #
-# Instance profile.
+# Permissions.
 #
 
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_ROLE_NM}"
-is_ecr_role_associated="${__RESULT}"
+check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
 
-if [[ 'true' == "${is_ecr_role_associated}" ]]
-   then
+if [[ 'true' == "${is_permission_policy_associated}" ]]
+then
+   echo 'Detaching permission policy from role ...'
    
-   ####
-   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
-   #### to the role.
-   ####
-   
-   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_ROLE_NM}"
-
-   echo 'ECR role removed from the instance profile.'
-   else
-   echo 'WARN: ECR role already removed from the instance profile.'
-fi
+   detach_permission_policy_from_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   echo 'Permission policy detached.'
+else
+   echo 'WARN: permission policy already detached from the role.'
+fi 
 
 ## 
 ## SSH Access.

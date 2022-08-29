@@ -15,6 +15,41 @@ set +o xtrace
 STEP 'AWS ECR'
 ####
 
+get_instance_id "${ADMIN_INST_NM}"
+instance_id="${__RESULT}"
+
+if [[ -z "${instance_id}" ]]
+then
+   echo '* WARN: Admin box not found.'
+else
+   get_instance_state "${ADMIN_INST_NM}"
+   instance_st="${__RESULT}"
+   
+   echo "* Admin box ID: ${instance_id} (${instance_st})."
+fi
+
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
+
+if [[ -z "${sgp_id}" ]]
+then
+   echo '* WARN: security group not found.'
+else
+   echo "* security group ID: ${sgp_id}."
+fi
+
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+eip="${__RESULT}"
+
+if [[ -z "${eip}" ]]
+then
+   echo '* WARN: public IP address not found.'
+else
+   echo "* public IP address: ${eip}."
+fi
+
+echo
+
 #
 # Centos 
 #
@@ -34,8 +69,6 @@ then
 else
    echo 'Centos repository already deleted.'
 fi
-
-echo
 
 #
 # Ruby 
@@ -57,8 +90,6 @@ else
    echo 'Ruby repository already deleted.'
 fi
 
-echo
-
 #
 # Jenkins 
 #
@@ -78,8 +109,6 @@ then
 else
    echo 'Jenkins repository already deleted.'
 fi
-
-echo
 
 #
 # Nginx 
@@ -101,8 +130,6 @@ else
    echo 'Nginx repository already deleted.'
 fi
 
-echo
-
 #
 # Redis 
 #
@@ -118,9 +145,9 @@ if [[ 'true' == "${redis_repository_exists}" ]]
 then
    ecr_delete_repository "${REDIS_DOCKER_IMG_NM}"
    
-   echo 'Redis db repository deleted.'
+   echo 'Redis repository deleted.'
 else
-   echo 'Redis db repository already deleted.'
+   echo 'Redis repository already deleted.'
 fi
 
 #
@@ -142,5 +169,47 @@ then
 else
    echo 'Sinatra repository already deleted.'
 fi
+
+####### TODO
+####### TODO clear Admin box #######
+####### TODO local images and containers ####### 
+####### TODO
+####### TODO
+
+#
+# Firewall.
+#
+
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
+
+#
+# Permissions.
+#
+
+check_role_exists "${ADMIN_AWS_ROLE_NM}"
+role_exists="${__RESULT}"
+
+if [[ 'true' == "$role_exists{}" ]]
+then
+   check_policy_exists "${ECR_POLICY_NM}"
+   policy_exists="${__RESULT}"
+
+   if [[ 'true' == "$policy_exists{}" ]]
+   then
+      check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      is_permission_policy_associated="${__RESULT}"
+
+      if [[ 'true' == "${is_permission_policy_associated}" ]]
+      then
+         detach_permission_policy_from_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+         echo 'Permission policy detached.'
+      else
+         echo 'WARN: permission policy already detached from the role.'
+      fi
+   fi
+fi 
 
 echo

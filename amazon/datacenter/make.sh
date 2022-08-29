@@ -102,26 +102,6 @@ else
    echo "The main subnet has been created in the ${DTC_AZ_1} availability zone and associated to the route table."    
 fi
 
-# 
-# Backup subnet
-#
-
-get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
-backup_subnet_id="${__RESULT}"	                
-	                
-if [[ -n "${backup_subnet_id}" ]]
-then
-   echo 'WARN: the backup subnet has already been created.'
-else
-   create_subnet "${DTC_SUBNET_BACKUP_NM}" \
-       "${DTC_SUBNET_BACKUP_CIDR}" "${DTC_AZ_2}" "${data_center_id}" "${route_table_id}"
-       
-   get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
-   backup_subnet_id="${__RESULT}"    
-
-   echo "The backup subnet has been created in the ${DTC_AZ_2} availability zone and associated to the route table."
-fi
-
 echo
 echo 'Data center up and running.'
 

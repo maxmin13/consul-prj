@@ -6,72 +6,85 @@ set -o nounset
 set +o xtrace
 
 #
-STEP 'AWS Permissions'
+STEP 'Permissions'
 #
 
-check_role_exists "${ADMIN_ROLE_NM}"
-admin_role_exists="${__RESULT}"
+check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" > /dev/null
+secretsmanager_persmission_policy_exists="${__RESULT}"
 
-if [[ 'false' == "${admin_role_exists}" ]]
+if [[ 'false' == "${secretsmanager_persmission_policy_exists}" ]]
+then
+   echo '* WARN: SecretsManager permission policy not found.'
+else
+   get_permission_policy_arn "${SECRETSMANAGER_POLICY_NM}" > /dev/null
+   secretsmanager_persmission_policy_arn="${__RESULT}"
+
+   echo "* SecretsManager permission policy ARN: ${secretsmanager_persmission_policy_arn}"
+fi
+
+check_role_exists "${ADMIN_AWS_ROLE_NM}"
+admin_aws_role_exists="${__RESULT}"
+
+if [[ 'false' == "${admin_aws_role_exists}" ]]
 then
    echo '* WARN: Admin role not found.'
 else
-   get_role_arn "${ADMIN_ROLE_NM}" > /dev/null
-   admin_role_arn="${__RESULT}"
+   get_role_arn "${ADMIN_AWS_ROLE_NM}" > /dev/null
+   admin_aws_role_arn="${__RESULT}"
 
-   echo "* Admin role ARN: ${admin_role_arn}"
+   echo "* Admin role ARN: ${admin_aws_role_arn}"
 fi
 
-check_role_exists "${NGINX_ROLE_NM}"
-nginx_role_exists="${__RESULT}"
+check_role_exists "${REDIS_AWS_ROLE_NM}"
+redis_aws_role_exists="${__RESULT}"
 
-if [[ 'false' == "${nginx_role_exists}" ]]
-then
-   echo '* WARN: Nginx role not found.'
-else
-   get_role_arn "${NGINX_ROLE_NM}" > /dev/null
-   nginx_role_arn="${__RESULT}"
-
-   echo "* Nginx role ARN: ${nginx_role_arn}"
-fi
-
-check_role_exists "${JENKINS_ROLE_NM}"
-jenkins_role_exists="${__RESULT}"
-
-if [[ 'false' == "${jenkins_role_exists}" ]]
-then
-   echo '* WARN: Jenkins role not found.'
-else
-   get_role_arn "${JENKINS_ROLE_NM}" > /dev/null
-   jenkins_role_arn="${__RESULT}"
-
-   echo "* Jenkins role ARN: ${jenkins_role_arn}"
-fi
-
-check_role_exists "${REDIS_ROLE_NM}"
-redis_role_exists="${__RESULT}"
-
-if [[ 'false' == "${redis_role_exists}" ]]
+if [[ 'false' == "${redis_aws_role_exists}" ]]
 then
    echo '* WARN: Redis role not found.'
 else
-   get_role_arn "${REDIS_ROLE_NM}" > /dev/null
-   redis_role_arn="${__RESULT}"
+   get_role_arn "${REDIS_AWS_ROLE_NM}" > /dev/null
+   redis_aws_role_arn="${__RESULT}"
 
-   echo "* Redis role ARN: ${redis_role_arn}"
+   echo "* Redis role ARN: ${redis_aws_role_arn}"
 fi
 
-check_role_exists "${SINATRA_ROLE_NM}"
-sinatra_role_exists="${__RESULT}"
+check_role_exists "${NGINX_AWS_ROLE_NM}"
+nginx_aws_role_exists="${__RESULT}"
 
-if [[ 'false' == "${sinatra_role_exists}" ]]
+if [[ 'false' == "${nginx_aws_role_exists}" ]]
+then
+   echo '* WARN: Nginx role not found.'
+else
+   get_role_arn "${NGINX_AWS_ROLE_NM}" > /dev/null
+   nginx_aws_role_arn="${__RESULT}"
+
+   echo "* Nginx role ARN: ${nginx_aws_role_arn}"
+fi
+
+check_role_exists "${SINATRA_AWS_ROLE_NM}"
+sinatra_aws_role_exists="${__RESULT}"
+
+if [[ 'false' == "${sinatra_aws_role_exists}" ]]
 then
    echo '* WARN: Sinatra role not found.'
 else
-   get_role_arn "${SINATRA_ROLE_NM}" > /dev/null
-   sinatra_role_arn="${__RESULT}"
+   get_role_arn "${SINATRA_AWS_ROLE_NM}" > /dev/null
+   sinatra_aws_role_arn="${__RESULT}"
 
-   echo "* Sinatra role ARN: ${sinatra_role_arn}"
+   echo "* Sinatra role ARN: ${sinatra_aws_role_arn}"
+fi
+
+check_role_exists "${JENKINS_AWS_ROLE_NM}"
+jenkins_aws_role_exists="${__RESULT}"
+
+if [[ 'false' == "${jenkins_aws_role_exists}" ]]
+then
+   echo '* WARN: Jenkins role not found.'
+else
+   get_role_arn "${JENKINS_AWS_ROLE_NM}" > /dev/null
+   jenkins_aws_role_arn="${__RESULT}"
+
+   echo "* Jenkins role ARN: ${jenkins_aws_role_arn}"
 fi
 
 echo
@@ -80,75 +93,78 @@ echo
 # Admin role
 #
 
-echo 'Deleting Admin role ...'
-
-if [[ 'true' == "${admin_role_exists}" ]]
+if [[ 'true' == "${admin_aws_role_exists}" ]]
 then
-   delete_role "${ADMIN_ROLE_NM}" > /dev/null
+   echo 'Deleting Admin role ...'
+   
+   delete_role "${ADMIN_AWS_ROLE_NM}" > /dev/null
    
    echo 'Admin role deleted.'
-else
-   echo 'WARN: Admin role already deleted.'
-fi 
+fi
 
 #
 # Nginx role
 #
-   
-echo 'Deleting Nginx role ...'
 
-if [[ 'true' == "${nginx_role_exists}" ]]
+if [[ 'true' == "${nginx_aws_role_exists}" ]]
 then
-   delete_role "${NGINX_ROLE_NM}" > /dev/null
+   echo 'Deleting Nginx role ...'
+   
+   delete_role "${NGINX_AWS_ROLE_NM}" > /dev/null
    
    echo 'Nginx role deleted.'
-else
-   echo 'WARN: Nginx role already deleted.'
-fi 
+fi
          
 #
 # Jenkins role
 #
-   
-echo 'Deleting Jenkins role ...'
 
-if [[ 'true' == "${jenkins_role_exists}" ]]
+if [[ 'true' == "${jenkins_aws_role_exists}" ]]
 then
-   delete_role "${JENKINS_ROLE_NM}" > /dev/null
+   echo 'Deleting Jenkins role ...'
+   
+   delete_role "${JENKINS_AWS_ROLE_NM}" > /dev/null
    
    echo 'Jenkins role deleted.'
-else
-   echo 'WARN: Jenkins role already deleted.'
-fi 
+fi
          
 #
 # Redis role
 #
-   
-echo 'Deleting Redis role ...'
 
-if [[ 'true' == "${redis_role_exists}" ]]
+if [[ 'true' == "${redis_aws_role_exists}" ]]
 then
-   delete_role "${REDIS_ROLE_NM}" > /dev/null
+   echo 'Deleting Redis role ...'
+   
+   delete_role "${REDIS_AWS_ROLE_NM}" > /dev/null
    
    echo 'Redis role deleted.'
-else
-   echo 'WARN: Redis role already deleted.'
 fi
 
 #
 # Sinatra role
 #
-   
-echo 'Deleting Sinatra role ...'
 
-if [[ 'true' == "${sinatra_role_exists}" ]]
+if [[ 'true' == "${sinatra_aws_role_exists}" ]]
 then
-   delete_role "${SINATRA_ROLE_NM}" > /dev/null
+   echo 'Deleting Sinatra role ...'
+   
+   delete_role "${SINATRA_AWS_ROLE_NM}" > /dev/null
    
    echo 'Sinatra role deleted.'
-else
-   echo 'WARN: Sinatra role already deleted.'
+fi
+
+#
+# SecretsManager permission policy
+#
+
+if [[ 'true' == "${secretsmanager_persmission_policy_exists}" ]]
+then
+   echo 'Deleting SecretsManager permission policy ...'
+   
+   delete_permission_policy "${SECRETSMANAGER_POLICY_NM}" > /dev/null
+   
+   echo 'SecretsManager permission policy deleted.'
 fi
 
 echo
