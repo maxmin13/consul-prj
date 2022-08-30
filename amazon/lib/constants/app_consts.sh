@@ -42,7 +42,7 @@ USER_PWD='awsadmin'
 ## AWS Shared image ##
 ## **************** ##
 
-SHARED_INST_NM='shared-box'
+SHARED_INST_NM='shared-box2'
 SHARED_INST_HOSTNAME='shared.maxmin.it'
 SHARED_INST_PRIVATE_IP='10.0.10.5'
 SHARED_INST_SSH_PORT='38142'

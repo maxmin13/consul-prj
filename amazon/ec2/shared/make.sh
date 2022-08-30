@@ -18,6 +18,7 @@ set +o xtrace
 STEP 'AWS shared box'
 #
 
+SCRIPTS_DIR=/home/"${USER_NM}"/script
 shared_dir='shared'
 
 get_datacenter_id "${DTC_NM}"
@@ -71,13 +72,13 @@ sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Shared security group is already created.'
+   echo 'WARN: the security group is already created.'
 else
    create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.'
    get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
 
-   echo 'Created Shared security group.'
+   echo 'Created security group.'
 fi
 
 set +e
@@ -179,7 +180,7 @@ fi
 get_public_ip_address_associated_with_instance "${SHARED_INST_NM}"
 eip="${__RESULT}"
 
-echo "Shared box public address: ${eip}."
+echo "Public address: ${eip}."
 
 # Verify it the SSH port is still 22 or it has changed.
 private_key_file="${ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
@@ -187,14 +188,14 @@ private_key_file="${ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
 get_ssh_port "${private_key_file}" "${eip}" "${USER_NM}" '22' "${SHARED_INST_SSH_PORT}" 
 ssh_port="${__RESULT}"
 
-echo "The SSH port on the Shared box is ${ssh_port}."
+echo "SSH port ${ssh_port}."
 
 ##
 ## Upload the scripts to the instance
 ## 
 
 echo
-echo 'Uploading the scripts to the Shared box ...'
+echo 'Uploading the scripts to the box ...'
 
 remote_dir=/home/"${USER_NM}"/script
 
@@ -231,7 +232,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/*.sh" \
     "${USER_NM}" \
     "${USER_PWD}"
 
-echo 'Securing the Shared box ...'
+echo 'Securing the box ...'
                 
 set +e
 
@@ -249,7 +250,7 @@ set -e
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
 then
-   echo 'Shared box successfully secured.'
+   echo 'Box successfully secured.'
 
    set +e
    ssh_run_remote_command_as_root "reboot" \
@@ -260,24 +261,28 @@ then
        "${USER_PWD}"
    set -e
 else
-   echo 'ERROR: securing the Shared box.'
+   echo 'ERROR: securing the box.'
    exit 1
 fi
+
+#
+# Firewall
+#
 
 # Finally, remove access from SSH port 22.
 set +e
 revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
 
-echo 'Revoked SSH access to the Shared box port 22.'
+echo 'Revoked SSH access on port 22.'
 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
 get_ssh_port "${private_key_file}" "${eip}" "${USER_NM}" '22' "${SHARED_INST_SSH_PORT}" 
 ssh_port="${__RESULT}"
 
-echo "The SSH port on the Shared box is ${ssh_port}." 
-echo 'Running security checks in the Shared box ...'
+echo "SSH port ${ssh_port}."
+echo 'Running security checks ...'
 
 ssh_run_remote_command_as_root "${remote_dir}/check-linux.sh" \
     "${private_key_file}" \
@@ -319,10 +324,10 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
 
 stop_instance "${instance_id}" > /dev/null  
 
-echo 'Shared box stopped.'   
+echo 'Box stopped.'   
 
 ## 
-## SSH Access
+## Firewall
 ## 
 
 # Revoke SSH access from the development machine.
@@ -330,7 +335,7 @@ set +e
 revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Revoked SSH access to the Shared box.'
+echo 'Revoked SSH access.'
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

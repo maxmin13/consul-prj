@@ -51,28 +51,22 @@ set -e
 
 secret_exists="${__RESULT}"
 
-if [[ 'server' == "${AGENT_MODE}" ]]
-then   
-   echo 'Server mode.'
-
-   if [[ 'false' == "${secret_exists}" ]]
+if [[ 'false' == "${secret_exists}" ]]
+then
+   if [[ 'server' == "${AGENT_MODE}" ]]
    then
+      echo 'Server mode.'      
       echo 'Generating Consul key ...'
    
       ## Generate and save the secret in AWS secret manager.
       key_value="$(consul keygen)"
       sm_create_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}" 'consul' "${key_value}" 
    
-      echo 'Consul key generated.' 
+      echo 'Consul key generated.'
    else
-      echo 'WARN: Consul key already generated.'  
-   fi
-else
-   echo 'Client mode.'
-   
-   if [[ 'false' == "${secret_exists}" ]]
-   then
+      echo 'Client mode.'     
       echo 'ERROR: Consul key not found.'
+      
       exit 1
    fi
 fi

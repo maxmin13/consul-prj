@@ -33,7 +33,7 @@ if [[ -z "${sgp_id}" ]]
 then
    echo '* WARN: security group not found.'
 else
-   echo "* security group. ${sgp_id}."
+   echo "* security group ${sgp_id}."
 fi
 
 echo
@@ -102,7 +102,7 @@ then
 fi
 
 ##
-## SSH keys.
+## Firewall
 ##
 
 check_aws_public_key_exists "${SHARED_INST_KEY_PAIR_NM}" 
