@@ -30,37 +30,30 @@ set +o xtrace
 STEP() { echo ; echo ; echo "==\\" ; echo "===>" "$@" ; echo "==/" ; echo ; }
 
 LOGIN_USER='SEDuser_nmSED'
-SCRIPTS_DIR='SEDscript_dirSED'
+SCRIPTS_DIR='SEDscripts_dirSED'
 
 source "${SCRIPTS_DIR}"/dockerlib.sh
 
 # kernel version 3.10 or greater is needed.
 uname -r
 
-yum update -y
+yum update -y > /dev/null
 
 if ! docker version > /dev/null 2>&1 
 then
-   amazon-linux-extras install -y docker 
-   systemctl start docker
-   systemctl enable docker
+   amazon-linux-extras install -y docker > /dev/null
+   systemctl start docker  > /dev/null
+   systemctl enable docker  > /dev/null
+   
+   echo 'Docker started.'
 fi 
 
-docker_run_helloworld_container test
-docker_delete_container test
-docker_delete_img hello-world:latest
-
-#if ! groups "${LOGIN_USER}" | grep docker
-#then
-#   usermod -aG docker "${LOGIN_USER}"
-#   
-#   echo "${LOGIN_USER} added to docker group."
-#else
-#   echo "${LOGIN_USER} already added to docker group."
-#fi
-
+docker_run_helloworld_container 'test'
+docker_delete_container 'test'
+docker_delete_img 'hello-world' 'latest'
 
 echo 'Installed networks:'
+
 docker network ls
 
 echo

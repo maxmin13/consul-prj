@@ -11,7 +11,7 @@ CONSUL_SECRET_NM='consulkey'
 STEP 'Redis box'
 ####
 
-echo 'Deleting Redis box ...'
+echo 'Deleting box ...'
 echo
 
 get_instance_id "${REDIS_INST_NM}"
@@ -19,12 +19,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Redis box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${REDIS_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Redis box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
@@ -84,13 +84,13 @@ then
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo "Deleting Redis box ..."
+      echo "Deleting box ..."
       
       delete_instance "${instance_id}" 'and_wait' > /dev/null
       
-      echo 'Redis box deleted.'
+      echo 'Box deleted.'
    else
-      echo 'Redis box already deleted.'
+      echo 'Box already deleted.'
    fi
 fi
 
@@ -132,5 +132,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Redis box deleted.'
+echo 'Box deleted.'
 echo

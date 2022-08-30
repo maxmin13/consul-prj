@@ -15,7 +15,7 @@ set -o nounset
 set +o xtrace
 
 #
-STEP 'AWS shared box'
+STEP 'Shared box'
 #
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
@@ -180,7 +180,7 @@ fi
 get_public_ip_address_associated_with_instance "${SHARED_INST_NM}"
 eip="${__RESULT}"
 
-echo "Public address: ${eip}."
+echo "Public address ${eip}."
 
 # Verify it the SSH port is still 22 or it has changed.
 private_key_file="${ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
@@ -197,9 +197,7 @@ echo "SSH port ${ssh_port}."
 echo
 echo 'Uploading the scripts to the box ...'
 
-remote_dir=/home/"${USER_NM}"/script
-
-ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir ${SCRIPTS_DIR}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -217,7 +215,7 @@ sed -e "s/SEDuser_nmSED/${USER_NM}/g" \
        
 echo 'docker.sh ready.'     
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${SCRIPTS_DIR}" \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${PROVISION_DIR}"/security/secure-linux.sh \
     "${PROVISION_DIR}"/security/check-linux.sh \
@@ -225,7 +223,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${re
     "${TMP_DIR}"/docker.sh \
     "${TMP_DIR}"/"${shared_dir}"/sshd_config        
 
-ssh_run_remote_command_as_root "chmod +x ${remote_dir}/*.sh" \
+ssh_run_remote_command_as_root "chmod +x ${SCRIPTS_DIR}/*.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -237,7 +235,7 @@ echo 'Securing the box ...'
 set +e
 
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
-ssh_run_remote_command_as_root "${remote_dir}/secure-linux.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/secure-linux.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -284,7 +282,7 @@ ssh_port="${__RESULT}"
 echo "SSH port ${ssh_port}."
 echo 'Running security checks ...'
 
-ssh_run_remote_command_as_root "${remote_dir}/check-linux.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/check-linux.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -294,7 +292,7 @@ ssh_run_remote_command_as_root "${remote_dir}/check-linux.sh" \
 echo 'Provisioning Docker ...'
 
 set +e                                
-ssh_run_remote_command_as_root "${remote_dir}/docker.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/docker.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -314,7 +312,7 @@ else
 fi     
    
 # Clear remote directory.
-ssh_run_remote_command "rm -rf ${remote_dir:?}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \

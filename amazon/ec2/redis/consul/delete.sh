@@ -37,7 +37,7 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Redis instance not found.'
+   echo '* WARN: instance not found.'
 fi
 
 if [[ -n "${instance_id}" ]]
@@ -47,32 +47,32 @@ then
    
    if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* Redis box ready (${instance_st})."
+      echo "* box ready (${instance_st})."
    else
-      echo "* WARN: Redis box is not ready. (${instance_st})."
+      echo "* WARN: box is not ready (${instance_st})."
    fi
 fi
 
 get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
-redis_sgp_id="${__RESULT}"
+sgp_id="${__RESULT}"
 
-if [[ -z "${redis_sgp_id}" ]]
+if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Redis security group not found.'
+   echo '* WARN: security group not found.'
 else
-   echo "* Redis security group ID: ${redis_sgp_id}."
+   echo "* security group ID: ${sgp_id}."
 fi
 
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
-redis_eip="${__RESULT}"
+eip="${__RESULT}"
 
-if [[ -z "${redis_eip}" ]]
+if [[ -z "${eip}" ]]
 then
-   echo '* WARN: Redis public IP address not found.'
+   echo '* WARN: public IP address not found.'
 else
-   echo "* Redis public IP address: ${redis_eip}."
+   echo "* Public IP address ${eip}."
 fi
 
 # Removing old files
@@ -90,17 +90,17 @@ then
    #
 
    set +e 
-   allow_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    set -e
 
-   echo 'Provisioning the Redis instance ...' 
+   echo 'Provisioning the instance ...' 
 
    private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
-   wait_ssh_started "${private_key_file}" "${redis_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
+   wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
    ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
        "${private_key_file}" \
-       "${redis_eip}" \
+       "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${USER_NM}"  
     
@@ -116,7 +116,7 @@ then
      
    echo 'consul-remove.sh ready.' 
 
-   scp_upload_files "${private_key_file}" "${redis_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
        "${LIBRARY_DIR}"/general_utils.sh \
        "${LIBRARY_DIR}"/secretsmanager.sh \
        "${redis_tmp_dir}"/consul-remove.sh 
@@ -125,7 +125,7 @@ then
    
    ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
        "${private_key_file}" \
-       "${redis_eip}" \
+       "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${USER_NM}" \
        "${USER_PWD}"   
@@ -133,7 +133,7 @@ then
    # shellcheck disable=SC2015
    ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul-remove.sh" \
        "${private_key_file}" \
-       "${redis_eip}" \
+       "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${USER_NM}" \
        "${USER_PWD}" && echo 'Consul server successfully removed.' ||
@@ -144,7 +144,7 @@ then
     
    ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
        "${private_key_file}" \
-       "${redis_eip}" \
+       "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${USER_NM}"     
 
@@ -169,15 +169,15 @@ then
    #
 
    set +e
-   revoke_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
    set -e 
 
    ## Clearing
@@ -186,4 +186,5 @@ then
 
    echo 'Redis Consul deleted.'
 fi
+
 echo

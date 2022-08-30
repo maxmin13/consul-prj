@@ -15,18 +15,18 @@ CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/secretsmanager.sh
 
-yum update -y && yum install -y jq
+yum update -y && yum install -y jq > /dev/null
 
 ####
 echo 'Removing Consul ...'
 ####
 
-yum -y remove consul jq
+yum -y remove consul jq > /dev/null
 rm -f /etc/systemd/system/"${CONSUL_SERVICE_FILE_NM}"
 rm -rf /etc/consul.d/scripts
 rm -rf /var/consul
 rm -rf /opt/consul
-systemctl daemon-reload
+systemctl daemon-reload > /dev/null
 
 set +e
 sm_check_secret_exists "${CONSUL_SECRET_NM}" "${DTC_REGION}"

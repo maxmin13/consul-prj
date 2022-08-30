@@ -18,7 +18,7 @@ REDIS_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 REDIS_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
-STEP 'AWS Redis box'
+STEP 'Redis box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -71,20 +71,20 @@ sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Redis security group is already created.'
+   echo 'WARN: security group is already created.'
 else
    create_security_group "${dtc_id}" "${REDIS_INST_SEC_GRP_NM}" "${REDIS_INST_SEC_GRP_NM}" 
    get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
-   echo 'Created Redis security group.'
+   echo 'Security group create.'
 fi
 
 set +e
 allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Granted SSH access to the Redis box.'
+echo 'Granted SSH access to the box.'
 
 # 
 # Redis box
@@ -133,14 +133,14 @@ then
          'stopped' == "${instance_st}" || \
          'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Redis box already created (${instance_st})."
+      echo "WARN: box already created (${instance_st})."
    else
-      echo "ERROR: Redis box already created (${instance_st})."
+      echo "ERROR: box already created (${instance_st})."
       
       exit 1
    fi
 else
-   echo "Creating the Redis box ..."
+   echo "Creating the box ..."
 
    run_instance \
        "${REDIS_INST_NM}" \
@@ -153,14 +153,14 @@ else
    get_instance_id "${REDIS_INST_NM}"
    instance_id="${__RESULT}"    
 
-   echo "Redis box created."
+   echo "Box created."
 fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
 eip="${__RESULT}"
 
-echo "Redis box public address: ${eip}."
+echo "Public address ${eip}."
 
 #
 # Permissions.
@@ -393,9 +393,9 @@ set +e
 revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Revoked SSH access to the Redis box.'      
+echo 'Revoked SSH access to the box.'      
 
-echo 'Redis box created.'
+echo 'Box created.'
 echo
 
 # Removing old files

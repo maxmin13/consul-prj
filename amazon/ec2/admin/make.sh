@@ -12,7 +12,7 @@ set -o nounset
 set +o xtrace
 
 ####
-STEP 'AWS Admin box'
+STEP 'Admin box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -65,20 +65,24 @@ sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Admin security group is already created.'
+   echo 'WARN: security group is already created.'
 else
    create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" "${ADMIN_INST_SEC_GRP_NM}" 
    get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
-   echo 'Created Admin security group.'
+   echo 'Security group created.'
 fi
+
+#
+# Firewall
+# 
 
 set +e
 allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Granted SSH access to the Admin box.'
+echo 'Granted SSH access to the box.'
 
 # 
 # Admin box
@@ -127,14 +131,14 @@ then
          'stopped' == "${instance_st}" || \
          'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Admin box already created (${instance_st})."
+      echo "WARN: box already created (${instance_st})."
    else
-      echo "ERROR: Admin box already created (${instance_st})."
+      echo "ERROR: box already created (${instance_st})."
       
       exit 1
    fi
 else
-   echo "Creating the Admin box ..."
+   echo "Creating the box ..."
 
    run_instance \
        "${ADMIN_INST_NM}" \
@@ -147,14 +151,14 @@ else
    get_instance_id "${ADMIN_INST_NM}"
    instance_id="${__RESULT}"    
 
-   echo "Admin box created."
+   echo "Box created."
 fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
 eip="${__RESULT}"
 
-echo "Admin box public address: ${eip}."
+echo "Public address: ${eip}."
 
 #
 # Permissions.
@@ -176,15 +180,15 @@ then
 
    create_instance_profile "${ADMIN_INST_PROFILE_NM}" 
 
-   echo 'instance profile created.'
+   echo 'Instance profile created.'
 else
    echo 'WARN: instance profile already created.'
 fi
 
 get_instance_profile_id "${ADMIN_INST_PROFILE_NM}"
-admin_instance_profile_id="${__RESULT}"
+instance_profile_id="${__RESULT}"
 
-check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${admin_instance_profile_id}"
+check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${instance_profile_id}"
 is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
@@ -200,7 +204,7 @@ then
       associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
       echo 'Instance profile associated to the instance.' ||
       {
-         echo 'ERROR: associating the instance profile to the instance.'
+         echo 'ERROR: associating instance profile to the instance.'
          exit 1
       }
    }
@@ -249,7 +253,7 @@ set -e
 
 echo 'Revoked SSH access to the box.' 
 
-echo 'Admin box created.'       
+echo 'Box created.'       
 echo
 
 # Removing old files

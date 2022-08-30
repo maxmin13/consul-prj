@@ -19,7 +19,7 @@ SINATRA_ARCHIVE='webapp.zip'
 SINATRA_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
-STEP 'AWS Sinatra box'
+STEP 'Sinatra box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -134,14 +134,14 @@ then
          'stopped' == "${instance_st}" || \
          'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Sinatra box already created (${instance_st})."
+      echo "WARN: box already created (${instance_st})."
    else
-      echo "ERROR: Sinatra box already created (${instance_st})."
+      echo "ERROR: box already created (${instance_st})."
       
       exit 1
    fi
 else
-   echo "Creating the Sinatra box ..."
+   echo "Creating the box ..."
 
    run_instance \
        "${SINATRA_INST_NM}" \
@@ -154,14 +154,14 @@ else
    get_instance_id "${SINATRA_INST_NM}"
    instance_id="${__RESULT}"    
 
-   echo "Sinatra box created."
+   echo "Box created."
 fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${SINATRA_INST_NM}"
 eip="${__RESULT}"
 
-echo "Sinatra box public address: ${eip}."
+echo "Box public address ${eip}."
 
 #
 # Permissions.
@@ -410,7 +410,7 @@ allow_access_from_cidr "${sgp_id}" "${SINATRA_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /d
 set -e
    
 echo 'Revoked SSH access to the box.'      
-echo 'Sinatra box created.'
+echo 'Box created.'
 echo
 
 # Removing old files

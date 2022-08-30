@@ -27,7 +27,7 @@ source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 source "${SCRIPTS_DIR}"/ecr.sh
 
-yum update -y
+yum update -y > /dev/null
 
 ####
 echo 'Installing Jenkins ...'
@@ -79,7 +79,7 @@ echo 'Logged into ECR registry.'
 
 echo 'Building Jenkins image ...'
 
-docker_build_img "${JENKINS_DOCKER_IMG_NM}" "${JENKINS_DOCKER_IMG_TAG}" "${JENKINS_DOCKER_CTX}"
+docker_build_img "${JENKINS_DOCKER_IMG_NM}" "${JENKINS_DOCKER_IMG_TAG}" "${JENKINS_DOCKER_CTX}" > /dev/null
 
 echo 'Image built.'
 echo 'Pushing image to the ECR repostory ... '

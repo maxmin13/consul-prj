@@ -14,7 +14,7 @@ set -o nounset
 set +o xtrace
 
 #
-STEP 'AWS Shared image'
+STEP 'Shared image'
 #
 
 shared_dir='shared'
@@ -60,13 +60,13 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Shared box not found.'
+   echo '* ERROR: box not found.'
    exit 1
 else
    get_instance_state "${SHARED_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Shared box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 echo
@@ -79,7 +79,7 @@ mkdir "${TMP_DIR}"/"${shared_dir}"
 ## Shared image.
 ## 
 
-echo 'Creating the Shared image ...'
+echo 'Creating the image ...'
 
 create_image "${instance_id}" "${SHARED_IMG_NM}" "${SHARED_IMG_DESC}" >> /dev/null	
 
@@ -87,5 +87,5 @@ create_image "${instance_id}" "${SHARED_IMG_NM}" "${SHARED_IMG_DESC}" >> /dev/nu
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 
 echo
-echo 'Shared image created.'
+echo 'Image created.'
 

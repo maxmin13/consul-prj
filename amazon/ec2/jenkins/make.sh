@@ -16,7 +16,7 @@ SCRIPTS_DIR=/home/"${USER_NM}"/script
 JENKINS_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 
 ####
-STEP 'AWS Jenkins box'
+STEP 'Jenkins box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -131,14 +131,14 @@ then
          'stopped' == "${instance_st}" || \
          'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Jenkins box already created (${instance_st})."
+      echo "WARN: box already created (${instance_st})."
    else
-      echo "ERROR: Jenkins box already created (${instance_st})."
+      echo "ERROR: box already created (${instance_st})."
       
       exit 1
    fi
 else
-   echo "Creating the Jenkins box ..."
+   echo "Creating the box ..."
 
    run_instance \
        "${JENKINS_INST_NM}" \
@@ -151,14 +151,14 @@ else
    get_instance_id "${JENKINS_INST_NM}"
    instance_id="${__RESULT}"    
 
-   echo "Jenkins box created."
+   echo "Box created."
 fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${JENKINS_INST_NM}"
 eip="${__RESULT}"
 
-echo "Jenkins box public address: ${eip}."
+echo "Public address ${eip}."
 
 #
 # Permissions.
@@ -303,7 +303,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDjenkins_inst_home_dirSED/$(escape "${JENKINS_INST_HOME_DIR}")/g" \
        "${SERVICES_DIR}"/jenkins/jenkins.sh > "${jenkins_tmp_dir}"/jenkins.sh       
   
-echo 'Jenkins ready.'  
+echo 'jenkins.sh ready.'  
    
 scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${JENKINS_DOCKER_CTX}" \
     "${SERVICES_DIR}"/jenkins/Dockerfile \
@@ -385,9 +385,9 @@ revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' 
 allow_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Revoked SSH access to the Jenkins box.'      
+echo 'Revoked SSH access to the box.'      
 
-echo 'Jenkins box created.'
+echo 'Box created.'
 echo
 
 # Removing old files

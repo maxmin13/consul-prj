@@ -6,6 +6,7 @@
 #
 # Consul is a datacenter runtime that provides service discovery, configuration, and orchestration.
 # The script installs Consul in the Redis database instance and runs an agent in client mode.
+# Consul agents exchange messages on the 'main-subnet' network.
 # 
 ##########################################################################################################
 
@@ -44,51 +45,51 @@ else
 fi
 
 get_instance_id "${REDIS_INST_NM}"
-redis_instance_id="${__RESULT}"
+instance_id="${__RESULT}"
 
-if [[ -z "${redis_instance_id}" ]]
+if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Redis box not found.'
+   echo '* ERROR: box not found.'
    exit 1
 fi
 
-if [[ -n "${redis_instance_id}" ]]
+if [[ -n "${instance_id}" ]]
 then
    get_instance_state "${REDIS_INST_NM}"
-   redis_instance_st="${__RESULT}"
+   instance_st="${__RESULT}"
    
-   if [[ 'running' == "${redis_instance_st}" ]]
+   if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* Redis box ready (${redis_instance_st})."
+      echo "* box ready (${instance_st})."
    else
-      echo "* ERROR: Redis box is not ready. (${redis_instance_st})."
+      echo "* ERROR: box is not ready. (${instance_st})."
       
       exit 1
    fi
 fi
 
 get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
-redis_sgp_id="${__RESULT}"
+sgp_id="${__RESULT}"
 
-if [[ -z "${redis_sgp_id}" ]]
+if [[ -z "${sgp_id}" ]]
 then
    echo '* ERROR: security group not found.'
    exit 1
 else
-   echo "* security group ID: ${redis_sgp_id}."
+   echo "* security group ID: ${sgp_id}."
 fi
 
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
-redis_eip="${__RESULT}"
+eip="${__RESULT}"
 
-if [[ -z "${redis_eip}" ]]
+if [[ -z "${eip}" ]]
 then
    echo '* ERROR: public IP address not found.'
    exit 1
 else
-   echo "* public IP address: ${redis_eip}."
+   echo "* public IP address: ${eip}."
 fi
 
 # Removing old files
@@ -169,15 +170,15 @@ fi
 
 set +e
 # Firewall rules 
-allow_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${redis_sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Granted access to the box.'
@@ -187,11 +188,11 @@ echo 'Provisioning the box ...'
 # 
 
 private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
-wait_ssh_started "${private_key_file}" "${redis_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
     "${private_key_file}" \
-    "${redis_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}"  
     
@@ -201,7 +202,7 @@ echo 'Provisioning Consul scripts ...'
 
 sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDdtc_regionSED/${DTC_REGION}/g" \
-    -e "s/SEDinstance_eip_addressSED/${redis_eip}/g" \
+    -e "s/SEDinstance_eip_addressSED/${eip}/g" \
     -e "s/SEDinstance_private_addressSED/${REDIS_INST_PRIVATE_IP}/g" \
     -e "s/SEDconsul_config_file_nmSED/consul-client.json/g" \
     -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
@@ -215,12 +216,12 @@ echo 'consul.sh ready.'
 
 sed -e "s/SEDbind_addressSED/${REDIS_INST_PRIVATE_IP}/g" \
     -e "s/SEDbootstrap_expectSED/1/g" \
-    -e "s/SEDstart_join_bind_addressSED/${REDIS_INST_PRIVATE_IP}/g" \
+    -e "s/SEDstart_join_bind_addressSED/${ADMIN_INST_PRIVATE_IP}/g" \
     "${SERVICES_DIR}"/consul/consul-client.json > "${redis_tmp_dir}"/consul-client.json
     
 echo 'consul-client.json ready.'      
       
-scp_upload_files "${private_key_file}" "${redis_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
     "${redis_tmp_dir}"/consul.sh \
     "${redis_tmp_dir}"/consul-client.json \
     "${SERVICES_DIR}"/consul/consul.service \
@@ -232,14 +233,14 @@ echo
 
 ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
     "${private_key_file}" \
-    "${redis_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}"      
 
 ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
     "${private_key_file}" \
-    "${redis_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" && echo 'Consul client successfully installed.' ||
@@ -253,7 +254,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
     
        ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
           "${private_key_file}" \
-          "${redis_eip}" \
+          "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
           "${USER_PWD}" && echo 'Consul client successfully installed.' ||
@@ -265,7 +266,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
     
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
     "${private_key_file}" \
-    "${redis_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}"      
   
@@ -292,7 +293,7 @@ fi
 ##
 
 set +e
-revoke_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
 
 echo 'Revoked SSH access to the box.'  

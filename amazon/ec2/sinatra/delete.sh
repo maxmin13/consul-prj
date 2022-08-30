@@ -6,10 +6,10 @@ set -o nounset
 set +o xtrace
 
 ####
-STEP 'Sinatra box'
+STEP 'Sinatra'
 ####
 
-echo 'Deleting Sinatra box ...'
+echo 'Deleting box ...'
 echo
 
 get_instance_id "${SINATRA_INST_NM}"
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Sinatra box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${SINATRA_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Sinatra box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${SINATRA_INST_SEC_GRP_NM}"
@@ -82,18 +82,18 @@ then
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo "Deleting Sinatra box ..."
+      echo "Deleting box ..."
       
       delete_instance "${instance_id}" 'and_wait' > /dev/null
       
-      echo 'Sinatra box deleted.'
+      echo 'Box deleted.'
    else
-      echo 'Sinatra box already deleted.'
+      echo 'Box already deleted.'
    fi
 fi
 
 #
-# Security group
+# Firewall
 # 
   
 if [[ -n "${sgp_id}" ]]
@@ -130,5 +130,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Sinatra box deleted.'
+echo 'Box deleted.'
 echo

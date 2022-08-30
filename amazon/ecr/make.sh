@@ -15,7 +15,7 @@ set +o xtrace
 SCRIPTS_DIR=/home/"${USER_NM}"/script
 
 ####
-STEP 'AWS ECR'
+STEP 'ECR'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -42,38 +42,38 @@ fi
 
 # Jumpbox where the images are built.
 get_instance_id "${ADMIN_INST_NM}"
-admin_instance_id="${__RESULT}"
+instance_id="${__RESULT}"
 
-if [[ -z "${admin_instance_id}" ]]
+if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Admin instance not found.'
+   echo '* ERROR: instance not found.'
    exit 1
 fi
 
-if [[ -n "${admin_instance_id}" ]]
+if [[ -n "${instance_id}" ]]
 then
    get_instance_state "${ADMIN_INST_NM}"
-   admin_instance_st="${__RESULT}"
+   instance_st="${__RESULT}"
    
-   if [[ 'running' == "${admin_instance_st}" ]]
+   if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* Admin box ready (${admin_instance_st})."
+      echo "* box ready (${instance_st})."
    else
-      echo "* ERROR: Admin box is not ready. (${admin_instance_st})."
+      echo "* ERROR: box is not ready. (${instance_st})."
       
       exit 1
    fi
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
-admin_sgp_id="${__RESULT}"
+sgp_id="${__RESULT}"
 
-if [[ -z "${admin_sgp_id}" ]]
+if [[ -z "${sgp_id}" ]]
 then
    echo '* ERROR: Admin security group not found.'
    exit 1
 else
-   echo "* Admin security group ID: ${admin_sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
 # Removing old files
@@ -85,11 +85,11 @@ mkdir -p "${ecr_tmp_dir}"
 echo
 
 #
-# Admin jumpbox
+# Firewall
 #
 
 set +e
-allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Granted SSH access to the Admin box.'
@@ -162,17 +162,17 @@ fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
-admin_eip="${__RESULT}"
+eip="${__RESULT}"
 
-echo "Admin box public address: ${admin_eip}."
-echo 'Provisioning the Admin instance ...'
+echo "Public address ${eip}."
+echo 'Provisioning the instance ...'
 
 private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-wait_ssh_started "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}/centos/dockerctx && mkdir -p ${SCRIPTS_DIR}/ruby/dockerctx" \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}"
     
@@ -195,10 +195,10 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/centos")/g" \
        
 echo 'centos.sh ready.' 
 
-scp_upload_file "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/centos/dockerctx \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/centos/dockerctx \
     "${SERVICES_DIR}"/base/centos/Dockerfile  
     
-scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/centos \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/centos \
     "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
@@ -230,10 +230,10 @@ sed -e "s/SEDruby_docker_repository_uriSED/$(escape "${centos_docker_repository_
        
 echo 'ruby Dockerfile ready.'        
 
-scp_upload_file "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/ruby/dockerctx \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/ruby/dockerctx \
     "${ecr_tmp_dir}"/ruby/Dockerfile
      
-scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/ruby \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/ruby \
     "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
@@ -245,17 +245,17 @@ echo
 
 ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}"       
     
 echo 'Building Centos Docker image ...'
            
-# build Centos Docker images in the admin box and send it to ECR.                             
+# build Centos Docker images in the box and send it to ECR.                             
 ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" && echo 'Centos Docker image successfully built.' ||
@@ -269,7 +269,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
     
        ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
           "${private_key_file}" \
-          "${admin_eip}" \
+          "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
           "${USER_PWD}" && echo 'Centos Docker image successfully built.' ||
@@ -283,10 +283,10 @@ echo
 echo 'Building Ruby Docker image ...'
            
 set +e   
-# build Ruby Docker images in the admin box and send it to ECR.                             
+# build Ruby Docker images in the box and send it to ECR.                             
 ssh_run_remote_command_as_root "${SCRIPTS_DIR}/ruby/ruby.sh" \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" 
@@ -305,7 +305,7 @@ fi
 
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}"  
     
@@ -328,14 +328,14 @@ else
 fi 
 
 ## 
-## SSH Access.
+## Firewall.
 ##
 
 set +e
-   revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
 
-echo 'Revoked SSH access to the Admin box.'      
+echo 'Revoked SSH access to the box.'      
 
 echo
 

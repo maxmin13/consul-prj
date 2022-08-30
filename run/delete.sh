@@ -7,7 +7,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
  
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../docker-prj && pwd)"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../consul-prj && pwd)"
 
 source "${PROJECT_DIR}"/amazon/lib/constants/app_consts.sh
 source "${PROJECT_DIR}"/amazon/lib/constants/project_dirs.sh

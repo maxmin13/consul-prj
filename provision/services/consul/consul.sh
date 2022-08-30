@@ -4,7 +4,7 @@
 
 ########################################################################################################################
 # Consul is a datacenter runtime that provides service discovery, configuration, and orchestration.
-# By default, Consul allows connections to the following ports only from the loopback interface (127.0.0.1). 
+# Consul agents exchange messages on the 'main-subnet' network.
 #  8500: handles HTTP API requests from clients
 #  8400: handles requests from CLI
 #  8600: answers DNS queries
@@ -33,15 +33,15 @@ CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/secretsmanager.sh
 
-yum update -y && yum install -y jq
+yum update -y && yum install -y jq > /dev/null
 
 ####
 echo 'Installing Consul ...'
 ####
 
-yum install -y yum-utils
-yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-yum -y install consul
+yum install -y yum-utils > /dev/null
+yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo 
+yum -y install consul > /dev/null
 mkdir -p /etc/consul.d/scripts
 mkdir -p /var/consul
 
@@ -81,8 +81,8 @@ cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
 echo 'Consul installed.'
 
-systemctl daemon-reload
-systemctl restart consul
+systemctl daemon-reload > /dev/null
+systemctl restart consul > /dev/null
 systemctl status consul 
 consul version
 
@@ -99,7 +99,7 @@ consul members 2>&1 > /dev/null && echo "Consul ${AGENT_MODE} successfully start
    }
 }
 
-yum remove -y jq
+yum remove -y jq > /dev/null
 
 node_name="$(consul members |awk -v address="${INSTANCE_PRIVATE_ADDRESS}" '$2 ~ address {print $1}')"
 
@@ -110,3 +110,5 @@ then
    echo "dig @${INSTANCE_EIP_ADDRESS} -p ${CONSUL_DNS_PORT} ${node_name}.node.consul"
    echo
 fi
+
+echo

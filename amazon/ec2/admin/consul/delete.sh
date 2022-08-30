@@ -37,7 +37,7 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Admin instance not found.'
+   echo '* WARN: instance not found.'
 fi
 
 if [[ -n "${instance_id}" ]]
@@ -47,20 +47,20 @@ then
    
    if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* Admin box ready (${instance_st})."
+      echo "* box ready (${instance_st})."
    else
-      echo "* WARN: Admin box is not ready. (${instance_st})."
+      echo "* WARN: box is not ready. (${instance_st})."
    fi
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
-admin_sgp_id="${__RESULT}"
+sgp_id="${__RESULT}"
 
-if [[ -z "${admin_sgp_id}" ]]
+if [[ -z "${sgp_id}" ]]
 then
    echo '* WARN: Admin security group not found.'
 else
-   echo "* Admin security group ID: ${admin_sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
 
@@ -154,10 +154,10 @@ then
    #
 
    set +e 
-   allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    set -e
 
-   echo 'Provisioning the Admin instance ...'
+   echo 'Provisioning the instance ...'
  
    private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
    wait_ssh_started "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
@@ -232,15 +232,15 @@ then
    #
 
    set +e
-   revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
    set -e 
 
    ## Clearing
@@ -248,5 +248,5 @@ then
    mkdir -p "${TMP_DIR}"
 fi
 
-echo 'Admin Consul deleted.'
+echo 'Consul deleted.'
 echo

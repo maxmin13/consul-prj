@@ -11,7 +11,7 @@ STEP 'Admin box'
 
 CONSUL_SECRET_NM='consulkey'
 
-echo 'Deleting Admin box ...'
+echo 'Deleting box ...'
 echo
 
 get_instance_id "${ADMIN_INST_NM}"
@@ -19,12 +19,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Admin box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${ADMIN_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Admin box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -84,13 +84,13 @@ then
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo "Deleting Admin box ..."
+      echo "Deleting box ..."
       
       delete_instance "${instance_id}" 'and_wait' > /dev/null
       
-      echo 'Admin box deleted.'
+      echo 'Box deleted.'
    else
-      echo 'Admin box already deleted.'
+      echo 'Box already deleted.'
    fi
 fi
 
@@ -115,7 +115,7 @@ then
       release_public_ip_address "${allocation_id}"
    fi
    
-   echo "Admin address released from the account." 
+   echo "IP address released from the account." 
 fi
 
 check_aws_public_key_exists "${ADMIN_INST_KEY_PAIR_NM}" 
@@ -132,5 +132,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Admin box deleted.'
+echo 'Box deleted.'
 echo

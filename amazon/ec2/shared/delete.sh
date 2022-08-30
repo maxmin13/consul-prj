@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 #
-STEP 'AWS Shared box'
+STEP 'Shared box'
 #
 
 shared_dir='shared'
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Shared box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${SHARED_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Shared box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 # The temporary security group used to build the image may already be gone
@@ -49,11 +49,11 @@ then
    
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo 'Deleting Shared box ...' 
+      echo 'Deleting box ...' 
       
       delete_instance "${instance_id}" > /dev/null
       
-      echo 'Shared box deleted.'
+      echo 'Box deleted.'
    fi
 fi
 

@@ -30,7 +30,7 @@ set +o xtrace
 STEP() { echo ; echo ; echo "==\\" ; echo "===>" "$@" ; echo "==/" ; echo ; }
 
 LOGIN_USER='awsadmin'
-SCRIPTS_DIR='SEDscript_dirSED'
+SCRIPTS_DIR='/home/awsadmin/script'
 
 source "${SCRIPTS_DIR}"/dockerlib.sh
 
@@ -46,21 +46,12 @@ then
    systemctl enable docker
 fi 
 
-docker_run_helloworld_container test
-docker_delete_container test
-docker_delete_img hello-world:latest
-
-#if ! groups "${LOGIN_USER}" | grep docker
-#then
-#   usermod -aG docker "${LOGIN_USER}"
-#   
-#   echo "${LOGIN_USER} added to docker group."
-#else
-#   echo "${LOGIN_USER} already added to docker group."
-#fi
-
+docker_run_helloworld_container 'test'
+docker_delete_container 'test'
+docker_delete_img 'hello-world' 'latest'
 
 echo 'Installed networks:'
+
 docker network ls
 
 echo

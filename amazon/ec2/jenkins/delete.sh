@@ -9,7 +9,7 @@ set +o xtrace
 STEP 'Jenkins box'
 ####
 
-echo 'Deleting Jenkins box ...'
+echo 'Deleting box ...'
 echo
 
 get_instance_id "${JENKINS_INST_NM}"
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Jenkins box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${JENKINS_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Jenkins box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${JENKINS_INST_SEC_GRP_NM}"
@@ -82,13 +82,13 @@ then
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo "Deleting Jenkins box ..."
+      echo "Deleting box ..."
       
       delete_instance "${instance_id}" 'and_wait' > /dev/null
       
-      echo 'Jenkins box deleted.'
+      echo 'Box deleted.'
    else
-      echo 'Jenkins box already deleted.'
+      echo 'Box already deleted.'
    fi
 fi
 

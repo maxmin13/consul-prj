@@ -27,7 +27,7 @@ source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 source "${SCRIPTS_DIR}"/ecr.sh
 
-yum update -y
+yum update -y > /dev/null
 
 ####
 echo 'Installing Redis ...'

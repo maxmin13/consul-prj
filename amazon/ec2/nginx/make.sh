@@ -18,7 +18,7 @@ WEBSITE_ARCHIVE='welcome.zip'
 WEBSITE_NM='welcome'
 
 ####
-STEP 'AWS Nginx box'
+STEP 'Nginx box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -133,14 +133,14 @@ then
          'stopped' == "${instance_st}" || \
          'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Nginx box already created (${instance_st})."
+      echo "WARN: box already created (${instance_st})."
    else
-      echo "ERROR: Nginx box already created (${instance_st})."
+      echo "ERROR: box already created (${instance_st})."
       
       exit 1
    fi
 else
-   echo "Creating the Nginx box ..."
+   echo "Creating the box ..."
 
    run_instance \
        "${NGINX_INST_NM}" \
@@ -160,7 +160,7 @@ fi
 get_public_ip_address_associated_with_instance "${NGINX_INST_NM}"
 eip="${__RESULT}"
 
-echo "Nginx box public address: ${eip}."
+echo "Public address ${eip}."
 
 #
 # Permissions.
@@ -420,9 +420,9 @@ revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' 
 allow_access_from_cidr "${sgp_id}" "${NGINX_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Revoked SSH access to the Nginx box.'      
+echo 'Revoked SSH access to the box.'      
 
-echo 'Nginx box created.'
+echo 'Box created.'
 echo
 
 # Removing old files

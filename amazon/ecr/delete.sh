@@ -12,7 +12,7 @@ set -o nounset
 set +o xtrace
 
 ####
-STEP 'AWS ECR'
+STEP 'ECR'
 ####
 
 get_instance_id "${ADMIN_INST_NM}"
@@ -20,12 +20,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Admin box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${ADMIN_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Admin box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -171,7 +171,7 @@ else
 fi
 
 ####### TODO
-####### TODO clear Admin box #######
+####### TODO clear box #######
 ####### TODO local images and containers ####### 
 ####### TODO
 ####### TODO

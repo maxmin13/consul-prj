@@ -9,7 +9,7 @@ set +o xtrace
 STEP 'Nginx box'
 ####
 
-echo 'Deleting Nginx box ...'
+echo 'Deleting box ...'
 echo
 
 get_instance_id "${NGINX_INST_NM}"
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Nginx box not found.'
+   echo '* WARN: box not found.'
 else
    get_instance_state "${NGINX_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Nginx box ID: ${instance_id} (${instance_st})."
+   echo "* box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${NGINX_INST_SEC_GRP_NM}"
@@ -82,13 +82,13 @@ then
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo "Deleting Nginx box ..."
+      echo "Deleting box ..."
       
       delete_instance "${instance_id}" 'and_wait' > /dev/null
       
-      echo 'Nginx box deleted.'
+      echo 'Box deleted.'
    else
-      echo 'Nginx box already deleted.'
+      echo 'Box already deleted.'
    fi
 fi
 
@@ -130,5 +130,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Nginx box deleted.'
+echo 'Box deleted.'
 echo

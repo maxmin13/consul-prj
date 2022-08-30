@@ -44,38 +44,38 @@ else
 fi
 
 get_instance_id "${ADMIN_INST_NM}"
-admin_instance_id="${__RESULT}"
+instance_id="${__RESULT}"
 
-if [[ -z "${admin_instance_id}" ]]
+if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Admin box not found.'
+   echo '* ERROR: box not found.'
    exit 1
 fi
 
-if [[ -n "${admin_instance_id}" ]]
+if [[ -n "${instance_id}" ]]
 then
    get_instance_state "${ADMIN_INST_NM}"
-   admin_instance_st="${__RESULT}"
+   instance_st="${__RESULT}"
    
-   if [[ 'running' == "${admin_instance_st}" ]]
+   if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* Admin box ready (${admin_instance_st})."
+      echo "* box ready (${instance_st})."
    else
-      echo "* ERROR: Admin box is not ready. (${admin_instance_st})."
+      echo "* ERROR: box is not ready. (${instance_st})."
       
       exit 1
    fi
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
-admin_sgp_id="${__RESULT}"
+sgp_id="${__RESULT}"
 
-if [[ -z "${admin_sgp_id}" ]]
+if [[ -z "${sgp_id}" ]]
 then
    echo '* ERROR: security group not found.'
    exit 1
 else
-   echo "* security group ID: ${admin_sgp_id}."
+   echo "* security group ID: ${sgp_id}."
 fi
 
 
@@ -168,15 +168,15 @@ fi
 #
 
 set +e 
-allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Granted access to the box.'
@@ -290,7 +290,7 @@ fi
 ##
 
 set +e
-  revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+  revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
 
 echo 'Revoked SSH access to the box.'  

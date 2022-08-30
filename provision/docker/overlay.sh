@@ -22,7 +22,7 @@ source "${SCRIPTS_DIR}"/app_consts.sh
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 
-yum update -y
+yum update -y > /dev/null
 
 ####
 echo 'Creating network ...'
