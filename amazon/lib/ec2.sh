@@ -81,7 +81,7 @@ function create_datacenter()
    aws ec2 create-vpc \
        --cidr-block "${DTC_CDIR}" \
        --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" \
-       > /dev/null
+      
        
    exit_code=$?    
   
@@ -289,7 +289,7 @@ function create_subnet()
    fi        
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" > /dev/null
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}"
   
    exit_code=$?
    
@@ -445,7 +445,7 @@ function create_internet_gateway()
   
    aws ec2 create-internet-gateway \
        --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \
-       > /dev/null
+      
   
    exit_code=$?
    
@@ -593,7 +593,7 @@ function create_route_table()
    aws ec2 create-route-table \
        --vpc-id "${dtc_id}" \
        --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" \
-        > /dev/null
+       
  
    exit_code=$?
    
@@ -668,7 +668,7 @@ function set_route()
    aws ec2 create-route --route-table-id "${rtb_id}" \
        --destination-cidr-block "${destination_cidr}" \
        --gateway-id "${target_id}" \
-        > /dev/null
+       
 
    exit_code=$?
    
@@ -757,7 +757,7 @@ function create_security_group()
         --description "${sgp_desc}" \
         --vpc-id "${dtc_id}" \
         --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
-         > /dev/null
+        
         
    exit_code=$?
    
@@ -885,6 +885,75 @@ function allow_access_from_security_group()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: allowing access from security group.'
+   fi  
+ 
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Verifies if a Security Group grants access from a specific CIDR or Security 
+# Group.  
+#
+# Globals:
+#  None
+# Arguments:
+# +sgp_id   -- the security group identifier.
+# +port     -- the TCP port.
+# +protocol -- the IP protocol name (tcp , udp , icmp). 
+# +from     -- the source CIDR or Security Group ID.
+# Returns:      
+#  true/false in the __RESULT variable.
+#===============================================================================
+function check_access_is_granted()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT='false'
+   local exit_code=0
+   local -r sgp_id="${1}"
+   local -r port="${2}"
+   local -r protocol="${3}"
+   local -r from="${4}"
+   local rule=''
+   local cidr=''
+   local group=''
+   
+   rule="$(aws ec2 describe-security-groups --group-id "${sgp_id}" --query "SecurityGroups[].IpPermissions[]" | \
+      jq --arg fromPort "${port}" --arg toPort "${port}" --arg protocol "${protocol}" -c '.[] | 
+         select(.FromPort | contains($fromPort|tonumber)) | 
+         select(.ToPort | contains($toPort|tonumber)) | 
+         select(.IpProtocol | contains($protocol))')"
+        
+   if [[ -z "${rule}" ]]
+   then
+      return 0   
+   fi
+   
+   cidr="$(echo ${rule} | \
+      jq --arg from "${from}" -c '. | 
+         select(.IpRanges[].CidrIp | contains($from))')"
+         
+   if [[ -n "${cidr}" ]]
+   then
+      __RESULT='true' 
+   fi
+   
+   group="$(echo ${rule} | \
+      jq --arg from "${from}" -c '. | 
+         select(.UserIdGroupPairs[].GroupId | contains($from))')"
+   
+   if [[ -n "${group}" ]]
+   then
+      __RESULT='true'  
+   fi
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: allowing access from CIDR.'
    fi  
  
    return "${exit_code}"
@@ -1405,7 +1474,7 @@ function associate_instance_profile_to_instance()
    fi
    
    aws ec2 associate-iam-instance-profile --iam-instance-profile Name="${profile_nm}" \
-      --instance-id "${instance_id}" > /dev/null    
+      --instance-id "${instance_id}"    
    
    exit_code=$?
    
@@ -1413,6 +1482,46 @@ function associate_instance_profile_to_instance()
    then
       echo 'ERROR: associating instance profile to EC2 instance.'
    fi
+   
+   return "${exit_code}" 
+}
+
+#===============================================================================
+# Associates the specified instance profile to an EC2 instance.
+#
+# Globals:
+#  None
+# Arguments:
+# +instance_nm -- the instance name.
+# +profile_nm  -- the IAM instance profile name.
+# Returns:      
+#  none.  
+#===============================================================================
+function associate_instance_profile_to_instance_and_wait()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi 
+   
+   __RESULT=''
+   local exit_code=0
+   local -r instance_nm="${1}"
+   local -r profile_nm="${2}"
+   local instance_id=''
+   
+   associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" && \
+   echo 'Instance profile associated to the instance.' ||
+   {
+      wait 30
+      associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" && \
+      echo 'Instance profile associated to the instance.' ||
+      {
+         echo 'ERROR: associating instance profile to the instance.'
+         exit 1
+      }
+   }
    
    return "${exit_code}" 
 }
@@ -1460,7 +1569,7 @@ function disassociate_instance_profile_from_instance()
       return 1
    fi
    
-   aws ec2 disassociate-iam-instance-profile --association-id "${association_id}" > /dev/null
+   aws ec2 disassociate-iam-instance-profile --association-id "${association_id}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]

@@ -1,0 +1,10 @@
+#cloud-config
+users:
+  - name: awsadmin
+    gecos: Aws user
+    passwd: $6$rounds=4096$tN/VvxuOegJeMedA$aKXPex1ldv/Pw0nREoT3TXOibzYg6KE.JF0YC/Wvnwv8P4BPUWd9LNpuUsP6KkksZIHEl2gQEH9nU1wUhR14m0
+    lock_passwd: false
+    sudo: ALL=(ALL) PASSWD:ALL
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDbMYn/I3CP/8+dJUKOTyj0IG9ktVewgj3C4fzuoMkV5WSmBxvOxiitvin+f0f/KbHqZb+RTzmfsB/TlWuCH8opPfTAjqUGPmmMqsf3N8fQIvNGq9uJ9ytIYiFzhhydoJPTBpeqPiIKAdG3clasbiqM6P0RSy3zAQhDkaU2/Iged/B8VN4LoYa1SFLWVfXQXb8MaFIAMUMqMXaKjX0F2H+iM+nIUdMw64/JXKSwGmdQVNkWOvzP/b7Z+TBiohe77Ma+mpvATD2Fnlhiw0gCb92zodkNhzFQSGkCBF2jAFEW1sNqI3AsHmr1LFgFjvdtNflIwiYS9iCkW0QmPmZCHSir
+hostname: jenkins.maxmin.it

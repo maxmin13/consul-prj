@@ -20,7 +20,7 @@ ENV REFRESHED_AT 2022-05-15
 
 ARG REDIS_IP_PORT
  
-RUN yum update -y && yum install -y redis 
+RUN yum update -y && yum install -y redis
 ADD redis.conf /usr/local/etc/redis/
 
 EXPOSE $REDIS_IP_PORT 

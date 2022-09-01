@@ -57,7 +57,7 @@ mkdir -p "${admin_tmp_dir}"
 echo
 
 #
-# Security group
+# Firewall
 #
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -67,22 +67,24 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: security group is already created.'
 else
-   create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" "${ADMIN_INST_SEC_GRP_NM}" 
+   create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" "${ADMIN_INST_SEC_GRP_NM}" | logto admin.log
    get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
    echo 'Security group created.'
 fi
 
-#
-# Firewall
-# 
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-set +e
-allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
    
-echo 'Granted SSH access to the box.'
+   echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 # 
 # Admin box
@@ -158,7 +160,7 @@ fi
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
 eip="${__RESULT}"
 
-echo "Public address: ${eip}."
+echo "Public address ${eip}."
 
 #
 # Permissions.
@@ -193,21 +195,9 @@ is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   # Associate the instance profile with the instance. The instance profile doesn't have a role
-   # associated, the role has to added when needed. 
    echo 'Associating instance profile to the instance ...'
    
-   associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-   echo 'Instance profile associated to the instance.' ||
-   {
-      wait 30
-      associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-      echo 'Instance profile associated to the instance.' ||
-      {
-         echo 'ERROR: associating instance profile to the instance.'
-         exit 1
-      }
-   }
+   associate_instance_profile_to_instance_and_wait "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" | logto admin.log
 else
    echo 'WARN: instance profile already associated to the instance.'
 fi
@@ -221,24 +211,7 @@ then
    
    associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}"
       
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
-   echo 'Role associated to the instance profile.' ||
-   {
-      echo 'The role has not been associated to the profile yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
-      echo 'Role associated to the instance profile.' ||
-      {
-         echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
-         exit 1
-      }
-   } 
+   echo 'Role associated to the instance profile.' 
 else
    echo 'WARN: role already associated to the instance profile.'
 fi 
@@ -247,11 +220,17 @@ fi
 ## Firewall.
 ##
 
-set +e
-revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-echo 'Revoked SSH access to the box.' 
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log 
+   
+   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 echo 'Box created.'       
 echo

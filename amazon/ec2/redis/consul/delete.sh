@@ -89,9 +89,17 @@ then
    # Firewall
    #
 
-   set +e 
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   set -e
+   check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'false' == "${is_granted}" ]]
+   then
+      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log  
+   
+      echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+   fi
 
    echo 'Provisioning the instance ...' 
 
@@ -168,17 +176,113 @@ then
    # Firewall rules
    #
 
-   set +e
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-   revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-   set -e 
+   check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log  
+      
+      echo "Access revoked on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_SERF_LAN_PORT} tcp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_SERF_LAN_PORT} udp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_SERF_WAN_PORT} tcp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_SERF_WAN_PORT} udp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_RPC_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_RPC_PORT} tcp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_HTTP_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_HTTP_PORT} tcp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_DNS_PORT} tcp 0.0.0.0/0."
+   fi
+
+   check_access_is_granted "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
+
+   if [[ 'true' == "${is_granted}" ]]
+   then
+      revoke_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' | logto redis.log 
+      
+      echo "Access revoked on "${REDIS_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already revoked ${REDIS_CONSUL_SERVER_DNS_PORT} udp 0.0.0.0/0."
+   fi
 
    ## Clearing
    rm -rf "${TMP_DIR:?}"

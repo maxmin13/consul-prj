@@ -9,4 +9,4 @@ FROM SEDruby_docker_repository_uriSED:SEDruby_docker_img_tagSED
 LABEL maintainer="maxmin@example.com"
 ENV REFRESHED_AT 2022-05-15
 
-RUN yum update -y; yum install -y ruby rubygems ruby-devel
+RUN yum update -y; yum install -y ruby rubygems ruby-devel;

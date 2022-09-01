@@ -22,7 +22,7 @@ STEP 'Permissions'
 build_assume_role_trust_policy_document_for_ec2_entities 
 trust_policy_document="${__RESULT}"
 
-check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" > /dev/null
+check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" | logto permissions.log
 secretsmanager_persmission_policy_exists="${__RESULT}"
 
 if [[ 'false' == "${secretsmanager_persmission_policy_exists}" ]]
@@ -47,7 +47,7 @@ admin_aws_role_exists="${__RESULT}"
 
 if [[ 'false' == "${admin_aws_role_exists}" ]]
 then
-   create_role "${ADMIN_AWS_ROLE_NM}" 'Admin instance role' "${trust_policy_document}" > /dev/null
+   create_role "${ADMIN_AWS_ROLE_NM}" 'Admin instance role' "${trust_policy_document}" | logto permissions.log
    
    echo 'Admin role created.'
 else
@@ -63,7 +63,7 @@ redis_aws_role_exists="${__RESULT}"
 
 if [[ 'false' == "${redis_aws_role_exists}" ]]
 then
-   create_role "${REDIS_AWS_ROLE_NM}" 'Redis instance role' "${trust_policy_document}" > /dev/null
+   create_role "${REDIS_AWS_ROLE_NM}" 'Redis instance role' "${trust_policy_document}" | logto permissions.log
    
    echo 'Redis role created.'
 else
@@ -79,7 +79,7 @@ nginx_aws_role_exists="${__RESULT}"
 
 if [[ 'false' == "${nginx_aws_role_exists}" ]]
 then
-   create_role "${NGINX_AWS_ROLE_NM}" 'Nginx instance role' "${trust_policy_document}" > /dev/null
+   create_role "${NGINX_AWS_ROLE_NM}" 'Nginx instance role' "${trust_policy_document}" | logto permissions.log
    
    echo 'Nginx role created.'
 else
@@ -95,7 +95,7 @@ jenkins_aws_role_exists="${__RESULT}"
 
 if [[ 'false' == "${jenkins_aws_role_exists}" ]]
 then
-   create_role "${JENKINS_AWS_ROLE_NM}" 'Jenkins instance role.' "${trust_policy_document}" > /dev/null
+   create_role "${JENKINS_AWS_ROLE_NM}" 'Jenkins instance role.' "${trust_policy_document}" | logto permissions.log
    
    echo 'Jenkins role created.'
 else
@@ -111,7 +111,7 @@ sinatra_aws_role_exists="${__RESULT}"
 
 if [[ 'false' == "${sinatra_aws_role_exists}" ]]
 then
-   create_role "${SINATRA_AWS_ROLE_NM}" 'Sinatra instance role' "${trust_policy_document}" > /dev/null
+   create_role "${SINATRA_AWS_ROLE_NM}" 'Sinatra instance role' "${trust_policy_document}" | logto permissions.log
    
    echo 'Sinatra role created.'
 else

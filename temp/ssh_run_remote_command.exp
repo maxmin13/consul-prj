@@ -1,0 +1,11 @@
+#!/usr/bin/expect -f
+set timeout -1
+log_user 0
+spawn ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i /home/vagrant/consul-prj/access/jenkins-key -p 38142 -t awsadmin@54.154.172.186 sudo bash -c '/home/awsadmin/script/jenkins.sh'
+match_max 100000
+expect -exact "\: "
+send -- "awsadmin\r"
+expect eof
+puts "$expect_out(buffer)"
+lassign [wait] pid spawnid os_error_flag value
+exit ${value}

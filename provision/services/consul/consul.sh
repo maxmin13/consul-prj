@@ -33,15 +33,15 @@ CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/secretsmanager.sh
 
-yum update -y && yum install -y jq > /dev/null
+yum update -y && yum install -y jq
 
 ####
 echo 'Installing Consul ...'
 ####
 
-yum install -y yum-utils > /dev/null
+yum install -y yum-utils 
 yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo 
-yum -y install consul > /dev/null
+yum -y install consul 
 mkdir -p /etc/consul.d/scripts
 mkdir -p /var/consul
 
@@ -81,12 +81,12 @@ cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
 echo 'Consul installed.'
 
-systemctl daemon-reload > /dev/null
-systemctl restart consul > /dev/null
+systemctl daemon-reload
+systemctl restart consul 
 systemctl status consul 
 consul version
 
-consul members 2>&1 > /dev/null && echo "Consul ${AGENT_MODE} successfully started." || 
+consul members && echo "Consul ${AGENT_MODE} successfully started." || 
 {
    echo "Waiting for Consul ${AGENT_MODE} to start" 
       
@@ -99,7 +99,7 @@ consul members 2>&1 > /dev/null && echo "Consul ${AGENT_MODE} successfully start
    }
 }
 
-yum remove -y jq > /dev/null
+yum remove -y jq
 
 node_name="$(consul members |awk -v address="${INSTANCE_PRIVATE_ADDRESS}" '$2 ~ address {print $1}')"
 

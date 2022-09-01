@@ -37,13 +37,13 @@ source "${SCRIPTS_DIR}"/dockerlib.sh
 # kernel version 3.10 or greater is needed.
 uname -r
 
-yum update -y > /dev/null
+yum update -y 
 
-if ! docker version > /dev/null 2>&1 
+if ! docker version
 then
-   amazon-linux-extras install -y docker > /dev/null
-   systemctl start docker  > /dev/null
-   systemctl enable docker  > /dev/null
+   amazon-linux-extras install -y docker
+   systemctl start docker  
+   systemctl enable docker 
    
    echo 'Docker started.'
 fi 

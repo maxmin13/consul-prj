@@ -171,7 +171,7 @@ function sm_check_secret_exists()
 
    # error if the secret is not found.
    secret_desc="$(aws secretsmanager describe-secret --secret-id "${secret_nm}" \
-      --region "${region}" --output text 2>/dev/null)"          
+      --region "${region}" --output text)"          
   
    exit_code=$?
    

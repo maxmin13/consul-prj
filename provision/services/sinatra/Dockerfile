@@ -12,7 +12,7 @@ LABEL maintainer="maxmin@example.com"
 ENV REFRESHED_AT 2022-05-15
 ARG SINATRA_HTTP_PORT
 
-RUN yum update -y && gem install sinatra redis 
+RUN yum update -y && gem install sinatra redis
 RUN mkdir -p SEDcontainer_volume_dirSED
 
 EXPOSE $SINATRA_HTTP_PORT

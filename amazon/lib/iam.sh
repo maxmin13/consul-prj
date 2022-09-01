@@ -77,7 +77,7 @@ function create_permission_policy()
    local -r policy_nm="${1}"
    local -r policy_doc="${2}"
     
-   aws iam create-policy --policy-name "${policy_nm}" --policy-document "${policy_doc}" > /dev/null
+   aws iam create-policy --policy-name "${policy_nm}" --policy-document "${policy_doc}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -791,7 +791,7 @@ function create_instance_profile()
    local exit_code=0
    local -r profile_nm="${1}"
 
-   aws iam create-instance-profile --instance-profile-name "${profile_nm}" > /dev/null
+   aws iam create-instance-profile --instance-profile-name "${profile_nm}"
        
    exit_code=$?
    

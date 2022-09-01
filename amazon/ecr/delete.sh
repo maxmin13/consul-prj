@@ -180,9 +180,17 @@ fi
 # Firewall.
 #
 
-set +e
-revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto ecr.log  
+   
+   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 #
 # Permissions.

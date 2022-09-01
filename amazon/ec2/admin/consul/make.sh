@@ -103,35 +103,6 @@ echo
 # Permissions.
 #
 
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" 
-is_role_associated="${__RESULT}"
-
-if [[ 'false' == "${is_role_associated}" ]]
-then
-   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}"
-      
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
-   echo 'Role associated to the instance profile.' ||
-   {
-      echo 'The role has not been associated to the profile yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
-      echo 'Role associated to the instance profile.' ||
-      {
-         echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
-         exit 1
-      }
-   } 
-else
-   echo 'WARN: role already associated to the instance profile.'
-fi 
-
 check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
@@ -140,25 +111,8 @@ then
    echo 'Associating permission policy the instance role ...'
 
    attach_permission_policy_to_role "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
-      
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}" && \
-   echo 'Permission policy associated to the role.' ||
-   {
-      echo 'The permission policy has not been associated to the role yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}" && \
-      echo 'Permission policy associated to the role.' ||
-      {
-         echo 'ERROR: the permission policy has not been associated to the role after 3 minutes.'
-         exit 1
-      }
-   } 
+
+   echo 'Permission policy associated to the role.'  
 else
    echo 'WARN: permission policy already associated to the role.'
 fi 
@@ -167,23 +121,115 @@ fi
 # Firewall rules
 #
 
-set +e 
-allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
-   
-echo 'Granted access to the box.'
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-#
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_SERF_LAN_PORT} tcp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_SERF_LAN_PORT} udp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_SERF_WAN_PORT} tcp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_SERF_WAN_PORT} udp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_RPC_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_RPC_PORT} tcp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_HTTP_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_HTTP_PORT} tcp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_DNS_PORT} tcp 0.0.0.0/0."
+fi
+
+check_access_is_granted "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' | logto admin.log
+   
+   echo "Access granted on "${ADMIN_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${ADMIN_CONSUL_SERVER_DNS_PORT} udp 0.0.0.0/0."
+fi
+
 echo 'Provisioning the instance ...'
-# 
 
 private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
@@ -195,8 +241,6 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
     "${USER_NM}"  
     
 # Prepare the scripts to run on the server.
-
-echo 'Provisioning Consul scripts ...'
 
 sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDdtc_regionSED/${DTC_REGION}/g" \
@@ -240,7 +284,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" && echo 'Consul server successfully installed.' ||
+    "${USER_PWD}" | logto admin.log && echo 'Consul server successfully installed.' ||
     {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
@@ -254,7 +298,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
           "${admin_eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" && echo 'Consul server successfully installed.' ||
+          "${USER_PWD}" | logto admin.log && echo 'Consul server successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -289,11 +333,17 @@ fi
 ## Firewall.
 ##
 
-set +e
-  revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-echo 'Revoked SSH access to the box.'  
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log 
+   
+   echo "Access revoked on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi  
 
 # Removing old files
 # shellcheck disable=SC2115

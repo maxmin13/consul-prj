@@ -69,7 +69,7 @@ if [[ -n "${image_id}" ]]
 then
    echo 'Deleting image ...'
    
-   delete_image "${image_id}" > /dev/null 
+   delete_image "${image_id}" | logto sinatra.log
    
    echo 'Image deleted.'
 fi

@@ -61,7 +61,7 @@ echo
 ## Permissions.
 ##
 
-check_instance_profile_exists "${SINATRA_INST_PROFILE_NM}" > /dev/null
+check_instance_profile_exists "${SINATRA_INST_PROFILE_NM}" | logto sinatra.log
 instance_profile_exists="${__RESULT}"
 
 if [[ 'true' == "${instance_profile_exists}" ]]
@@ -84,7 +84,7 @@ then
    then
       echo "Deleting box ..."
       
-      delete_instance "${instance_id}" 'and_wait' > /dev/null
+      delete_instance "${instance_id}" 'and_wait' | logto sinatra.log
       
       echo 'Box deleted.'
    else

@@ -51,7 +51,7 @@ then
    then
       echo 'Deleting box ...' 
       
-      delete_instance "${instance_id}" > /dev/null
+      delete_instance "${instance_id}" | logto shared.log
       
       echo 'Box deleted.'
    fi
@@ -66,13 +66,13 @@ then
    echo 'Deleting security group ...'
 
    # shellcheck disable=SC2015
-   delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
+   delete_security_group "${sgp_id}" | logto shared.log && echo 'Security group deleted.' || 
    {
       wait 60
-      delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
+      delete_security_group "${sgp_id}" | logto shared.log && echo 'Security group deleted.' || 
       {
          wait 60
-         delete_security_group "${sgp_id}" > /dev/null 2>&1 echo 'Security group deleted.' || 
+         delete_security_group "${sgp_id}" | logto shared.log echo 'Security group deleted.' || 
          {
             echo 'ERROR: deleting security group.'
             exit 1

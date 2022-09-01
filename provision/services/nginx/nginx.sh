@@ -30,7 +30,7 @@ source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 source "${SCRIPTS_DIR}"/ecr.sh
 
-yum update -y > /dev/null
+yum update -y 
 
 ####
 echo 'Installing Nginx ...'
@@ -112,7 +112,7 @@ docker_run_nginx_container "${NGINX_DOCKER_CONTAINER_NM}" \
 echo 'Nginx container running.'                                                  
 echo 'Deploying the welcome website ...'
 
-unzip -o "${SCRIPTS_DIR}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_INST_WEBAPPS_DIR}"/"${WEBSITE_NM}" > /dev/null
+unzip -o "${SCRIPTS_DIR}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_INST_WEBAPPS_DIR}"/"${WEBSITE_NM}"
 find "${NGINX_INST_WEBAPPS_DIR}" -type d -exec chmod 755 {} + 
 find "${NGINX_INST_WEBAPPS_DIR}" -type f -exec chmod 744 {} +
 

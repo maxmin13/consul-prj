@@ -22,7 +22,7 @@ source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 source "${SCRIPTS_DIR}"/ecr.sh
 
-yum update -y > /dev/null
+yum update -y 
 
 ####
 STEP "Ruby"

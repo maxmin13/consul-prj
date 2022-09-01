@@ -45,7 +45,7 @@ function ecr_check_repository_exists()
               --repository-names "${repository_nm}" \
               --region "${DTC_REGION}" \
               --query repositories[0].repositoryArn \
-              --output text 2>/dev/null)"          
+              --output text)"          
    exit_code=$?
    
    if [[ -n "${repository_desc}" ]]
@@ -81,7 +81,7 @@ function ecr_create_repository()
        
    aws ecr create-repository \
       --repository-name "${repository_nm}" \
-      --region "${DTC_REGION}" > /dev/null   
+      --region "${DTC_REGION}"   
        
    exit_code=$?    
   
@@ -117,7 +117,7 @@ function ecr_delete_repository()
        
    aws ecr delete-repository --repository-name "${repository_nm}" \
       --region "${DTC_REGION}" \
-      --force > /dev/null   
+      --force   
        
    exit_code=$?    
   
@@ -162,7 +162,7 @@ function ecr_check_img_exists()
               --repository-name "${repository_nm}" \
               --region "${DTC_REGION}" \
               --image-ids imageTag="${img_tag}" \
-              --query text 2>/dev/null)"
+              --query text)"
               
    exit_code=$?            
    

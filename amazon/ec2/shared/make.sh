@@ -64,7 +64,7 @@ rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 mkdir "${TMP_DIR}"/"${shared_dir}"
 
 ## 
-## Security group
+## Firewall
 ##
 
 get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
@@ -74,24 +74,36 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the security group is already created.'
 else
-   create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.'
+   create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.' | logto shared.log
    get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
 
    echo 'Created security group.'
 fi
 
-set +e
-allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
-   
-echo 'Granted SSH access on port 22.'
+check_access_is_granted "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-set +e
-allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' | logto shared.log 
    
-echo "Granted SSH access on port ${SHARED_INST_SSH_PORT}."
+   echo "Access granted on 22 tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted on 22 tcp 0.0.0.0/0."
+fi
+   
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto shared.log 
+   
+    echo "Access granted on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 ##
 ## SSH keys.
@@ -240,7 +252,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/secure-linux.sh" \
     "${eip}" \
     "${ssh_port}" \
     "${USER_NM}" \
-    "${USER_PWD}" 
+    "${USER_PWD}" | logto shared.log   
                    
 exit_code=$?
 set -e
@@ -267,12 +279,17 @@ fi
 # Firewall
 #
 
-# Finally, remove access from SSH port 22.
-set +e
-revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-echo 'Revoked SSH access on port 22.'
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' | logto shared.log  
+   
+   echo "Access revoked on 22 tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked on 22 tcp 0.0.0.0/0."
+fi
 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
@@ -287,7 +304,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/check-linux.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}"  
+    "${USER_PWD}" | logto shared.log    
     
 echo 'Provisioning Docker ...'
 
@@ -297,7 +314,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/docker.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}"   
+    "${USER_PWD}" | logto shared.log   
                             
 exit_code=$?
 set -e
@@ -320,7 +337,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     
 # After the instance is created, stop it before creating the image, to ensure data integrity.
 
-stop_instance "${instance_id}" > /dev/null  
+stop_instance "${instance_id}" | logto shared.log
 
 echo 'Box stopped.'   
 
@@ -328,12 +345,17 @@ echo 'Box stopped.'
 ## Firewall
 ## 
 
-# Revoke SSH access from the development machine.
-set +e
-revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto shared.log  
    
-echo 'Revoked SSH access.'
+   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

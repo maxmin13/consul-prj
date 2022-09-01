@@ -71,16 +71,24 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the security group is already created.'
 else
-   create_security_group "${dtc_id}" "${JENKINS_INST_SEC_GRP_NM}" "${JENKINS_INST_SEC_GRP_NM}" 
+   create_security_group "${dtc_id}" "${JENKINS_INST_SEC_GRP_NM}" "${JENKINS_INST_SEC_GRP_NM}" | logto jenkins.log 
    get_security_group_id "${JENKINS_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
    echo 'Created security group.'
 fi
 
-set +e
-allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto jenkins.log  
+   
+   echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
    
 echo 'Granted SSH access to the box.'
 
@@ -193,21 +201,11 @@ is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   # Associate the instance profile with the instance. The instance profile doesn't have a role
-   # associated, the role has to added when needed. 
    echo 'Associating instance profile to the instance ...'
    
-   associate_instance_profile_to_instance "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-   echo 'Instance profile associated to the instance.' ||
-   {
-      wait 30
-      associate_instance_profile_to_instance "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" > /dev/null 2>&1 && \
-      echo 'Instance profile associated to the instance.' ||
-      {
-         echo 'ERROR: associating the instance profile to the instance.'
-         exit 1
-      }
-   }
+   associate_instance_profile_to_instance_and_wait "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" | logto jenkins.log 
+   
+   echo 'Instance profile associated to the instance '
 else
    echo 'WARN: instance profile already associated to the instance.'
 fi
@@ -220,25 +218,8 @@ then
    echo 'Associating role to instance profile ...'
    
    associate_role_to_instance_profile "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}"
-      
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}" && \
-   echo 'Role associated to the instance profile.' ||
-   {
-      echo 'The role has not been associated to the profile yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_instance_profile_has_role_associated "${JENKINS_INST_PROFILE_NM}" "${JENKINS_AWS_ROLE_NM}" && \
-      echo 'Role associated to the instance profile.' ||
-      {
-         echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
-         exit 1
-      }
-   } 
+
+   echo 'Role associated to the instance profile.' 
 else
    echo 'WARN: role already associated to the instance profile.'
 fi 
@@ -252,24 +233,7 @@ then
 
    attach_permission_policy_to_role "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
       
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
-   echo 'Permission policy associated to the role.' ||
-   {
-      echo 'The permission policy has not been associated to the role yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
-      echo 'Permission policy associated to the role.' ||
-      {
-         echo 'ERROR: the permission policy has not been associated to the role after 3 minutes.'
-         exit 1
-      }
-   } 
+   echo 'Permission policy associated to the role.' 
 else
    echo 'WARN: permission policy already associated to the role.'
 fi   
@@ -328,7 +292,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" && echo 'Jenkins successfully installed.' ||
+    "${USER_PWD}" | logto jenkins.log && echo 'Jenkins successfully installed.' ||
     {
     
        echo 'The role may not have been associated to the profile yet.'
@@ -343,7 +307,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" && echo 'Jenkins successfully installed.' ||
+          "${USER_PWD}" | logto jenkins.log && echo 'Jenkins successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -378,15 +342,32 @@ fi
 ## Firewall.
 ##
 
-set +e
-revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto jenkins.log  
+   
+   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
    
 # Make Jenkins accessible from anywhere in the internet.
-allow_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
-   
-echo 'Revoked SSH access to the box.'      
 
+check_access_is_granted "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+   grant_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' | logto jenkins.log  
+   
+   echo "Access granted on ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
+fi 
+ 
 echo 'Box created.'
 echo
 

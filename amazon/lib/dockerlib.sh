@@ -46,7 +46,7 @@ if [[ $# -lt 2 ]]
       docker login \
          --username 'AWS' \
          --password-stdin \
-         "${registry_uri}" > /dev/null  
+         "${registry_uri}"  
        
    exit_code=$?    
   
@@ -79,7 +79,7 @@ if [[ $# -lt 1 ]]
    local exit_code=0
    local registry_uri="${1}"
        
-   docker logout "${registry_uri}" > /dev/null  
+   docker logout "${registry_uri}"  
        
    exit_code=$?    
   
@@ -265,7 +265,7 @@ function docker_tag_image()
      
    # To push an image to a private registry and not the central Docker registry 
    # you must tag it with the registry hostname and port (if needed).
-   docker tag "${repository}":"${tag}" "${target_repository}":"${target_tag}" > /dev/null 
+   docker tag "${repository}":"${tag}" "${target_repository}":"${target_tag}" 
        
    exit_code=$?    
   
@@ -301,7 +301,7 @@ function docker_push_image()
    local -r repository="${1}"
    local -r tag="${2}"
 
-   docker push "${repository}":"${tag}" > /dev/null   
+   docker push "${repository}":"${tag}"   
        
    exit_code=$?    
   
@@ -336,7 +336,7 @@ function docker_pull_image()
    local -r repository="${1}"
    local -r tag="${2}"
    
-   docker pull "${repository}":"${tag}" > /dev/null   
+   docker pull "${repository}":"${tag}"   
        
    exit_code=$?    
   
@@ -535,7 +535,7 @@ function docker_stop_container()
    local exit_code=0
    local -r container_nm="${1}"
 
-   docker stop "${container_nm}" > /dev/null       
+   docker stop "${container_nm}"       
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
@@ -567,7 +567,7 @@ function docker_delete_container()
    local exit_code=0
    local -r container_nm="${1}"
 
-   docker rm "${container_nm}" > /dev/null     
+   docker rm "${container_nm}"     
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
@@ -616,7 +616,7 @@ function docker_run_jenkins_container()
               -v /var/run/docker.sock:/var/run/docker.sock \
               -p "${jenkins_port}":8080 \
               -p 5000:5000 \
-              "${img_repository}":"${img_tag}" > /dev/null     
+              "${img_repository}":"${img_tag}"     
                
    exit_code=$?    
   
@@ -663,7 +663,7 @@ function docker_run_nginx_container()
    docker run -d --name "${container_nm}" \
               -v "${host_volume_dir}":"${container_volume_dir}":ro \
               -p "${port}":"${port}" \
-              "${img_repository}":"${img_tag}" > /dev/null       
+              "${img_repository}":"${img_tag}"       
               
    exit_code=$?    
   
@@ -707,7 +707,7 @@ function docker_run_redis_container()
    docker run -d --name "${container_nm}" \
               -p "${port}":"${port}" \
               --net "${network_nm}" \
-              "${img_repository}":"${img_tag}" > /dev/null  
+              "${img_repository}":"${img_tag}"  
                    
    exit_code=$?    
   
@@ -757,7 +757,7 @@ function docker_run_sinatra_container()
               -v "${host_volume_dir}":"${container_volume_dir}":ro \
               -p "${port}":"${port}" \
               "${img_repository}":"${img_tag}" \
-              --net "${network_nm}" > /dev/null                
+              --net "${network_nm}"                
                   
    exit_code=$?    
   

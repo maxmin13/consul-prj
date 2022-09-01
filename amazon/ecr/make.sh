@@ -88,46 +88,21 @@ echo
 # Firewall
 #
 
-set +e
-allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto ecr.log 
    
-echo 'Granted SSH access to the Admin box.'
+   echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 #
 # Permissions.
 #
-
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" 
-is_role_associated="${__RESULT}"
-
-if [[ 'false' == "${is_role_associated}" ]]
-then
-   echo 'Associating permission policy the Admin instance role ...'
-
-   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}"
-      
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
-   echo 'Role associated to the Admin instance profile.' ||
-   {
-      echo 'The role has not been associated to the profile yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" && \
-      echo 'Role associated to the instance profile.' ||
-      {
-         echo 'ERROR: the role has not been associated to the profile after 3 minutes.'
-         exit 1
-      }
-   } 
-else
-   echo 'WARN: role already associated to the instance profile.'
-fi 
 
 check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
@@ -135,30 +110,13 @@ is_permission_policy_associated="${__RESULT}"
 if [[ 'false' == "${is_permission_policy_associated}" ]]
 then
    echo 'Attaching permission policy to the role ...'
-   
+
    attach_permission_policy_to_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
       
-   # IAM is a bit slow, progress only when the role is associated to the profile. 
-   check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
-   echo 'Permission policy associated to the role.' ||
-   {
-      echo 'The permission policy has not been associated to the role yet.'
-      echo 'Let''s wait a bit and check again (first time).' 
-      
-      wait 180  
-      
-      echo 'Let''s try now.' 
-      
-      check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}" && \
-      echo 'Permission policy associated to the role.' ||
-      {
-         echo 'ERROR: the permission policy has not been associated to the role after 3 minutes.'
-         exit 1
-      }
-   } 
+   echo 'Permission policy associated to the role.' 
 else
    echo 'WARN: permission policy already associated to the role.'
-fi 
+fi   
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
@@ -258,7 +216,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" && echo 'Centos Docker image successfully built.' ||
+    "${USER_PWD}" | logto ecr.log && echo 'Centos Docker image successfully built.' ||
     {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
@@ -272,7 +230,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" && echo 'Centos Docker image successfully built.' ||
+          "${USER_PWD}" | logto ecr.log && echo 'Centos Docker image successfully built.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -281,28 +239,19 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
 
 echo
 echo 'Building Ruby Docker image ...'
-           
-set +e   
+            
 # build Ruby Docker images in the box and send it to ECR.                             
 ssh_run_remote_command_as_root "${SCRIPTS_DIR}/ruby/ruby.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" 
-                            
-exit_code=$?
-set -e
-
-# shellcheck disable=SC2181
-if [[ 0 -eq "${exit_code}" ]]
-then
-   echo 'Ruby Docker image successfully built.'    
-else
-   echo 'ERROR: building Ruby.'
-   exit 1
-fi
-
+    "${USER_PWD}" | logto ecr.log && echo 'Centos Docker image successfully built.' ||
+    {
+        echo 'ERROR: building Ruby.'
+        exit 1   
+    }
+                           
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
     "${private_key_file}" \
     "${eip}" \
@@ -331,9 +280,17 @@ fi
 ## Firewall.
 ##
 
-set +e
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto ecr.log  
+   
+   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+fi
 
 echo 'Revoked SSH access to the box.'      
 
@@ -342,7 +299,4 @@ echo
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${ecr_tmp_dir:?}"
-
-
-
 

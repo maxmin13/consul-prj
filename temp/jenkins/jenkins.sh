@@ -12,15 +12,15 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-SCRIPTS_DIR='SEDscripts_dirSED'
-JENKINS_DOCKER_CTX='SEDjenkins_docker_ctxSED'
-JENKINS_DOCKER_REPOSITORY_URI='SEDjenkins_docker_repository_uriSED'
-JENKINS_DOCKER_IMG_NM='SEDjenkins_docker_img_nmSED'
-JENKINS_DOCKER_IMG_TAG='SEDjenkins_docker_img_tagSED'
-JENKINS_DOCKER_CONTAINER_NM='SEDjenkins_docker_container_nmSED'
-JENKINS_HTTP_ADDRESS='SEDjenkins_http_addressSED' 
-JENKINS_HTTP_PORT='SEDjenkins_http_portSED'
-JENKINS_INST_HOME_DIR='SEDjenkins_inst_home_dirSED'
+SCRIPTS_DIR='/home/awsadmin/script'
+JENKINS_DOCKER_CTX='/home/awsadmin/script/dockerctx'
+JENKINS_DOCKER_REPOSITORY_URI='955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/jenkins'
+JENKINS_DOCKER_IMG_NM='maxmin13/jenkins'
+JENKINS_DOCKER_IMG_TAG='v1'
+JENKINS_DOCKER_CONTAINER_NM='jenkins'
+JENKINS_HTTP_ADDRESS='54.154.172.186' 
+JENKINS_HTTP_PORT='80'
+JENKINS_INST_HOME_DIR='/var/jenkins_home'
  
 source "${SCRIPTS_DIR}"/app_consts.sh
 source "${SCRIPTS_DIR}"/general_utils.sh

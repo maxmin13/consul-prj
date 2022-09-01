@@ -30,7 +30,7 @@ source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 source "${SCRIPTS_DIR}"/ecr.sh
 
-yum update -y > /dev/null
+yum update -y 
 
 ####
 echo 'Installing Sinatra ...'
@@ -102,7 +102,7 @@ chmod 700 "${SINATRA_DOCKER_HOST_VOLUME_DIR}"
 
 echo 'Deploying the Sinatra sources ...'
 
-unzip -o "${SCRIPTS_DIR}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_DOCKER_HOST_VOLUME_DIR}" > /dev/null
+unzip -o "${SCRIPTS_DIR}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
 find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type d -exec chmod 755 {} + 
 find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type f -exec chmod 744 {} +
 
