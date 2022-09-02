@@ -81,7 +81,7 @@ mkdir "${TMP_DIR}"/"${shared_dir}"
 
 echo 'Creating the image ...'
 
-create_image "${instance_id}" "${SHARED_IMG_NM}" "${SHARED_IMG_DESC}" | logto shared.log	
+create_image "${instance_id}" "${SHARED_IMG_NM}" "${SHARED_IMG_DESC}" >> "${LOGS_DIR}"/shared.log	
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

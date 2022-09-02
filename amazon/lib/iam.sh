@@ -827,12 +827,11 @@ function delete_instance_profile()
    local -r profile_nm="${1}"
    local role_nm=''
    
-   # Retrieve role attached to the instance profiles.
    # Only one role can be attached to an instance profile.
    role_nm="$(aws iam list-instance-profiles \
        --query "InstanceProfiles[? InstanceProfileName=='${profile_nm}' ].Roles[].RoleName" --output text)"
    exit_code=$?
-   
+
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving the role attached to the instance profile.' 
@@ -843,6 +842,10 @@ function delete_instance_profile()
    then
       # Detach the role from the instance profile.
       remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
+      
+      echo 'Role detached from the instance profile.'
+   else
+      echo 'No role attached to the instance profile.'
    fi
    
    exit_code=$?
@@ -852,10 +855,10 @@ function delete_instance_profile()
       echo 'ERROR: removing role from instance profile.'
       return "${exit_code}"
    fi
-   
+
    aws iam delete-instance-profile --instance-profile-name "${profile_nm}" 
    exit_code=$?
-   
+
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: deleting instance profile.'
@@ -881,7 +884,7 @@ function check_instance_profile_exists()
       echo 'ERROR: missing mandatory arguments.'
       return 128
    fi
-   
+
    __RESULT=''
    local exit_code=0
    local -r profile_nm="${1}"
@@ -889,7 +892,7 @@ function check_instance_profile_exists()
    local exists='false'
 
    get_instance_profile_id "${profile_nm}"
-   exit_code=$?
+   exit_code=$? 
    
    if [[ 0 -ne "${exit_code}" ]]
    then
@@ -898,6 +901,7 @@ function check_instance_profile_exists()
    fi
    
    profile_id="${__RESULT}"
+
    __RESULT=''
    
    if [[ -n "${profile_id}" ]]
@@ -905,8 +909,8 @@ function check_instance_profile_exists()
       exists='true'
    fi
        
-   __RESULT="${exists}"      
-   
+   __RESULT="${exists}" 
+  
    return 0
 }
 

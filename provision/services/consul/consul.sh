@@ -27,8 +27,8 @@ CONSUL_CONFIG_FILE_NM='SEDconsul_config_file_nmSED'
 CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
 CONSUL_HTTP_PORT='SEDconsul_http_portSED'
 CONSUL_DNS_PORT='SEDconsul_dns_portSED'
-AGENT_MODE='SEDagent_modeSED'
 CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
+AGENT_MODE='SEDagent_modeSED'
 
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/secretsmanager.sh

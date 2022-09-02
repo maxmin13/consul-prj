@@ -74,7 +74,7 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the security group is already created.'
 else
-   create_security_group "${dtc_id}" "${SINATRA_INST_SEC_GRP_NM}" "${SINATRA_INST_SEC_GRP_NM}" | logto sinatra.log  
+   create_security_group "${dtc_id}" "${SINATRA_INST_SEC_GRP_NM}" "${SINATRA_INST_SEC_GRP_NM}" >> "${LOGS_DIR}"/sinatra.log  
    get_security_group_id "${SINATRA_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
@@ -86,7 +86,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto sinatra.log  
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/sinatra.log  
    
    echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
@@ -187,7 +187,7 @@ if [[ 'false' == "${instance_profile_exists}" ]]
 then
    echo 'Creating instance profile ...'
 
-   create_instance_profile "${SINATRA_INST_PROFILE_NM}" 
+   create_instance_profile "${SINATRA_INST_PROFILE_NM}" >> "${LOGS_DIR}"/sinatra.log
 
    echo 'Instance profile created.'
 else
@@ -204,7 +204,9 @@ if [[ 'false' == "${is_profile_associated}" ]]
 then
    echo 'Associating instance profile to the instance ...'
 
-   associate_instance_profile_to_instance_and_wait "${SINATRA_INST_NM}" "${SINATRA_INST_PROFILE_NM}" | logto sinatra.log   
+   associate_instance_profile_to_instance_and_wait "${SINATRA_INST_NM}" "${SINATRA_INST_PROFILE_NM}" >> "${LOGS_DIR}"/sinatra.log 2>&1  
+   
+   echo 'Instance profile associated to the instance.'
 else
    echo 'WARN: instance profile already associated to the instance.'
 fi
@@ -285,7 +287,7 @@ echo 'Dockerfile ready.'
 ## Sinatra webapp
 cd "${sinatra_tmp_dir}" || exit
 cp -R "${SERVICES_DIR}"/sinatra/webapp .
-zip -r "${SINATRA_ARCHIVE}" webapp | logto sinatra.log
+zip -r "${SINATRA_ARCHIVE}" webapp >> "${LOGS_DIR}"/sinatra.log
 
 echo "${SINATRA_ARCHIVE} ready." 
    
@@ -312,7 +314,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/sinatra.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}"| logto sinatra.log && echo 'Sinatra successfully installed.' ||
+    "${USER_PWD}">> "${LOGS_DIR}"/sinatra.log && echo 'Sinatra successfully installed.' ||
     {
     
        echo 'The role may not have been associated to the profile yet.'
@@ -327,7 +329,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/sinatra.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \ 
           "${USER_NM}" \
-          "${USER_PWD}" | logto sinatra.log && echo 'Sinatra successfully installed.' ||
+          "${USER_PWD}" >> "${LOGS_DIR}"/sinatra.log && echo 'Sinatra successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -367,18 +369,17 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto sinatra.log 
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/sinatra.log 
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi
-    
-echo 'Box created.'
-echo
 
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${sinatra_tmp_dir:?}"
-
+    
+echo 'Sinatra Box created.'
+echo
 

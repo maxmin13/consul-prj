@@ -8,28 +8,26 @@ set -o nounset
 set +o xtrace
  
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../consul-prj && pwd)"
-LOGS_DIR="${PROJECT_DIR}"/logs/"$(date +%Y%m%d)"
-mkdir -p "${LOGS_DIR}"
 
 source "${PROJECT_DIR}"/amazon/lib/constants/app_consts.sh
 source "${PROJECT_DIR}"/amazon/lib/constants/project_dirs.sh
 source "${PROJECT_DIR}"/amazon/lib/constants/docker.sh
 source "${PROJECT_DIR}"/amazon/lib/ssh_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/general_utils.sh
-source "${PROJECT_DIR}"/amazon/lib/log_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/ecr.sh
 source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
 source "${PROJECT_DIR}"/amazon/lib/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/secretsmanager.sh
 
-echo
+mkdir -p "${LOGS_DIR}"
 
 # Docker base images.
 . "${PROJECT_DIR}"/amazon/ecr/delete.sh 
 
 # AWS instances.
 . "${PROJECT_DIR}"/amazon/ec2/jenkins/delete.sh
+
 . "${PROJECT_DIR}"/amazon/ec2/nginx/delete.sh
 . "${PROJECT_DIR}"/amazon/ec2/sinatra/delete.sh
 

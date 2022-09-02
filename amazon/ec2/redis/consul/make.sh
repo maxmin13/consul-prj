@@ -49,7 +49,7 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: box not found.'
+   echo '* ERROR: Redis box not found.'
    exit 1
 fi
 
@@ -60,9 +60,9 @@ then
    
    if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* box ready (${instance_st})."
+      echo "* Redis box ready (${instance_st})."
    else
-      echo "* ERROR: box is not ready. (${instance_st})."
+      echo "* ERROR: Redis box is not ready. (${instance_st})."
       
       exit 1
    fi
@@ -127,7 +127,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log  
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log  
    
    echo "Access granted on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
 else
@@ -139,7 +139,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
 else
@@ -151,7 +151,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
 else
@@ -163,7 +163,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
 else
@@ -175,7 +175,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
 else
@@ -187,7 +187,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_RPC_PORT}" tcp 0.0.0.0/0."
 else
@@ -199,7 +199,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_HTTP_PORT}" tcp 0.0.0.0/0."
 else
@@ -211,7 +211,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
 else
@@ -223,16 +223,12 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' | logto redis.log 
+   allow_access_from_cidr "${sgp_id}" "${REDIS_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log 
    
    echo "Access granted on "${REDIS_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${REDIS_CONSUL_SERVER_DNS_PORT} udp 0.0.0.0/0."
 fi
-
-#
-echo 'Provisioning the box ...'
-# 
 
 private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
@@ -290,7 +286,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto redis.log && echo 'Consul client successfully installed.' ||
+    "${USER_PWD}" >> "${LOGS_DIR}"/redis.log && echo 'Consul client successfully installed.' ||
     {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
@@ -304,7 +300,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" | logto redis.log && echo 'Consul client successfully installed.' ||
+          "${USER_PWD}" >> "${LOGS_DIR}"/redis.log && echo 'Consul client successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -344,7 +340,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log  
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log  
    
    echo "Access revoked on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
 else

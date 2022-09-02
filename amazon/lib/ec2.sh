@@ -803,6 +803,45 @@ function delete_security_group()
 }
 
 #===============================================================================
+# Deletes a security group.
+#
+# Globals:
+#  None
+# Arguments:
+# +sgp_id -- the security group identifier.
+# Returns:      
+#  None    
+#===============================================================================
+function delete_security_group_and_wait()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r sgp_id="${1}"
+      
+   # shellcheck disable=SC2015
+   delete_security_group "${sgp_id}" || 
+   {
+      wait 60
+      delete_security_group "${sgp_id}" || 
+      {
+         wait 60
+         delete_security_group "${sgp_id}" || 
+         {
+            echo 'ERROR: deleting security group.'
+            exit_code=1
+         }         
+      } 
+   }   
+ 
+   return "${exit_code}"
+}
+
+#===============================================================================
 # Allow access to the traffic incoming from a CIDR block.  
 #
 # Globals:
@@ -891,7 +930,7 @@ function allow_access_from_security_group()
 }
 
 #===============================================================================
-# Verifies if a Security Group grants access from a specific CIDR or Security 
+# Verifies if a security group grants access from a specific CIDR or Security 
 # Group.  
 #
 # Globals:
@@ -900,7 +939,7 @@ function allow_access_from_security_group()
 # +sgp_id   -- the security group identifier.
 # +port     -- the TCP port.
 # +protocol -- the IP protocol name (tcp , udp , icmp). 
-# +from     -- the source CIDR or Security Group ID.
+# +from     -- the source CIDR or security group ID.
 # Returns:      
 #  true/false in the __RESULT variable.
 #===============================================================================
@@ -1511,12 +1550,10 @@ function associate_instance_profile_to_instance_and_wait()
    local -r profile_nm="${2}"
    local instance_id=''
    
-   associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" && \
-   echo 'Instance profile associated to the instance.' ||
+   associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
    {
       wait 30
-      associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" && \
-      echo 'Instance profile associated to the instance.' ||
+      associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
       {
          echo 'ERROR: associating instance profile to the instance.'
          exit 1

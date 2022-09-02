@@ -14,12 +14,13 @@ source "${PROJECT_DIR}"/amazon/lib/constants/project_dirs.sh
 source "${PROJECT_DIR}"/amazon/lib/constants/docker.sh
 source "${PROJECT_DIR}"/amazon/lib/ssh_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/general_utils.sh
-source "${PROJECT_DIR}"/amazon/lib/log_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/ecr.sh
 source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
 source "${PROJECT_DIR}"/amazon/lib/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/secretsmanager.sh
+
+mkdir -p "${LOGS_DIR}"
 
 # Datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh  

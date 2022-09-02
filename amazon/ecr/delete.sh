@@ -25,7 +25,7 @@ else
    get_instance_state "${ADMIN_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* box ID: ${instance_id} (${instance_st})."
+   echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -56,14 +56,14 @@ echo
 
 # Check if an ECR repository by the name of the image exists.
 set +e
-ecr_check_repository_exists "${CENTOS_DOCKER_IMG_NM}"
+ecr_check_repository_exists "${CENTOS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
 set -e
 
 centos_repository_exists="${__RESULT}"
 
 if [[ 'true' == "${centos_repository_exists}" ]]
 then
-   ecr_delete_repository "${CENTOS_DOCKER_IMG_NM}"
+   ecr_delete_repository "${CENTOS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
    
    echo 'Centos repository deleted.'
 else
@@ -76,14 +76,14 @@ fi
 
 # Check if an ECR repository by the name of the image exists.
 set +e
-ecr_check_repository_exists "${RUBY_DOCKER_IMG_NM}"
+ecr_check_repository_exists "${RUBY_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
 set -e
 
 ruby_repository_exists="${__RESULT}"
 
 if [[ 'true' == "${ruby_repository_exists}" ]]
 then
-   ecr_delete_repository "${RUBY_DOCKER_IMG_NM}"
+   ecr_delete_repository "${RUBY_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
    
    echo 'Ruby repository deleted.'
 else
@@ -96,14 +96,14 @@ fi
 
 # Check if an ECR repository by the name of the image exists.
 set +e
-ecr_check_repository_exists "${JENKINS_DOCKER_IMG_NM}"
+ecr_check_repository_exists "${JENKINS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
 set -e
 
 jenkins_repository_exists="${__RESULT}"
 
 if [[ 'true' == "${jenkins_repository_exists}" ]]
 then
-   ecr_delete_repository "${JENKINS_DOCKER_IMG_NM}"
+   ecr_delete_repository "${JENKINS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
    
    echo 'Jenkins repository deleted.'
 else
@@ -116,14 +116,14 @@ fi
 
 # Check if an ECR repository by the name of the image exists.
 set +e
-ecr_check_repository_exists "${NGINX_DOCKER_IMG_NM}"
+ecr_check_repository_exists "${NGINX_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
 set -e
 
 nginx_repository_exists="${__RESULT}"
 
 if [[ 'true' == "${nginx_repository_exists}" ]]
 then
-   ecr_delete_repository "${NGINX_DOCKER_IMG_NM}"
+   ecr_delete_repository "${NGINX_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
    
    echo 'Nginx repository deleted.'
 else
@@ -136,14 +136,14 @@ fi
 
 # Check if an ECR repository by the name of the image exists.
 set +e
-ecr_check_repository_exists "${REDIS_DOCKER_IMG_NM}"
+ecr_check_repository_exists "${REDIS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
 set -e
 
 redis_repository_exists="${__RESULT}"
 
 if [[ 'true' == "${redis_repository_exists}" ]]
 then
-   ecr_delete_repository "${REDIS_DOCKER_IMG_NM}"
+   ecr_delete_repository "${REDIS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
    
    echo 'Redis repository deleted.'
 else
@@ -156,14 +156,14 @@ fi
 
 # Check if an ECR repository by the name of the image exists.
 set +e
-ecr_check_repository_exists "${SINATRA_DOCKER_IMG_NM}"
+ecr_check_repository_exists "${SINATRA_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
 set -e
 
 sinatra_repository_exists="${__RESULT}"
 
 if [[ 'true' == "${sinatra_repository_exists}" ]]
 then
-   ecr_delete_repository "${SINATRA_DOCKER_IMG_NM}"
+   ecr_delete_repository "${SINATRA_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
    
    echo 'Sinatra repository deleted.'
 else
@@ -185,7 +185,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto ecr.log  
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/ecr.log  
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else

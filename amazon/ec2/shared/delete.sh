@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: box not found.'
+   echo '* WARN: Shared box not found.'
 else
    get_instance_state "${SHARED_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* box ID: ${instance_id} (${instance_st})."
+   echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 # The temporary security group used to build the image may already be gone
@@ -51,7 +51,7 @@ then
    then
       echo 'Deleting box ...' 
       
-      delete_instance "${instance_id}" | logto shared.log
+      delete_instance "${instance_id}" >> "${LOGS_DIR}"/shared.log
       
       echo 'Box deleted.'
    fi
@@ -65,20 +65,9 @@ if [[ -n "${sgp_id}" ]]
 then  
    echo 'Deleting security group ...'
 
-   # shellcheck disable=SC2015
-   delete_security_group "${sgp_id}" | logto shared.log && echo 'Security group deleted.' || 
-   {
-      wait 60
-      delete_security_group "${sgp_id}" | logto shared.log && echo 'Security group deleted.' || 
-      {
-         wait 60
-         delete_security_group "${sgp_id}" | logto shared.log echo 'Security group deleted.' || 
-         {
-            echo 'ERROR: deleting security group.'
-            exit 1
-         }         
-      } 
-   }   
+   delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/admin.log 2>&1 
+   
+   echo "Security group deleted."
 fi
 
 ## 
@@ -96,9 +85,9 @@ then
    if [[ -n "${allocation_id}" ]] 
    then
       release_public_ip_address "${allocation_id}"
+      
+      echo 'Address released from the account.' 
    fi
-   
-   echo 'Address released from the account.' 
 fi
 
 ##
@@ -115,6 +104,8 @@ then
    echo 'The SSH access key-pair have been deleted.'
 fi
 
+echo
+echo 'Shared box deleted.'
 echo
 
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

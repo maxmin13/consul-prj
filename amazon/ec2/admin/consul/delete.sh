@@ -37,7 +37,7 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: instance not found.'
+   echo '* WARN: Admin box not found.'
 fi
 
 if [[ -n "${instance_id}" ]]
@@ -47,9 +47,9 @@ then
    
    if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* box ready (${instance_st})."
+      echo "* Admin box ready (${instance_st})."
    else
-      echo "* WARN: box is not ready. (${instance_st})."
+      echo "* WARN: Admin box is not ready. (${instance_st})."
    fi
 fi
 
@@ -112,7 +112,7 @@ then
 
    if [[ 'false' == "${is_granted}" ]]
    then
-      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log 
+      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log 
    
        echo "Access granted on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
    else
@@ -137,6 +137,7 @@ then
        -e "s/SEDdtc_regionSED/${DTC_REGION}/g" \
        -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
        -e "s/SEDconsul_secret_nmSED/${CONSUL_SECRET_NM}/g" \
+       -e "s/SEDagent_modeSED/server/g" \
           "${SERVICES_DIR}"/consul/consul-remove.sh > "${admin_tmp_dir}"/consul-remove.sh  
      
    echo 'consul-remove.sh ready.' 
@@ -161,7 +162,7 @@ then
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${USER_NM}" \
-       "${USER_PWD}" && echo 'Consul server successfully removed.' ||
+       "${USER_PWD}" >> "${LOGS_DIR}"/admin.log && echo 'Consul server successfully removed.' ||
        { 
           echo 'ERROR: removing Consul.'
           exit 1
@@ -198,7 +199,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log 
+      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log 
       
       echo "Access revoked on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
    else
@@ -210,7 +211,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
    else
@@ -222,7 +223,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_SERF_LAN_PORT}" tcp 0.0.0.0/0."
    else
@@ -234,7 +235,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
    else
@@ -246,7 +247,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_SERF_WAN_PORT}" tcp 0.0.0.0/0."
    else
@@ -258,7 +259,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_RPC_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_RPC_PORT}" tcp 0.0.0.0/0."
    else
@@ -270,7 +271,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_HTTP_PORT}" tcp 0.0.0.0/0."
    else
@@ -282,7 +283,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
    else
@@ -294,7 +295,7 @@ then
 
    if [[ 'true' == "${is_granted}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' | logto admin.log
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_CONSUL_SERVER_DNS_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
       
       echo "Access revoked on "${ADMIN_CONSUL_SERVER_DNS_PORT}" tcp 0.0.0.0/0."
    else

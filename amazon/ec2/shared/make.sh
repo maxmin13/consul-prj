@@ -74,7 +74,7 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the security group is already created.'
 else
-   create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.' | logto shared.log
+   create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.' >> "${LOGS_DIR}"/shared.log
    get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
 
@@ -86,7 +86,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' | logto shared.log 
+   allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/shared.log 
    
    echo "Access granted on 22 tcp 0.0.0.0/0."
 else
@@ -98,7 +98,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto shared.log 
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/shared.log 
    
     echo "Access granted on "${SHARED_INST_SSH_PORT}" tcp 0.0.0.0/0."
 else
@@ -245,14 +245,13 @@ ssh_run_remote_command_as_root "chmod +x ${SCRIPTS_DIR}/*.sh" \
 echo 'Securing the box ...'
                 
 set +e
-
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
 ssh_run_remote_command_as_root "${SCRIPTS_DIR}/secure-linux.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto shared.log   
+    "${USER_PWD}"
                    
 exit_code=$?
 set -e
@@ -284,7 +283,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' | logto shared.log  
+   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/shared.log  
    
    echo "Access revoked on 22 tcp 0.0.0.0/0."
 else
@@ -304,7 +303,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/check-linux.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto shared.log    
+    "${USER_PWD}" >> "${LOGS_DIR}"/shared.log    
     
 echo 'Provisioning Docker ...'
 
@@ -314,7 +313,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/docker.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto shared.log   
+    "${USER_PWD}" >> "${LOGS_DIR}"/shared.log   
                             
 exit_code=$?
 set -e
@@ -337,7 +336,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     
 # After the instance is created, stop it before creating the image, to ensure data integrity.
 
-stop_instance "${instance_id}" | logto shared.log
+stop_instance "${instance_id}" >> "${LOGS_DIR}"/shared.log
 
 echo 'Box stopped.'   
 
@@ -350,7 +349,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto shared.log  
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/shared.log  
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
@@ -359,4 +358,7 @@ fi
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
+
+echo 'Shared box created.'
+echo
 

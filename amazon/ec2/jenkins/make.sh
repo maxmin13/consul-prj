@@ -71,7 +71,7 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the security group is already created.'
 else
-   create_security_group "${dtc_id}" "${JENKINS_INST_SEC_GRP_NM}" "${JENKINS_INST_SEC_GRP_NM}" | logto jenkins.log 
+   create_security_group "${dtc_id}" "${JENKINS_INST_SEC_GRP_NM}" "${JENKINS_INST_SEC_GRP_NM}" >> "${LOGS_DIR}"/jenkins.log 
    get_security_group_id "${JENKINS_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
@@ -83,7 +83,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto jenkins.log  
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
    
    echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
@@ -186,7 +186,7 @@ if [[ 'false' == "${instance_profile_exists}" ]]
 then
    echo 'Creating instance profile ...'
 
-   create_instance_profile "${JENKINS_INST_PROFILE_NM}" 
+   create_instance_profile "${JENKINS_INST_PROFILE_NM}" >> "${LOGS_DIR}"/jenkins.log
 
    echo 'Instance profile created.'
 else
@@ -203,7 +203,7 @@ if [[ 'false' == "${is_profile_associated}" ]]
 then
    echo 'Associating instance profile to the instance ...'
    
-   associate_instance_profile_to_instance_and_wait "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" | logto jenkins.log 
+   associate_instance_profile_to_instance_and_wait "${JENKINS_INST_NM}" "${JENKINS_INST_PROFILE_NM}" >> "${LOGS_DIR}"/jenkins.log 2>&1 
    
    echo 'Instance profile associated to the instance '
 else
@@ -292,7 +292,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto jenkins.log && echo 'Jenkins successfully installed.' ||
+    "${USER_PWD}" >> "${LOGS_DIR}"/jenkins.log && echo 'Jenkins successfully installed.' ||
     {
     
        echo 'The role may not have been associated to the profile yet.'
@@ -307,7 +307,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" | logto jenkins.log && echo 'Jenkins successfully installed.' ||
+          "${USER_PWD}" >> "${LOGS_DIR}"/jenkins.log && echo 'Jenkins successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -347,7 +347,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto jenkins.log  
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
@@ -361,18 +361,17 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   grant_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' | logto jenkins.log  
+   grant_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
    
    echo "Access granted on ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
 fi 
  
-echo 'Box created.'
-echo
-
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${jenkins_tmp_dir:?}"
 
+echo 'Jenkins box created.'
+echo
 

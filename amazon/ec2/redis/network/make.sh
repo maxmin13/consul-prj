@@ -49,7 +49,7 @@ admin_instance_id="${__RESULT}"
 
 if [[ -z "${admin_instance_id}" ]]
 then
-   echo '* ERROR: Admin instance not found.'
+   echo '* ERROR: Admin box not found.'
    exit 1
 fi
 
@@ -73,7 +73,7 @@ redis_instance_id="${__RESULT}"
 
 if [[ -z "${redis_instance_id}" ]]
 then
-   echo '* ERROR: Redis instance not found.'
+   echo '* ERROR: Redis box not found.'
    exit 1
 fi
 
@@ -112,13 +112,13 @@ mkdir -p "${redis_tmp_dir}"
 echo
 
 set +e
-allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_CLUSTER_MANAGEMENT_COMMS_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log
+allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_CLUSTER_MANAGEMENT_COMMS_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log
 
 # Firewall rules for Docker daemons using overlay networks
-allow_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log
-allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_NODES_COMMS_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log
-allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_NODES_COMMS_PORT}" 'udp' '0.0.0.0/0' | logto redis.log
-allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_TRAFFIC_PORT}" 'udp' '0.0.0.0/0' | logto redis.log
+allow_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log
+allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_NODES_COMMS_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log
+allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_NODES_COMMS_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log
+allow_access_from_cidr "${redis_sgp_id}" "${NETWORK_OVERLAY_TRAFFIC_PORT}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log
 set -e
    
 echo 'Granted SSH access to the Redis box.'
@@ -192,7 +192,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/overlay.sh" \
 ##
 
 set +e
-  ###### revoke_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto redis.log
+  ###### revoke_access_from_cidr "${redis_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log
 set -e
 
 echo 'Revoked SSH access to the Redis box.'  

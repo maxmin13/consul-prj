@@ -9,7 +9,7 @@ set +o xtrace
 STEP 'Sinatra'
 ####
 
-echo 'Deleting box ...'
+echo 'Deleting Sinatra box ...'
 echo
 
 get_instance_id "${SINATRA_INST_NM}"
@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: box not found.'
+   echo '* WARN: Sinatra box not found.'
 else
    get_instance_state "${SINATRA_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* box ID: ${instance_id} (${instance_st})."
+   echo "* Sinatra box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${SINATRA_INST_SEC_GRP_NM}"
@@ -61,12 +61,12 @@ echo
 ## Permissions.
 ##
 
-check_instance_profile_exists "${SINATRA_INST_PROFILE_NM}" | logto sinatra.log
+check_instance_profile_exists "${SINATRA_INST_PROFILE_NM}" >> "${LOGS_DIR}"/sinatra.log
 instance_profile_exists="${__RESULT}"
 
 if [[ 'true' == "${instance_profile_exists}" ]]
 then
-   delete_instance_profile "${SINATRA_INST_PROFILE_NM}"
+   delete_instance_profile "${SINATRA_INST_PROFILE_NM}" >> "${LOGS_DIR}"/sinatra.log
 
    echo 'Instance profile deleted.'
 fi
@@ -84,7 +84,7 @@ then
    then
       echo "Deleting box ..."
       
-      delete_instance "${instance_id}" 'and_wait' | logto sinatra.log
+      delete_instance "${instance_id}" 'and_wait' >> "${LOGS_DIR}"/sinatra.log
       
       echo 'Box deleted.'
    else
@@ -92,15 +92,17 @@ then
    fi
 fi
 
-#
-# Firewall
-# 
+## 
+## Firewall 
+## 
   
 if [[ -n "${sgp_id}" ]]
-then
-   delete_security_group "${sgp_id}" 
-      
-   echo 'Security group deleted.'
+then  
+   echo 'Deleting security group ...'
+
+   delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/admin.log 2>&1 
+   
+   echo "Security group deleted."
 fi
 
 if [[ -n "${eip}" ]]
@@ -130,5 +132,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Box deleted.'
+echo 'Sinatra box deleted.'
 echo

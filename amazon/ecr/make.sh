@@ -46,7 +46,7 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: instance not found.'
+   echo '* ERROR: Admin box not found.'
    exit 1
 fi
 
@@ -57,9 +57,9 @@ then
    
    if [[ 'running' == "${instance_st}" ]]
    then
-      echo "* box ready (${instance_st})."
+      echo "* Admin box ready (${instance_st})."
    else
-      echo "* ERROR: box is not ready. (${instance_st})."
+      echo "* ERROR: Admin box not ready. (${instance_st})."
       
       exit 1
    fi
@@ -93,7 +93,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto ecr.log 
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/ecr.log 
    
    echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
@@ -216,7 +216,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto ecr.log && echo 'Centos Docker image successfully built.' ||
+    "${USER_PWD}" >> "${LOGS_DIR}"/ecr.log && echo 'Centos Docker image successfully built.' ||
     {    
        echo 'The role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
@@ -230,7 +230,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos.sh" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
-          "${USER_PWD}" | logto ecr.log && echo 'Centos Docker image successfully built.' ||
+          "${USER_PWD}" >> "${LOGS_DIR}"/ecr.log && echo 'Centos Docker image successfully built.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
@@ -246,7 +246,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/ruby/ruby.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}" | logto ecr.log && echo 'Centos Docker image successfully built.' ||
+    "${USER_PWD}" >> "${LOGS_DIR}"/ecr.log && echo 'Centos Docker image successfully built.' ||
     {
         echo 'ERROR: building Ruby.'
         exit 1   
@@ -285,7 +285,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto ecr.log  
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/ecr.log  
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else

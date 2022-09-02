@@ -23,7 +23,7 @@ then
    echo 'WARN: the data center has already been created.'
 else
    ## Make a new VPC with a master 10.0.10.0/16 subnet
-   create_datacenter "${DTC_NM}" | logto datacenter.log
+   create_datacenter "${DTC_NM}" >> "${LOGS_DIR}"/datacenter.log
    get_datacenter_id "${DTC_NM}"
    data_center_id="${__RESULT}"
     
@@ -42,7 +42,7 @@ if [[ -n "${internet_gate_id}" ]]
 then
    echo 'WARN: the internet gateway has already been created.'
 else
-   create_internet_gateway "${DTC_INTERNET_GATEWAY_NM}" "${data_center_id}" | logto datacenter.log
+   create_internet_gateway "${DTC_INTERNET_GATEWAY_NM}" "${data_center_id}" >> "${LOGS_DIR}"/datacenter.log
    get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
    internet_gate_id="${__RESULT}"
 	              
@@ -71,14 +71,14 @@ if [[ -n "${route_table_id}" ]]
 then
    echo 'WARN: the route table has already been created.'
 else
-   create_route_table "${DTC_ROUTE_TABLE_NM}" "${data_center_id}" | logto datacenter.log
+   create_route_table "${DTC_ROUTE_TABLE_NM}" "${data_center_id}" >> "${LOGS_DIR}"/datacenter.log
    get_route_table_id "${DTC_ROUTE_TABLE_NM}"
    route_table_id="${__RESULT}"
                    
    echo 'Created route table.'
 fi
 
-set_route "${route_table_id}" "${internet_gate_id}" '0.0.0.0/0' | logto datacenter.log
+set_route "${route_table_id}" "${internet_gate_id}" '0.0.0.0/0' >> "${LOGS_DIR}"/datacenter.log
 
 echo 'Created route that points all traffic to the internet gateway.'
 
@@ -94,7 +94,7 @@ then
    echo 'WARN: the main subnet has already been created.'
 else
    create_subnet "${DTC_SUBNET_MAIN_NM}" \
-       "${DTC_SUBNET_MAIN_CIDR}" "${DTC_AZ_1}" "${data_center_id}" "${route_table_id}" | logto datacenter.log
+       "${DTC_SUBNET_MAIN_CIDR}" "${DTC_AZ_1}" "${data_center_id}" "${route_table_id}" >> "${LOGS_DIR}"/datacenter.log
        
    get_subnet_id "${DTC_SUBNET_MAIN_NM}"
    main_subnet_id="${__RESULT}"

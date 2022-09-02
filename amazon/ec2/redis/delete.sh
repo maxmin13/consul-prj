@@ -11,7 +11,7 @@ CONSUL_SECRET_NM='consulkey'
 STEP 'Redis box'
 ####
 
-echo 'Deleting box ...'
+echo 'Deleting Redis box ...'
 echo
 
 get_instance_id "${REDIS_INST_NM}"
@@ -19,12 +19,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: box not found.'
+   echo '* WARN: Redis box not found.'
 else
    get_instance_state "${REDIS_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* box ID: ${instance_id} (${instance_st})."
+   echo "* Redis box ID: ${instance_id} (${instance_st})."
 fi
 
 get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
@@ -63,12 +63,12 @@ echo
 ## Permissions.
 ##
 
-check_instance_profile_exists "${REDIS_INST_PROFILE_NM}" | logto redis.log
+check_instance_profile_exists "${REDIS_INST_PROFILE_NM}" >> "${LOGS_DIR}"/redis.log
 instance_profile_exists="${__RESULT}"
 
 if [[ 'true' == "${instance_profile_exists}" ]]
 then
-   delete_instance_profile "${REDIS_INST_PROFILE_NM}"
+   delete_instance_profile "${REDIS_INST_PROFILE_NM}" >> "${LOGS_DIR}"/redis.log
 
    echo 'Instance profile deleted.'
 fi
@@ -86,7 +86,7 @@ then
    then
       echo "Deleting box ..."
       
-      delete_instance "${instance_id}" 'and_wait' | logto redis.log
+      delete_instance "${instance_id}" 'and_wait' >> "${LOGS_DIR}"/redis.log
       
       echo 'Box deleted.'
    else
@@ -94,15 +94,17 @@ then
    fi
 fi
 
-#
-# Firewall
-# 
+## 
+## Firewall 
+## 
   
 if [[ -n "${sgp_id}" ]]
-then
-   delete_security_group "${sgp_id}" 
-      
-   echo 'Security group deleted.'
+then  
+   echo 'Deleting security group ...'
+
+   delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/admin.log 2>&1 
+   
+   echo "Security group deleted."
 fi
 
 if [[ -n "${eip}" ]]
@@ -132,5 +134,5 @@ fi
 rm -rf "${TMP_DIR:?}"
 mkdir -p "${TMP_DIR}"
 
-echo 'Box deleted.'
+echo 'Redis box deleted.'
 echo

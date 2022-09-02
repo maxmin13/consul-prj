@@ -67,7 +67,7 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: security group is already created.'
 else
-   create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" "${ADMIN_INST_SEC_GRP_NM}" | logto admin.log
+   create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" "${ADMIN_INST_SEC_GRP_NM}" >> "${LOGS_DIR}"/admin.log
    get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
@@ -79,7 +79,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
    
    echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
@@ -180,7 +180,7 @@ if [[ 'false' == "${instance_profile_exists}" ]]
 then
    echo 'Creating instance profile ...'
 
-   create_instance_profile "${ADMIN_INST_PROFILE_NM}" 
+   create_instance_profile "${ADMIN_INST_PROFILE_NM}" >> "${LOGS_DIR}"/admin.log 
 
    echo 'Instance profile created.'
 else
@@ -197,7 +197,9 @@ if [[ 'false' == "${is_profile_associated}" ]]
 then
    echo 'Associating instance profile to the instance ...'
    
-   associate_instance_profile_to_instance_and_wait "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" | logto admin.log
+   associate_instance_profile_to_instance_and_wait "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" >> "${LOGS_DIR}"/admin.log 2>&1
+   
+   echo 'Instance profile associated to the instance.'
 else
    echo 'WARN: instance profile already associated to the instance.'
 fi
@@ -225,18 +227,17 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' | logto admin.log 
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log 
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi
 
-echo 'Box created.'       
-echo
-
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${admin_tmp_dir:?}"
 
+echo 'Admin box created.'       
+echo
 
