@@ -35,7 +35,6 @@ mkdir -p "${LOGS_DIR}"
 
 # Linux jumpbox.
 . "${PROJECT_DIR}"/amazon/ec2/admin/make.sh
-
 . "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
 
 # Docker base images.

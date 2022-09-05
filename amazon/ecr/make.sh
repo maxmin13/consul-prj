@@ -123,7 +123,6 @@ get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
 eip="${__RESULT}"
 
 echo "Public address ${eip}."
-echo 'Provisioning the instance ...'
 
 private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"

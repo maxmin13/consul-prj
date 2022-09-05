@@ -1,31 +1,68 @@
 #!/bin/bash
 
-##############################################################################################
-# Creates an AWS ECR repository for a Centos base image and a ruby base image.
-##############################################################################################
+# shellcheck disable=SC2015
 
-# shellcheck disable=SC1091,SC2155
+#########################################################
+# The script provisinos the scripts to the Admin jumpbox,
+# builds the base images and push them to ECR.
+#########################################################
 
 set -o errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
 
+SCRIPTS_DIR=/home/"${USER_NM}"/script
+
 ####
 STEP 'ECR'
 ####
 
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
+  
+if [[ -z "${dtc_id}" ]]
+then
+   echo '* ERROR: data center not found.'
+   exit 1
+else
+   echo "* data center ID: ${dtc_id}."
+fi
+
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+subnet_id="${__RESULT}"
+
+if [[ -z "${subnet_id}" ]]
+then
+   echo '* ERROR: main subnet not found.'
+   exit 1
+else
+   echo "* main subnet ID: ${subnet_id}."
+fi
+
+# Jumpbox where the images are built.
 get_instance_id "${ADMIN_INST_NM}"
 instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: box not found.'
-else
+   echo '* ERROR: Admin box not found.'
+   exit 1
+fi
+
+if [[ -n "${instance_id}" ]]
+then
    get_instance_state "${ADMIN_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* Admin box ID: ${instance_id} (${instance_st})."
+   if [[ 'running' == "${instance_st}" ]]
+   then
+      echo "* Admin box ready (${instance_st})."
+   else
+      echo "* ERROR: Admin box not ready. (${instance_st})."
+      
+      exit 1
+   fi
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -33,152 +70,203 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: security group not found.'
+   echo '* ERROR: Admin security group not found.'
+   exit 1
 else
-   echo "* security group ID: ${sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
-get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
-eip="${__RESULT}"
-
-if [[ -z "${eip}" ]]
-then
-   echo '* WARN: public IP address not found.'
-else
-   echo "* public IP address: ${eip}."
-fi
+# Removing old files
+# shellcheck disable=SC2115
+ecr_tmp_dir="${TMP_DIR}"/ecr
+rm -rf  "${ecr_tmp_dir:?}"
+mkdir -p "${ecr_tmp_dir}"
 
 echo
 
 #
-# Centos 
+# Firewall
 #
 
-# Check if an ECR repository by the name of the image exists.
-set +e
-ecr_check_repository_exists "${CENTOS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-set -e
+check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
 
-centos_repository_exists="${__RESULT}"
-
-if [[ 'true' == "${centos_repository_exists}" ]]
+if [[ 'false' == "${is_granted}" ]]
 then
-   ecr_delete_repository "${CENTOS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/ecr.log 
    
-   echo 'Centos repository deleted.'
+   echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
-   echo 'Centos repository already deleted.'
+   echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi
 
 #
-# Ruby 
+# Permissions.
 #
 
-# Check if an ECR repository by the name of the image exists.
-set +e
-ecr_check_repository_exists "${RUBY_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-set -e
+check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
 
-ruby_repository_exists="${__RESULT}"
-
-if [[ 'true' == "${ruby_repository_exists}" ]]
+if [[ 'false' == "${is_permission_policy_associated}" ]]
 then
-   ecr_delete_repository "${RUBY_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-   
-   echo 'Ruby repository deleted.'
+   echo 'Attaching permission policy to the role ...'
+
+   attach_permission_policy_to_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   echo 'Permission policy associated to the role.' 
 else
-   echo 'Ruby repository already deleted.'
-fi
+   echo 'WARN: permission policy already associated to the role.'
+fi   
 
+# Get the public IP address assigned to the instance. 
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+eip="${__RESULT}"
+
+echo "Public address ${eip}."
+
+private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
+
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}/centos && mkdir -p ${SCRIPTS_DIR}/ruby" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${SHARED_INST_SSH_PORT}" \
+    "${USER_NM}"
+    
+# Prepare the scripts to run on the server.
+mkdir -p "${ecr_tmp_dir}"/centos
+mkdir -p "${ecr_tmp_dir}"/ruby
+
+# Centos scripts
+echo 'Provisioning Centos scripts ...'
+
+ecr_get_repostory_uri "${CENTOS_DOCKER_IMG_NM}"
+centos_docker_repository_uri="${__RESULT}"
+
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/centos")/g" \
+    -e "s/SEDcentos_docker_repository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
+    -e "s/SEDcentos_docker_img_nmSED/$(escape "${CENTOS_DOCKER_IMG_NM}")/g" \
+    -e "s/SEDcentos_docker_img_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
+       "${SERVICES_DIR}"/base/centos/centos-remove.sh > "${ecr_tmp_dir}"/centos/centos-remove.sh  
+       
+echo 'centos-remove.sh ready.' 
+    
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/centos \
+    "${LIBRARY_DIR}"/constants/app_consts.sh \
+    "${LIBRARY_DIR}"/dockerlib.sh \
+    "${LIBRARY_DIR}"/ecr.sh \
+    "${ecr_tmp_dir}"/centos/centos-remove.sh 
+    
+echo 'Centos scripts provisioned.'
+echo         
+
+# Ruby scripts
+echo 'Provisioning Ruby scripts ...'
+
+ecr_get_repostory_uri "${RUBY_DOCKER_IMG_NM}"
+ruby_docker_repository_uri="${__RESULT}"
+
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/ruby")/g" \
+    -e "s/SEDruby_docker_repository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
+    -e "s/SEDruby_docker_img_nmSED/$(escape "${RUBY_DOCKER_IMG_NM}")/g" \
+    -e "s/SEDruby_docker_img_tagSED/${RUBY_DOCKER_IMG_TAG}/g" \
+       "${SERVICES_DIR}"/base/ruby/ruby-remove.sh > "${ecr_tmp_dir}"/ruby/ruby-remove.sh  
+       
+echo 'ruby-remove.sh ready.'        
+     
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/ruby \
+    "${LIBRARY_DIR}"/constants/app_consts.sh \
+    "${LIBRARY_DIR}"/dockerlib.sh \
+    "${LIBRARY_DIR}"/ecr.sh \
+    "${ecr_tmp_dir}"/ruby/ruby-remove.sh     
+
+echo 'Ruby scripts provisioned.' 
+echo   
+
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${SHARED_INST_SSH_PORT}" \
+    "${USER_NM}" \
+    "${USER_PWD}"       
+    
+echo 'Deleting Centos Docker image and ECR repository ...'
+           
+# build Centos Docker images in the box and send it to ECR.                             
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos-remove.sh" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${SHARED_INST_SSH_PORT}" \
+    "${USER_NM}" \
+    "${USER_PWD}" >> "${LOGS_DIR}"/ecr.log && echo 'Centos Docker image and ECR repository successfully deleted.' ||
+    {    
+       echo 'The role may not have been associated to the profile yet.'
+       echo 'Let''s wait a bit and check again (first time).' 
+      
+       wait 180  
+      
+       echo 'Let''s try now.' 
+    
+       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/centos/centos-remove.sh" \
+          "${private_key_file}" \
+          "${eip}" \
+          "${SHARED_INST_SSH_PORT}" \
+          "${USER_NM}" \
+          "${USER_PWD}" >> "${LOGS_DIR}"/ecr.log && echo 'Centos Docker image and ECR repository successfully deleted.' ||
+          {
+              echo 'ERROR: the problem persists after 3 minutes.'
+              exit 1          
+          }
+    }
+
+echo
+echo 'Deleting Ruby Docker image and ECR repository ...'
+            
+# build Ruby Docker images in the box and send it to ECR.                             
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/ruby/ruby-remove.sh" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${SHARED_INST_SSH_PORT}" \
+    "${USER_NM}" \
+    "${USER_PWD}" >> "${LOGS_DIR}"/ecr.log && echo 'Ruby Docker image and ECR repository successfully deleted.' ||
+    {
+        echo 'ERROR: building Ruby.'
+        exit 1   
+    }
+                           
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${SHARED_INST_SSH_PORT}" \
+    "${USER_NM}"
+    
+    	#
+    #
+    # TODO remove Jenkins, Nginx, Sinatra repositories TODO
+    # MOVE their Docker  build to Admin box
+    #  
+    
 #
-# Jenkins 
+# Permissions.
 #
 
-# Check if an ECR repository by the name of the image exists.
-set +e
-ecr_check_repository_exists "${JENKINS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-set -e
+check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
 
-jenkins_repository_exists="${__RESULT}"
-
-if [[ 'true' == "${jenkins_repository_exists}" ]]
+if [[ 'true' == "${is_permission_policy_associated}" ]]
 then
-   ecr_delete_repository "${JENKINS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
+   echo 'Detaching permission policy from role ...'
    
-   echo 'Jenkins repository deleted.'
+   detach_permission_policy_from_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
+      
+   echo 'Permission policy detached.'
 else
-   echo 'Jenkins repository already deleted.'
-fi
+   echo 'WARN: permission policy already detached from the role.'
+fi 
 
-#
-# Nginx 
-#
-
-# Check if an ECR repository by the name of the image exists.
-set +e
-ecr_check_repository_exists "${NGINX_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-set -e
-
-nginx_repository_exists="${__RESULT}"
-
-if [[ 'true' == "${nginx_repository_exists}" ]]
-then
-   ecr_delete_repository "${NGINX_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-   
-   echo 'Nginx repository deleted.'
-else
-   echo 'Nginx repository already deleted.'
-fi
-
-#
-# Redis 
-#
-
-# Check if an ECR repository by the name of the image exists.
-set +e
-ecr_check_repository_exists "${REDIS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-set -e
-
-redis_repository_exists="${__RESULT}"
-
-if [[ 'true' == "${redis_repository_exists}" ]]
-then
-   ecr_delete_repository "${REDIS_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-   
-   echo 'Redis repository deleted.'
-else
-   echo 'Redis repository already deleted.'
-fi
-
-#
-# Sinatra 
-#
-
-# Check if an ECR repository by the name of the image exists.
-set +e
-ecr_check_repository_exists "${SINATRA_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-set -e
-
-sinatra_repository_exists="${__RESULT}"
-
-if [[ 'true' == "${sinatra_repository_exists}" ]]
-then
-   ecr_delete_repository "${SINATRA_DOCKER_IMG_NM}" >> "${LOGS_DIR}"/ecr.log 2>&1
-   
-   echo 'Sinatra repository deleted.'
-else
-   echo 'Sinatra repository already deleted.'
-fi
-
-####### TODO
-####### TODO clear box #######
-####### TODO local images and containers ####### 
-####### TODO
-####### TODO
-
-#
-# Firewall.
-#
+## 
+## Firewall.
+##
 
 check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -189,35 +277,14 @@ then
    
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
-   echo "WARN: access already revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
+   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi
 
-#
-# Permissions.
-#
-
-check_role_exists "${ADMIN_AWS_ROLE_NM}"
-role_exists="${__RESULT}"
-
-if [[ 'true' == "$role_exists{}" ]]
-then
-   check_policy_exists "${ECR_POLICY_NM}"
-   policy_exists="${__RESULT}"
-
-   if [[ 'true' == "$policy_exists{}" ]]
-   then
-      check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
-      is_permission_policy_associated="${__RESULT}"
-
-      if [[ 'true' == "${is_permission_policy_associated}" ]]
-      then
-         detach_permission_policy_from_role "${ADMIN_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
-      
-         echo 'Permission policy detached.'
-      else
-         echo 'WARN: permission policy already detached from the role.'
-      fi
-   fi
-fi 
+echo 'Revoked SSH access to the box.'      
 
 echo
+
+# Removing old files
+# shellcheck disable=SC2115
+rm -rf  "${ecr_tmp_dir:?}"
+

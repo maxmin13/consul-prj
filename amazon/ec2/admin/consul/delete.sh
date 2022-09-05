@@ -303,8 +303,7 @@ then
    fi
 
    ## Clearing
-   rm -rf "${TMP_DIR:?}"
-   mkdir -p "${TMP_DIR}"
+   rm -rf "${admin_tmp_dir:?}"
 fi
 
 echo 'Consul deleted.'

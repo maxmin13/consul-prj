@@ -284,8 +284,7 @@ then
    fi
 
    ## Clearing
-   rm -rf "${TMP_DIR:?}"
-   mkdir -p "${TMP_DIR}"
+   rm -rf  "${redis_tmp_dir:?}"
 
    echo 'Redis Consul deleted.'
 fi

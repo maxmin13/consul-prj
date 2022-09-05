@@ -22,6 +22,12 @@ source "${PROJECT_DIR}"/amazon/lib/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
+#
+    #
+    # TODO remove Jenkins, Nginx, Sinatra repositories TODO
+    # MOVE their Docker  build to Admin box
+    #   
+
 # Docker base images.
 . "${PROJECT_DIR}"/amazon/ecr/delete.sh 
 

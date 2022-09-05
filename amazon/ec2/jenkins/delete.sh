@@ -128,9 +128,5 @@ then
    echo 'The SSH access key-pair have been deleted.'
 fi
 
-## Clearing
-rm -rf "${TMP_DIR:?}"
-mkdir -p "${TMP_DIR}"
-
 echo 'Jenkins box deleted.'
 echo
