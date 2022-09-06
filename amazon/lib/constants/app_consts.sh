@@ -122,3 +122,9 @@ SINATRA_INST_KEY_PAIR_NM='sinatra-key'
 SINATRA_INST_PROFILE_NM='SinatraInstanceProfile'
 SINATRA_AWS_ROLE_NM='SinatraAWSrole'
 
+## **************** ##
+##  Consul cluster  ##
+## **************** ##
+
+CONSUL_SECRET_NM='consulkey'
+

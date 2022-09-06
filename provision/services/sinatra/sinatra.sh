@@ -13,7 +13,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR='SEDscripts_dirSED'
-SINATRA_DOCKER_CTX='SEDsinatra_docker_ctxSED'
 SINATRA_DOCKER_REPOSITORY_URI='SEDsinatra_docker_repository_uriSED'
 SINATRA_DOCKER_IMG_NM='SEDsinatra_docker_img_nmSED'
 SINATRA_DOCKER_IMG_TAG='SEDsinatra_docker_img_tagSED'
@@ -33,37 +32,23 @@ source "${SCRIPTS_DIR}"/ecr.sh
 yum update -y 
 
 ####
-echo 'Installing Sinatra ...'
+echo 'Running Sinatra ...'
 ####
 
-docker_check_container_exists "${SINATRA_DOCKER_CONTAINER_NM}"
-exists="${__RESULT}"
-
-if [[ 'true' == "${exists}" ]]
-then
-  docker_stop_container "${SINATRA_DOCKER_CONTAINER_NM}" 
-  docker_delete_container "${SINATRA_DOCKER_CONTAINER_NM}" 
-  
-  echo 'Sinatra container removed.'
-fi
-
 #
-# Sinatra repository
+# ECR repository
 #
 
 set +e
 ecr_check_repository_exists "${SINATRA_DOCKER_IMG_NM}"
 set -e
 
-sinatra_repository_exists="${__RESULT}"
+repository_exists="${__RESULT}"
 
-if [[ 'false' == "${sinatra_repository_exists}" ]]
+if [[ 'false' == "${repository_exists}" ]]
 then
-   ecr_create_repository "${SINATRA_DOCKER_IMG_NM}"
-   
-   echo 'Sinatra repository created.'
-else
-   echo 'Sinatra repository already created.'
+   echo 'Repository not found.'
+   exit  1
 fi
 
 echo 'Loggin into ECR registry ...'
@@ -76,38 +61,29 @@ docker_login_ecr_registry "${ecr_registry_uri}" "${ecr_login_pwd}"
 
 echo 'Logged into ECR registry.'
 
-#
-# Sinatra image
-#
+docker_check_container_exists "${SINATRA_DOCKER_CONTAINER_NM}"
+container_exists="${__RESULT}"
 
-echo 'Building Sinatra image ...'
-
-docker_build_img "${SINATRA_DOCKER_IMG_NM}" "${SINATRA_DOCKER_IMG_TAG}" "${SINATRA_DOCKER_CTX}" "SINATRA_HTTP_PORT=${SINATRA_HTTP_PORT}"
-
-echo 'Image built.'
-echo 'Pushing image to the ECR repostory ... '
-
-docker_tag_image "${SINATRA_DOCKER_IMG_NM}" "${SINATRA_DOCKER_IMG_TAG}" "${SINATRA_DOCKER_REPOSITORY_URI}" "${SINATRA_DOCKER_IMG_TAG}"
-docker_push_image "${SINATRA_DOCKER_REPOSITORY_URI}" "${SINATRA_DOCKER_IMG_TAG}"
-
-echo 'Image pushed to ECR.'
-
-docker_logout_ecr_registry "${ecr_registry_uri}" 
-   
-echo 'Logged out of ECR registry.' 
+if [[ 'true' == "${container_exists}" ]]
+then
+  docker_stop_container "${SINATRA_DOCKER_CONTAINER_NM}" 
+  docker_delete_container "${SINATRA_DOCKER_CONTAINER_NM}" 
+  
+  echo 'Container removed.'
+fi
 
 # Create a volume directory to mount the Sinatra sources into the container.
 mkdir -p "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
 chmod 700 "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
 
-echo 'Deploying the Sinatra sources ...'
+echo 'Deploying the welcome website ...'                             
 
 unzip -o "${SCRIPTS_DIR}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
 find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type d -exec chmod 755 {} + 
 find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type f -exec chmod 744 {} +
 
-echo 'Sinatra sources deployed.'  
-echo 'Running Sinatra container ...'
+echo 'Welcome website deployed.'
+echo 'Running container ...'
   
 docker_run_sinatra_container "${SINATRA_DOCKER_CONTAINER_NM}" \
                              "${SINATRA_DOCKER_REPOSITORY_URI}" \
@@ -117,8 +93,9 @@ docker_run_sinatra_container "${SINATRA_DOCKER_CONTAINER_NM}" \
                              "${SINATRA_DOCKER_CONTAINER_VOLUME_DIR}" \
                              "${SINATRA_DOCKER_CONTAINER_NETWORK_NM}"
                              
-echo 'Sinatra container running.'                          
-                           
+docker_logout_ecr_registry "${ecr_registry_uri}" 
+   
+echo 'Logged out of ECR registry.'                                                                                                
 echo
 echo "http://${SINATRA_HTTP_ADDRESS}:${SINATRA_HTTP_PORT}/info"
 echo

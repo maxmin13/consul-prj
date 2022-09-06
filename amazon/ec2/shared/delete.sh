@@ -9,8 +9,6 @@ set +o xtrace
 STEP 'Shared box'
 #
 
-shared_dir='shared'
-
 # The temporary box used to build the image may already be gone
 get_instance_id "${SHARED_INST_NM}"
 instance_id="${__RESULT}"
@@ -107,6 +105,4 @@ fi
 echo
 echo 'Shared box deleted.'
 echo
-
-rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 

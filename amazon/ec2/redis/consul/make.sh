@@ -16,7 +16,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-CONSUL_SECRET_NM='consulkey'
 
 ####
 STEP 'Redis Consul'
@@ -233,7 +232,7 @@ fi
 private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}"/consul \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -243,7 +242,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
 
 echo 'Provisioning Consul scripts ...'
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/consul")/g" \
     -e "s/SEDdtc_regionSED/${DTC_REGION}/g" \
     -e "s/SEDinstance_eip_addressSED/${eip}/g" \
     -e "s/SEDinstance_private_addressSED/${REDIS_INST_PRIVATE_IP}/g" \
@@ -253,9 +252,9 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDconsul_dns_portSED/${REDIS_CONSUL_SERVER_DNS_PORT}/g" \
     -e "s/SEDagent_modeSED/client/g" \
     -e "s/SEDconsul_secret_nmSED/${CONSUL_SECRET_NM}/g" \
-       "${SERVICES_DIR}"/consul/consul.sh > "${redis_tmp_dir}"/consul.sh  
+       "${SERVICES_DIR}"/consul/consul-install.sh > "${redis_tmp_dir}"/consul-install.sh  
      
-echo 'consul.sh ready.'   
+echo 'consul-install.sh ready.'   
 
 sed -e "s/SEDbind_addressSED/${REDIS_INST_PRIVATE_IP}/g" \
     -e "s/SEDbootstrap_expectSED/1/g" \
@@ -264,8 +263,8 @@ sed -e "s/SEDbind_addressSED/${REDIS_INST_PRIVATE_IP}/g" \
     
 echo 'consul-client.json ready.'      
       
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
-    "${redis_tmp_dir}"/consul.sh \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/consul \
+    "${redis_tmp_dir}"/consul-install.sh \
     "${redis_tmp_dir}"/consul-client.json \
     "${SERVICES_DIR}"/consul/consul.service \
     "${LIBRARY_DIR}"/general_utils.sh \
@@ -274,14 +273,14 @@ scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USE
 echo 'Consul scripts provisioned.'
 echo
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/consul \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}"      
 
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul/consul-install.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -295,7 +294,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
+       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul/consul-install.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
@@ -307,7 +306,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
           }
     }
     
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -351,4 +350,4 @@ fi
 # shellcheck disable=SC2115
 rm -rf  "${redis_tmp_dir:?}"
 
-
+echo

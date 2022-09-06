@@ -5,8 +5,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-CONSUL_SECRET_NM='consulkey'
-
 ####
 STEP 'Redis box'
 ####

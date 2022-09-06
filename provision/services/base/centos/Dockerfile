@@ -4,7 +4,7 @@
 #
 #    docker build --rm -t="maxmin13/centos8:v1" .
 #
-FROM centos:8.4.2105
+FROM SEDbase_centos_docker_repository_uriSED:SEDbase_centos_docker_img_tagSED
 LABEL version="1" maintainer="maxmin@example.com" description="base centos 8 image"
 ENV REFRESHED_AT 2014-06-01
 

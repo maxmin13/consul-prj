@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 
 ############################################################
-# Installs Jenkins server in a Docker container.
+# Runs Jenkins server in a Docker container.
 # Persists Jenkins status to the host with a volume.
 ############################################################
 
@@ -13,7 +13,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR='SEDscripts_dirSED'
-JENKINS_DOCKER_CTX='SEDjenkins_docker_ctxSED'
 JENKINS_DOCKER_REPOSITORY_URI='SEDjenkins_docker_repository_uriSED'
 JENKINS_DOCKER_IMG_NM='SEDjenkins_docker_img_nmSED'
 JENKINS_DOCKER_IMG_TAG='SEDjenkins_docker_img_tagSED'
@@ -30,23 +29,8 @@ source "${SCRIPTS_DIR}"/ecr.sh
 yum update -y 
 
 ####
-echo 'Installing Jenkins ...'
+echo 'Running Jenkins ...'
 ####
-
-docker_check_container_exists "${JENKINS_DOCKER_CONTAINER_NM}"
-exists="${__RESULT}"
-
-if [[ 'true' == "${exists}" ]]
-then
-  docker_stop_container "${JENKINS_DOCKER_CONTAINER_NM}" 
-  docker_delete_container "${JENKINS_DOCKER_CONTAINER_NM}" 
-  
-  echo 'Jenkins container removed.'
-fi
-
-#
-# Jenkins repository
-#
 
 set +e
 ecr_check_repository_exists "${JENKINS_DOCKER_IMG_NM}"
@@ -56,11 +40,8 @@ jenkins_repository_exists="${__RESULT}"
 
 if [[ 'false' == "${jenkins_repository_exists}" ]]
 then
-   ecr_create_repository "${JENKINS_DOCKER_IMG_NM}"
-   
-   echo 'Jenkins repository created.'
-else
-   echo 'Jenkins repository already created.'
+   echo 'ERRIR: Jenkins repository not found.'
+   exit 1
 fi
 
 echo 'Logging into ECR registry ...'
@@ -73,21 +54,16 @@ docker_login_ecr_registry "${ecr_registry_uri}" "${ecr_login_pwd}"
 
 echo 'Logged into ECR registry.'
 
-#
-# Jenkins image
-#
+docker_check_container_exists "${JENKINS_DOCKER_CONTAINER_NM}"
+exists="${__RESULT}"
 
-echo 'Building Jenkins image ...'
-
-docker_build_img "${JENKINS_DOCKER_IMG_NM}" "${JENKINS_DOCKER_IMG_TAG}" "${JENKINS_DOCKER_CTX}" 
-
-echo 'Image built.'
-echo 'Pushing image to the ECR repostory ... '
-
-docker_tag_image "${JENKINS_DOCKER_IMG_NM}" "${JENKINS_DOCKER_IMG_TAG}" "${JENKINS_DOCKER_REPOSITORY_URI}" "${JENKINS_DOCKER_IMG_TAG}"
-docker_push_image "${JENKINS_DOCKER_REPOSITORY_URI}" "${JENKINS_DOCKER_IMG_TAG}"
-
-echo 'Image pushed to ECR.'
+if [[ 'true' == "${exists}" ]]
+then
+  docker_stop_container "${JENKINS_DOCKER_CONTAINER_NM}" 
+  docker_delete_container "${JENKINS_DOCKER_CONTAINER_NM}" 
+  
+  echo 'Jenkins container removed.'
+fi
 
 # Create a volume directory where to store Jenkins configuration.
 mkdir -p "${JENKINS_INST_HOME_DIR}" 
@@ -96,8 +72,6 @@ chmod 700 "${JENKINS_INST_HOME_DIR}"
 # 1000 is the UID of the jenkins user inside the image.
 chown -R 1000:1000 "${JENKINS_INST_HOME_DIR}"
 
-echo 'Running Jenkins container ...'
-
 docker_run_jenkins_container "${JENKINS_DOCKER_CONTAINER_NM}" \
                              "${JENKINS_DOCKER_REPOSITORY_URI}" \
                              "${JENKINS_DOCKER_IMG_TAG}" \
@@ -105,10 +79,7 @@ docker_run_jenkins_container "${JENKINS_DOCKER_CONTAINER_NM}" \
                              "${JENKINS_INST_HOME_DIR}" 
                              
 echo 'Jenkins container running.'
-
-find "${JENKINS_INST_HOME_DIR}" -type d -exec chmod 700 {} + 
-find "${JENKINS_INST_HOME_DIR}" -type f -exec chmod 700 {} +
-                             
+                         
 docker_logout_ecr_registry "${ecr_registry_uri}" 
    
 echo 'Logged out of ECR registry.'

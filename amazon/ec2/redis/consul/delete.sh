@@ -6,7 +6,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-CONSUL_SECRET_NM='consulkey'
 
 ####
 STEP 'Redis Consul'
@@ -104,7 +103,7 @@ then
    private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
    wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-   ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
+   ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}"/consul \
        "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
@@ -114,7 +113,7 @@ then
 
    echo 'Provisioning Consul scripts ...'
 
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
+   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/consul)/g" \
        -e "s/SEDdtc_regionSED/${DTC_REGION}/g" \
        -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
        -e "s/SEDconsul_secret_nmSED/${CONSUL_SECRET_NM}/g" \
@@ -123,14 +122,14 @@ then
      
    echo 'consul-remove.sh ready.' 
 
-   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/consul \
        "${LIBRARY_DIR}"/general_utils.sh \
        "${LIBRARY_DIR}"/secretsmanager.sh \
        "${redis_tmp_dir}"/consul-remove.sh 
          
    echo 'Consul scripts provisioned.'
    
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/consul \
        "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
@@ -138,7 +137,7 @@ then
        "${USER_PWD}"   
 
    # shellcheck disable=SC2015
-   ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul-remove.sh" \
+   ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul/consul-remove.sh" \
        "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
@@ -149,7 +148,7 @@ then
           exit 1
        }
     
-   ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+   ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
        "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \

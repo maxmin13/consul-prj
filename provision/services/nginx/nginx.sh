@@ -13,7 +13,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR='SEDscripts_dirSED'
-NGINX_DOCKER_CTX='SEDnginx_docker_ctxSED'
 NGINX_DOCKER_REPOSITORY_URI='SEDnginx_docker_repository_uriSED'
 NGINX_DOCKER_IMG_NM='SEDnginx_docker_img_nmSED'
 NGINX_DOCKER_IMG_TAG='SEDnginx_docker_img_tagSED'
@@ -33,40 +32,26 @@ source "${SCRIPTS_DIR}"/ecr.sh
 yum update -y 
 
 ####
-echo 'Installing Nginx ...'
+echo 'Running Nginx ...'
 ####
 
-docker_check_container_exists "${NGINX_DOCKER_CONTAINER_NM}"
-exists="${__RESULT}"
-
-if [[ 'true' == "${exists}" ]]
-then
-  docker_stop_container "${NGINX_DOCKER_CONTAINER_NM}" 
-  docker_delete_container "${NGINX_DOCKER_CONTAINER_NM}" 
-  
-  echo 'Nginx container removed.'
-fi
-
 #
-# Nginx repository
+# ECR repository
 #
 
 set +e
 ecr_check_repository_exists "${NGINX_DOCKER_IMG_NM}"
 set -e
 
-nginx_repository_exists="${__RESULT}"
+repository_exists="${__RESULT}"
 
-if [[ 'false' == "${nginx_repository_exists}" ]]
+if [[ 'false' == "${repository_exists}" ]]
 then
-   ecr_create_repository "${NGINX_DOCKER_IMG_NM}"
-   
-   echo 'Nginx repository created.'
-else
-   echo 'Nginx repository already created.'
+   echo 'Repository not found.'
+   exit  1
 fi
 
-echo 'Loggin into ECR registry ...'
+echo 'Logging into ECR registry ...'
 
 ecr_get_registry_uri
 ecr_registry_uri="${__RESULT}"
@@ -76,31 +61,22 @@ docker_login_ecr_registry "${ecr_registry_uri}" "${ecr_login_pwd}"
 
 echo 'Logged into ECR registry.'
 
-#
-# Nginx image
-#
+docker_check_container_exists "${NGINX_DOCKER_CONTAINER_NM}"
+container_exists="${__RESULT}"
 
-echo 'Building Nginx image ...'
-
-docker_build_img "${NGINX_DOCKER_IMG_NM}" "${NGINX_DOCKER_IMG_TAG}" "${NGINX_DOCKER_CTX}" "NGINX_HTTP_PORT=${NGINX_HTTP_PORT}"
-
-echo 'Image built.'
-echo 'Pushing image to the ECR repostory ... '
-
-docker_tag_image "${NGINX_DOCKER_IMG_NM}" "${NGINX_DOCKER_IMG_TAG}" "${NGINX_DOCKER_REPOSITORY_URI}" "${NGINX_DOCKER_IMG_TAG}"
-docker_push_image "${NGINX_DOCKER_REPOSITORY_URI}" "${NGINX_DOCKER_IMG_TAG}"
-
-echo 'Image pushed to ECR.'
-                           
-docker_logout_ecr_registry "${ecr_registry_uri}" 
-   
-echo 'Logged out of ECR registry.'   
+if [[ 'true' == "${container_exists}" ]]
+then
+  docker_stop_container "${NGINX_DOCKER_CONTAINER_NM}" 
+  docker_delete_container "${NGINX_DOCKER_CONTAINER_NM}" 
+  
+  echo 'Container removed.'
+fi
 
 # Create a volume directory for the website to mount into the Nginx container.
 mkdir -p "${NGINX_INST_WEBAPPS_DIR}" 
 chmod 755 "${NGINX_INST_WEBAPPS_DIR}" 
 
-echo 'Running Nginx container ...'
+echo 'Running container ...'
 
 docker_run_nginx_container "${NGINX_DOCKER_CONTAINER_NM}" \
                            "${NGINX_DOCKER_REPOSITORY_URI}" \
@@ -109,7 +85,11 @@ docker_run_nginx_container "${NGINX_DOCKER_CONTAINER_NM}" \
                            "${NGINX_INST_WEBAPPS_DIR}" \
                            "${NGINX_CONTAINER_VOLUME_DIR}" 
 
-echo 'Nginx container running.'                                                  
+echo 'Container running.'      
+
+docker_logout_ecr_registry "${ecr_registry_uri}" 
+   
+echo 'Logged out of ECR registry.'                                              
 echo 'Deploying the welcome website ...'
 
 unzip -o "${SCRIPTS_DIR}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_INST_WEBAPPS_DIR}"/"${WEBSITE_NM}"

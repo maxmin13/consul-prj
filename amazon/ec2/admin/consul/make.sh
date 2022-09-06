@@ -15,7 +15,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-CONSUL_SECRET_NM='consulkey'
 
 ####
 STEP 'Admin Consul'
@@ -81,14 +80,14 @@ fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
-admin_eip="${__RESULT}"
+eip="${__RESULT}"
 
-if [[ -z "${admin_eip}" ]]
+if [[ -z "${eip}" ]]
 then
    echo '* ERROR:  public IP address not found.'
    exit 1
 else
-   echo "* public IP address: ${admin_eip}."
+   echo "* public IP address: ${eip}."
 fi
 
 # Removing old files
@@ -232,19 +231,19 @@ fi
 echo 'Provisioning the instance ...'
 
 private_key_file="${ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-wait_ssh_started "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}"/consul \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}"  
     
 # Prepare the scripts to run on the server.
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/consul)/g" \
     -e "s/SEDdtc_regionSED/${DTC_REGION}/g" \
-    -e "s/SEDinstance_eip_addressSED/${admin_eip}/g" \
+    -e "s/SEDinstance_eip_addressSED/${eip}/g" \
     -e "s/SEDinstance_private_addressSED/${ADMIN_INST_PRIVATE_IP}/g" \
     -e "s/SEDconsul_config_file_nmSED/consul-server.json/g" \
     -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
@@ -252,9 +251,9 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
     -e "s/SEDconsul_dns_portSED/${ADMIN_CONSUL_SERVER_DNS_PORT}/g" \
     -e "s/SEDagent_modeSED/server/g" \
     -e "s/SEDconsul_secret_nmSED/${CONSUL_SECRET_NM}/g" \
-       "${SERVICES_DIR}"/consul/consul.sh > "${admin_tmp_dir}"/consul.sh  
+       "${SERVICES_DIR}"/consul/consul-install.sh > "${admin_tmp_dir}"/consul-install.sh  
      
-echo 'consul.sh ready.'   
+echo 'consul-install.sh ready.'   
 
 sed -e "s/SEDbind_addressSED/${ADMIN_INST_PRIVATE_IP}/g" \
     -e "s/SEDbootstrap_expectSED/1/g" \
@@ -262,8 +261,8 @@ sed -e "s/SEDbind_addressSED/${ADMIN_INST_PRIVATE_IP}/g" \
     
 echo 'consul-server.json ready.'      
       
-scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
-    "${admin_tmp_dir}"/consul.sh \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/consul \
+    "${admin_tmp_dir}"/consul-install.sh \
     "${admin_tmp_dir}"/consul-server.json \
     "${SERVICES_DIR}"/consul/consul.service \
     "${LIBRARY_DIR}"/general_utils.sh \
@@ -272,16 +271,16 @@ scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" 
 echo 'Consul scripts provisioned.'
 echo
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/consul \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}"      
 
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/consul/consul-install.sh \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" >> "${LOGS_DIR}"/admin.log && echo 'Consul server successfully installed.' ||
@@ -293,9 +292,9 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
+       ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/consul/consul-install.sh \
           "${private_key_file}" \
-          "${admin_eip}" \
+          "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${USER_NM}" \
           "${USER_PWD}" >> "${LOGS_DIR}"/admin.log && echo 'Consul server successfully installed.' ||
@@ -304,10 +303,13 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul.sh" \
               exit 1          
           }
     }
+   
+echo "http://${eip}/ui"  
+echo  
     
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
-    "${admin_eip}" \
+    "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}"      
     

@@ -60,8 +60,10 @@ fi
 echo
 
 # Removing old files
-rm -rf "${TMP_DIR:?}"/"${shared_dir}"
-mkdir "${TMP_DIR}"/"${shared_dir}"
+# shellcheck disable=SC2115
+shared_tmp_dir="${TMP_DIR}"/sinatra
+rm -rf  "${shared_tmp_dir:?}"
+mkdir -p "${shared_tmp_dir}"
 
 ## 
 ## Firewall
@@ -141,7 +143,7 @@ awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${USER_NM}" -v hostna
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
     sub(/SEDhostnameSED/,hostname)
-}1' "${INSTANCE_DIR}"/shared/config/cloud_init_template.yml > "${TMP_DIR}"/"${shared_dir}"/cloud_init.yml
+}1' "${INSTANCE_DIR}"/shared/config/cloud_init_template.yml > "${shared_tmp_dir}"/cloud_init.yml
   
 echo 'cloud_init.yml ready.'  
 
@@ -181,7 +183,7 @@ else
        "${subnet_id}" \
        "${SHARED_INST_PRIVATE_IP}" \
        "${AWS_BASE_IMG_ID}" \
-       "${TMP_DIR}"/"${shared_dir}"/cloud_init.yml
+       "${shared_tmp_dir}"/cloud_init.yml
        
    get_instance_id "${SHARED_INST_NM}"
    instance_id="${__RESULT}"   
@@ -209,7 +211,7 @@ echo "SSH port ${ssh_port}."
 echo
 echo 'Uploading the scripts to the box ...'
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir ${SCRIPTS_DIR}"/shared \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -217,36 +219,36 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir ${SCRIPTS_DIR}" \
    
 sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
     -e "s/AllowUsers/#AllowUsers/g" \
-       "${PROVISION_DIR}"/security/sshd_config_template > "${TMP_DIR}"/"${shared_dir}"/sshd_config
+       "${PROVISION_DIR}"/security/sshd_config_template > "${shared_tmp_dir}"/sshd_config
        
 echo 'sshd_config ready.' 
 
 sed -e "s/SEDuser_nmSED/${USER_NM}/g" \
     -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
-       "${PROVISION_DIR}"/docker/docker.sh > "${TMP_DIR}"/docker.sh    
+       "${PROVISION_DIR}"/docker/docker.sh > "${shared_tmp_dir}"/docker.sh    
        
 echo 'docker.sh ready.'     
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${SCRIPTS_DIR}" \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${SCRIPTS_DIR}"/shared \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${PROVISION_DIR}"/security/secure-linux.sh \
     "${PROVISION_DIR}"/security/check-linux.sh \
     "${PROVISION_DIR}"/yumupdate.sh \
-    "${TMP_DIR}"/docker.sh \
-    "${TMP_DIR}"/"${shared_dir}"/sshd_config        
+    "${shared_tmp_dir}"/docker.sh \
+    "${shared_tmp_dir}"/"${shared_dir}"/sshd_config        
 
-ssh_run_remote_command_as_root "chmod +x ${SCRIPTS_DIR}/*.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/shared \
     "${private_key_file}" \
     "${eip}" \
-    "${ssh_port}" \
+    "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
-    "${USER_PWD}"
+    "${USER_PWD}" 
 
 echo 'Securing the box ...'
                 
 set +e
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/secure-linux.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/shared/secure-linux.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -298,7 +300,7 @@ ssh_port="${__RESULT}"
 echo "SSH port ${ssh_port}."
 echo 'Running security checks ...'
 
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/check-linux.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/shared/check-linux.sh \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -308,7 +310,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/check-linux.sh" \
 echo 'Provisioning Docker ...'
 
 set +e                                
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/docker.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/shared/docker.sh \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -357,7 +359,7 @@ else
 fi
 
 # Removing old files
-rm -rf "${TMP_DIR:?}"/"${shared_dir}"
+rm -rf "${shared_tmp_dir:?}"
 
 echo 'Shared box created.'
 echo

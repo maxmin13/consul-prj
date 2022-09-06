@@ -16,8 +16,6 @@ AGENT_MODE='SEDagent_modeSED'
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/secretsmanager.sh
 
-yum update -y && yum install -y jq 
-
 ####
 echo 'Removing Consul ...'
 ####

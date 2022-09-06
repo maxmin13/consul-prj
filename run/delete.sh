@@ -22,12 +22,6 @@ source "${PROJECT_DIR}"/amazon/lib/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
-#
-    #
-    # TODO remove Jenkins, Nginx, Sinatra repositories TODO
-    # MOVE their Docker  build to Admin box
-    #   
-
 # Docker base images.
 . "${PROJECT_DIR}"/amazon/ecr/delete.sh 
 
@@ -37,11 +31,11 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/ec2/nginx/delete.sh
 . "${PROJECT_DIR}"/amazon/ec2/sinatra/delete.sh
 
-. "${PROJECT_DIR}"/amazon/ec2/redis/consul/delete.sh
-. "${PROJECT_DIR}"/amazon/ec2/redis/delete.sh
+##. "${PROJECT_DIR}"/amazon/ec2/redis/consul/delete.sh
+##. "${PROJECT_DIR}"/amazon/ec2/redis/delete.sh
 
 # Jumpbox.
-. "${PROJECT_DIR}"/amazon/ec2/admin/consul/delete.sh   
+####. "${PROJECT_DIR}"/amazon/ec2/admin/consul/delete.sh   
 . "${PROJECT_DIR}"/amazon/ec2/admin/delete.sh
 
 # AWS shared image.

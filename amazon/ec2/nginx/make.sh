@@ -13,7 +13,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-NGINX_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 WEBSITE_ARCHIVE='welcome.zip'
 WEBSITE_NM='welcome'
 
@@ -247,7 +246,7 @@ echo 'Provisioning the instance ...'
 private_key_file="${ACCESS_DIR}"/"${NGINX_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${NGINX_DOCKER_CTX}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}/nginx" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -258,8 +257,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${NGINX_DOCKER_CTX}" \
 ecr_get_repostory_uri "${NGINX_DOCKER_IMG_NM}"
 nginx_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
-    -e "s/SEDnginx_docker_ctxSED/$(escape "${NGINX_DOCKER_CTX}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/nginx)/g" \
     -e "s/SEDnginx_docker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
     -e "s/SEDnginx_docker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
     -e "s/SEDnginx_docker_img_tagSED/${NGINX_DOCKER_IMG_TAG}/g" \
@@ -297,13 +295,8 @@ cd "${nginx_tmp_dir}"/website || exit
 zip -r ../"${WEBSITE_ARCHIVE}" ./*  >> "${LOGS_DIR}"/nginx.log
 
 echo "${WEBSITE_ARCHIVE} ready"
-   
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${NGINX_DOCKER_CTX}" \
-    "${nginx_tmp_dir}"/global.conf \
-    "${SERVICES_DIR}"/nginx/nginx.conf \
-    "${nginx_tmp_dir}"/Dockerfile 
-    
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
+     
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/nginx \
     "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
@@ -311,14 +304,14 @@ scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USE
     "${nginx_tmp_dir}"/nginx.sh \
     "${nginx_tmp_dir}"/"${WEBSITE_ARCHIVE}" 
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/nginx \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" 
     
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/nginx.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx.sh \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -333,7 +326,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/nginx.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/nginx.sh" \
+       ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx.sh \
           "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
@@ -344,8 +337,11 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/nginx.sh" \
               exit 1          
           }
     }
+    
+echo "http://${eip}:${NGINX_HTTP_PORT}/${WEBSITE_NM}"
+echo    
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -383,7 +379,19 @@ then
    echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-fi    
+fi   
+
+check_access_is_granted "${sgp_id}" "${NGINX_HTTP_PORT}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   allow_access_from_cidr "${sgp_id}" "${NGINX_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/nginx.log  
+   
+   echo "Access granted on ${NGINX_HTTP_PORT} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted on ${NGINX_HTTP_PORT} tcp 0.0.0.0/0."
+fi 
 
 # Removing old files
 # shellcheck disable=SC2115

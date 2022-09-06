@@ -13,7 +13,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-JENKINS_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 
 ####
 STEP 'Jenkins box'
@@ -245,7 +244,7 @@ echo 'Provisioning the instance ...'
 private_key_file="${ACCESS_DIR}"/"${JENKINS_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${JENKINS_DOCKER_CTX}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}/jenkins" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -256,8 +255,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${JENKINS_DOCKER_CTX}"
 ecr_get_repostory_uri "${JENKINS_DOCKER_IMG_NM}"
 jenkins_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
-    -e "s/SEDjenkins_docker_ctxSED/$(escape "${JENKINS_DOCKER_CTX}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/jenkins)/g" \
     -e "s/SEDjenkins_docker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
     -e "s/SEDjenkins_docker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
     -e "s/SEDjenkins_docker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
@@ -268,26 +266,22 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
        "${SERVICES_DIR}"/jenkins/jenkins.sh > "${jenkins_tmp_dir}"/jenkins.sh       
   
 echo 'jenkins.sh ready.'  
-   
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${JENKINS_DOCKER_CTX}" \
-    "${SERVICES_DIR}"/jenkins/Dockerfile \
-    "${SERVICES_DIR}"/jenkins/plugins.txt  
-    
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
+     
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/jenkins \
     "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
     "${jenkins_tmp_dir}"/jenkins.sh    
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/jenkins \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" 
 
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins/jenkins.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -302,7 +296,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
+       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins/jenkins.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
@@ -313,8 +307,11 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins.sh" \
               exit 1          
           }
     }
+    
+echo "http://${eip}:${JENKINS_HTTP_PORT}/jenkins"
+echo    
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -359,7 +356,7 @@ fi
 check_access_is_granted "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
-if [[ 'true' == "${is_granted}" ]]
+if [[ 'false' == "${is_granted}" ]]
 then
    grant_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
    

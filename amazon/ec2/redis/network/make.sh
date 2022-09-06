@@ -140,7 +140,7 @@ echo 'Provisioning the Redis instance ...'
 private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${redis_eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}" \
     "${private_key_file}" \
     "${redis_eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -181,7 +181,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/overlay.sh" \
     "${USER_NM}" \
     "${USER_PWD}" && echo 'Network successfully installed.'
     
-#ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+#ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
 #    "${private_key_file}" \
 #    "${redis_eip}" \
 #    "${SHARED_INST_SSH_PORT}" \

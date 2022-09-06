@@ -6,6 +6,8 @@
 ## Base Docker images  ##
 ## ******************* ##
 
+BASE_CENTOS_DOCKER_IMG_NM='centos'
+BASE_CENTOS_DOCKER_IMG_TAG='8.4.2105'
 CENTOS_DOCKER_IMG_NM='maxmin13/centos8'
 CENTOS_DOCKER_IMG_TAG='v1'
 RUBY_DOCKER_IMG_NM='maxmin13/ruby'
@@ -15,6 +17,8 @@ RUBY_DOCKER_IMG_TAG='v1'
 ##      Jenkins        ##
 ## ******************* ##
 
+BASE_JENKINS_DOCKER_IMG_NM='jenkins/jenkins'
+BASE_JENKINS_DOCKER_IMG_TAG='lts'
 JENKINS_DOCKER_CONTAINER_NM='jenkins'
 JENKINS_DOCKER_IMG_NM='maxmin13/jenkins'
 JENKINS_DOCKER_IMG_TAG='v1'

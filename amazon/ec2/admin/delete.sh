@@ -9,8 +9,6 @@ set +o xtrace
 STEP 'Admin box'
 ####
 
-CONSUL_SECRET_NM='consulkey'
-
 echo 'Deleting Admin box ...'
 echo
 

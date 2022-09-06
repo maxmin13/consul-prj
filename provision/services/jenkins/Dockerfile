@@ -6,7 +6,7 @@
 # builds. 
 ##########################################################################################################
 
-FROM jenkins/jenkins:lts
+FROM SEDbase_jenkins_docker_repository_uriSED:SEDbase_jenkins_docker_img_tagSED
 MAINTAINER maxmin@example.com
 ENV REFRESHED_AT 2016-06-01
 

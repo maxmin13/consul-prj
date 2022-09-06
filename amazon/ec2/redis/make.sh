@@ -14,7 +14,6 @@ set -o nounset
 set +o xtrace
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-REDIS_DOCKER_CTX="${SCRIPTS_DIR}"/dockerctx
 REDIS_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
@@ -247,7 +246,7 @@ echo 'Provisioning the instance ...'
 private_key_file="${ACCESS_DIR}"/"${REDIS_INST_KEY_PAIR_NM}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${REDIS_DOCKER_CTX}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}/redis/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -258,8 +257,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR} && mkdir -p ${REDIS_DOCKER_CTX}" \
 ecr_get_repostory_uri "${REDIS_DOCKER_IMG_NM}"
 redis_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
-    -e "s/SEDredis_docker_ctxSED/$(escape "${REDIS_DOCKER_CTX}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/redis)/g" \
     -e "s/SEDredis_docker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
     -e "s/SEDredis_docker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
     -e "s/SEDredis_docker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
@@ -281,25 +279,25 @@ sed -e "s/SEDrepository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
 
 echo 'Dockerfile ready.'
    
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${REDIS_DOCKER_CTX}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/redis/dockerctx \
     "${redis_tmp_dir}"/Dockerfile \
     "${SERVICES_DIR}"/redis/redis.conf
     
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/redis \
     "${LIBRARY_DIR}"/constants/app_consts.sh \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
     "${redis_tmp_dir}"/redis.sh
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}" \
+ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/redis \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${USER_NM}" \
     "${USER_PWD}" 
     
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
+ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -313,7 +311,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
+       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
@@ -324,8 +322,11 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis.sh" \
               exit 1          
           }
     }
+    
+#echo "redis-cli -h ${eip} -p ${REDIS_IP_PORT}"
+#echo    
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR}" \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
@@ -364,6 +365,20 @@ then
 else
    echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi
+
+#check_access_is_granted "${sgp_id}" "${REDIS_IP_PORT}" 'tcp' '0.0.0.0/0'
+#is_granted="${__RESULT}"
+#
+#if [[ 'false' == "${is_granted}" ]]
+#then
+#   allow_access_from_cidr "${sgp_id}" "${REDIS_IP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/redis.log  
+#   
+#   echo "Access granted on ${REDIS_IP_PORT} tcp 0.0.0.0/0."
+#else
+#   echo "WARN: access already granted on ${REDIS_IP_PORT} tcp 0.0.0.0/0."
+#fi
+   
+echo 'Granted SSH access to the box.'
 
 # Removing old files
 # shellcheck disable=SC2115
