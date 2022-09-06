@@ -157,18 +157,24 @@ then
    #
    # Permissions.
    #
-
-   check_role_has_permission_policy_attached "${REDIS_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
-   is_permission_policy_associated="${__RESULT}"
-
-   if [[ 'true' == "${is_permission_policy_associated}" ]]
+   
+   check_role_exists "${REDIS_AWS_ROLE_NM}"
+   role_exists="${__RESULT}"
+   
+   if [[ 'true' == "${role_exists}" ]]
    then
-      detach_permission_policy_from_role "${REDIS_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
+      check_role_has_permission_policy_attached "${REDIS_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
+      is_permission_policy_associated="${__RESULT}"
+
+      if [[ 'true' == "${is_permission_policy_associated}" ]]
+      then
+         detach_permission_policy_from_role "${REDIS_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
       
-      echo 'Permission policy detached.'
-   else
-      echo 'WARN: permission policy already detached from the role.'
-   fi 
+         echo 'Permission policy detached.'
+      else
+         echo 'WARN: permission policy already detached from the role.'
+      fi   
+   fi
 
    #
    # Firewall rules
@@ -285,7 +291,7 @@ then
    ## Clearing
    rm -rf  "${redis_tmp_dir:?}"
 
-   echo 'Redis Consul deleted.'
+   echo 'Consul deleted.'
 fi
 
 echo

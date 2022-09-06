@@ -88,18 +88,24 @@ then
    # Permissions.
    #
 
-   check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
-   is_permission_policy_associated="${__RESULT}"
+   check_role_exists "${ADMIN_AWS_ROLE_NM}"
+   role_exists="${__RESULT}"
+   
+   if [[ 'true' == "${role_exists}" ]]
+   then  
+      check_role_has_permission_policy_attached "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
+      is_permission_policy_associated="${__RESULT}"
 
-   if [[ 'false' == "${is_permission_policy_associated}" ]]
-   then
-      echo 'Associating permission policy the instance role ...'
+      if [[ 'false' == "${is_permission_policy_associated}" ]]
+      then
+         echo 'Associating permission policy the instance role ...'
 
-      attach_permission_policy_to_role "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
+         attach_permission_policy_to_role "${ADMIN_AWS_ROLE_NM}" "${SECRETSMANAGER_POLICY_NM}"
 
-      echo 'Permission policy associated to the role.'  
-   else
-      echo 'WARN: permission policy already associated to the role.'
+         echo 'Permission policy associated to the role.'  
+      else
+        echo 'WARN: permission policy already associated to the role.'
+      fi
    fi
 
    #
