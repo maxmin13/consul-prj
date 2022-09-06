@@ -42,7 +42,7 @@ mkdir -p "${LOGS_DIR}"
 
 # AWS instances.
 . "${PROJECT_DIR}"/amazon/ec2/redis/make.sh
-###. "${PROJECT_DIR}"/amazon/ec2/redis/consul/make.sh 
+. "${PROJECT_DIR}"/amazon/ec2/redis/consul/make.sh 
 . "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
 . "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
 . "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
