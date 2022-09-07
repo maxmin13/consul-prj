@@ -34,17 +34,25 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/ec2/shared/delete.sh  
 
 # Linux jumpbox.
-. "${PROJECT_DIR}"/amazon/ec2/admin/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/admin/box/make.sh
 . "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
 
 # Docker base images.
 . "${PROJECT_DIR}"/amazon/ecr/make.sh 
 
 # AWS instances.
-. "${PROJECT_DIR}"/amazon/ec2/redis/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/redis/box/make.sh
 . "${PROJECT_DIR}"/amazon/ec2/redis/consul/make.sh 
-. "${PROJECT_DIR}"/amazon/ec2/sinatra/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/jenkins/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/nginx/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/redis/db/make.sh
+
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/box/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/web/make.sh
+
+. "${PROJECT_DIR}"/amazon/ec2/jenkins/box/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/jenkins/web/make.sh
+
+. "${PROJECT_DIR}"/amazon/ec2/nginx/box/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/nginx/web/make.sh
+
 
 
