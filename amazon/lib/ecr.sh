@@ -46,7 +46,6 @@ function ecr_check_repository_exists()
               --region "${DTC_REGION}" \
               --query repositories[0].repositoryArn \
               --output text)"          
-   exit_code=$?
    
    if [[ -n "${repository_desc}" ]]
    then
@@ -82,15 +81,7 @@ function ecr_create_repository()
    aws ecr create-repository \
       --repository-name "${repository_nm}" \
       --region "${DTC_REGION}"   
-       
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: creating repository.'
-      return "${exit_code}"
-   fi     
-            
+                       
    return "${exit_code}"
 }
 
@@ -162,9 +153,7 @@ function ecr_check_img_exists()
               --repository-name "${repository_nm}" \
               --region "${DTC_REGION}" \
               --image-ids imageTag="${img_tag}" \
-              --query text)"
-              
-   exit_code=$?            
+              --query text)"      
    
    if [[ -n "${image_desc}" ]]
    then

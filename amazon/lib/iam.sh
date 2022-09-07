@@ -353,13 +353,6 @@ function check_role_has_permission_policy_attached()
 
    policy_arn="$(aws iam list-attached-role-policies --role-name "${role_nm}" \
        --query "AttachedPolicies[? PolicyName=='${policy_nm}'].PolicyArn" --output text)"
-   exit_code=$?
- 
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving permission policy.' 
-      return "${exit_code}"
-   fi 
    
    if [[ -n "${policy_arn}" ]]
    then
@@ -579,24 +572,10 @@ function delete_role()
    # List the instance profiles for the role.
    instance_profiles="$(aws iam list-instance-profiles-for-role --role-name "${role_nm}" \
        --query "InstanceProfiles[].InstanceProfileName" --output text)"
-   exit_code=$?
-
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving instance profiles.' 
-      return "${exit_code}"
-   fi
    
    # List the permission policies attached to the role.
    policies="$(aws iam list-attached-role-policies --role-name "${role_nm}" --query "AttachedPolicies[].PolicyName" \
-       --output text)"
-   exit_code=$? 
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving the policies attached to the role.'
-      return "${exit_code}" 
-   fi   
+       --output text)" 
         
    # Detach the role from the instance profiles.
    for profile_nm in ${instance_profiles}
@@ -711,14 +690,6 @@ function get_role_arn()
 
    role_arn="$(aws iam list-roles --query "Roles[? RoleName=='${role_nm}'].Arn" --output text)"
    
-   exit_code=$?
-       
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving role ARN.'
-      return "${exit_code}"
-   fi
-   
    if [[ -z "${role_arn}" ]]
    then
       echo 'Role not found.'
@@ -754,15 +725,7 @@ function get_role_id()
 
    role_id="$(aws iam list-roles \
        --query "Roles[? RoleName=='${role_nm}'].RoleId" --output text)"
-       
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving role.'
-      return "${exit_code}"
-   fi
-   
+          
    __RESULT="${role_id}" 
        
    return "${exit_code}" 
@@ -830,13 +793,6 @@ function delete_instance_profile()
    # Only one role can be attached to an instance profile.
    role_nm="$(aws iam list-instance-profiles \
        --query "InstanceProfiles[? InstanceProfileName=='${profile_nm}' ].Roles[].RoleName" --output text)"
-   exit_code=$?
-
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving the role attached to the instance profile.' 
-      return "${exit_code}"
-   fi
 
    if [[ -n "${role_nm}" ]]
    then
@@ -940,14 +896,6 @@ function get_instance_profile_id()
    profile_id="$(aws iam list-instance-profiles \
       --query "InstanceProfiles[?InstanceProfileName=='${profile_nm}'].InstanceProfileId" \
       --output text)"
-
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting instance profile ID.'
-      return "${exit_code}"
-   fi 
   
    __RESULT="${profile_id}"
 
@@ -1025,14 +973,9 @@ function check_instance_profile_has_role_associated()
       --query "InstanceProfiles[? InstanceProfileName=='${profile_nm}' ].Roles[0].RoleName" \
       --output text)"
 
-   exit_code=$?
-   
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ "${role_nm}" == "${role_found}" ]]
    then
-      if [[ "${role_nm}" == "${role_found}" ]]
-      then
-         associated='true' 
-      fi
+      associated='true' 
    fi
    
    __RESULT="${associated}"

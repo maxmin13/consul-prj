@@ -129,14 +129,7 @@ function sm_get_secret()
    local secret;
    
    secret="$(aws secretsmanager get-secret-value --region "${region}" --secret-id "${secret_nm}"| jq --raw-output '.SecretString' | jq -r .Value)"
-      
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving the secret.'
-   fi 
-   
+         
    __RESULT="${secret}"
    
    return "${exit_code}"
@@ -162,7 +155,7 @@ function sm_check_secret_exists()
       return 128
    fi
 
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r secret_nm="${1}"
    local -r region="${2}"
@@ -172,8 +165,6 @@ function sm_check_secret_exists()
    # error if the secret is not found.
    secret_desc="$(aws secretsmanager describe-secret --secret-id "${secret_nm}" \
       --region "${region}" --output text)"          
-  
-   exit_code=$?
    
    if [[ -n "${secret_desc}" ]]
    then

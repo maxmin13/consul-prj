@@ -460,13 +460,6 @@ function docker_network_exists()
    local net=''
 
    net="$(docker network ls | awk -v nm="${network_nm}" '$2==nm {print $2}')"
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: looking for network.'
-      return "${exit_code}"
-   fi     
    
    if [[ -n "${net}" ]]
    then
@@ -855,13 +848,7 @@ function docker_swarm_status()
    local exit_code=0
    local swarm_status=''
 
-   swarm_status="$(docker info | awk -v nm="Swarm" '$1~nm {print $2}')"
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      return "${exit_code}"
-   fi     
+   swarm_status="$(docker info | awk -v nm="Swarm" '$1~nm {print $2}')"   
    
    __RESULT="${swarm_status}"
             

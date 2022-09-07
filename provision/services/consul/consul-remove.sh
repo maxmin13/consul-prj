@@ -41,11 +41,13 @@ then
    then
       sm_delete_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}"
    
-      echo 'Consul key deleted.' 
-   fi   
+      echo 'Consul key deleted.'
    else
-      echo 'Client mode.'
-   fi
+      echo 'WARN: Consul key not found.' 
+   fi   
+else
+   echo 'Client mode.'
+fi
 
 echo 'Consul removed.'
 echo

@@ -78,6 +78,41 @@ else
    echo "* security group ID: ${sgp_id}."
 fi
 
+# Jumpbox where Consul server is installed.
+get_instance_id "${ADMIN_INST_NM}"
+admin_instance_id="${__RESULT}"
+
+if [[ -z "${admin_instance_id}" ]]
+then
+   echo '* ERROR: Admin box not found.'
+   exit 1
+fi
+
+if [[ -n "${admin_instance_id}" ]]
+then
+   get_instance_state "${ADMIN_INST_NM}"
+   admin_instance_st="${__RESULT}"
+   
+   if [[ 'running' == "${admin_instance_st}" ]]
+   then
+      echo "* Admin box ready (${admin_instance_st})."
+   else
+      echo "* ERROR: Admin box not ready. (${admin_instance_st})."
+      
+      exit 1
+   fi
+fi
+
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+admin_eip="${__RESULT}"
+
+if [[ -z "${admin_eip}" ]]
+then
+   echo '* ERROR: Admin IP address not found.'
+   exit 1
+else
+   echo "* Admin IP address: ${admin_eip}."
+fi
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
@@ -305,6 +340,9 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul/consul-install.sh" \
               exit 1          
           }
     }
+    
+echo "http://${admin_eip}:${ADMIN_CONSUL_SERVER_HTTP_PORT}/ui"  
+echo     
     
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \

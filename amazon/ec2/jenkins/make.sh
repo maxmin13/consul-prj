@@ -358,7 +358,7 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   grant_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
+   allow_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
    
    echo "Access granted on ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
 else

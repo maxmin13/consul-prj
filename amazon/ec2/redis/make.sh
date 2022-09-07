@@ -323,9 +323,6 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis.sh" \
           }
     }
     
-#echo "redis-cli -h ${eip} -p ${REDIS_IP_PORT}"
-#echo    
-
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \

@@ -455,6 +455,8 @@ ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/sin
         echo 'ERROR: building Sinatra.'
         exit 1   
     }    
+ 
+echo 
    
 #
 # Redis

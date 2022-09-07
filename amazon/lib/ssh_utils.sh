@@ -635,14 +635,7 @@ function get_private_key()
    
    if [[ -f "${pkey_file}" ]]
    then
-      private_key="$(cat "${pkey_file}")"
-      exit_code=$?
-   
-      if [[ 0 -ne "${exit_code}" ]]
-      then
-         echo 'ERROR: retrieving private key.'
-         return "${exit_code}"
-      fi   
+      private_key="$(cat "${pkey_file}")"   
    else
       echo 'WARN: private key not found.'
    fi     
@@ -686,14 +679,7 @@ function get_public_key()
    
    if [[ -f "${pkey_file}" ]]
    then
-      public_key="$(ssh-keygen -y -f "${pkey_file}")"
-      exit_code=$?
-   
-      if [[ 0 -ne "${exit_code}" ]]
-      then
-         echo 'ERROR: retrieving public key.'
-         return "${exit_code}"
-      fi   
+      public_key="$(ssh-keygen -y -f "${pkey_file}")"  
    else
       echo 'WARN: private key not found.'
    fi  

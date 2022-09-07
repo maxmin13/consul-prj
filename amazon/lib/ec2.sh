@@ -43,14 +43,6 @@ function get_datacenter_id()
        --filters Name=tag-value,Values="${dtc_nm}" \
        --query 'Vpcs[*].VpcId' \
        --output text)" 
-       
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting datacenter ID.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${dtc_id}"
    
@@ -174,14 +166,6 @@ function get_subnet_ids()
    subnet_ids="$(aws ec2 describe-subnets \
        --filters Name=vpc-id,Values="${dtc_id}" \
        --query 'Subnets[*].SubnetId')" 
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting subnet IDs.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${subnet_ids}"
    
@@ -216,14 +200,6 @@ function get_subnet_id()
       --filters Name=tag-value,Values="${subnet_nm}" \
       --query 'Subnets[*].SubnetId' \
       --output text)"
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting subnet IDs.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${subnet_id}"
    
@@ -267,15 +243,7 @@ function create_subnet()
       --availability-zone "${subnet_az}" \
       --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${subnet_nm}'}]" \
       --query 'Subnet.SubnetId' \
-      --output text)"
-       
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: creating subnet.'
-      return "${exit_code}"
-   fi     
+      --output text)"    
  
    aws ec2 wait subnet-available --filters Name=tag-key,Values=Name \
        --filters Name=tag-value,Values="${subnet_nm}"
@@ -361,14 +329,6 @@ function get_internet_gateway_id()
        --filters Name=tag-value,Values="${igw_nm}" \
        --query 'InternetGateways[*].InternetGatewayId' \
        --output text)"
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting internet gateway ID.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${igw_id}"
    
@@ -407,14 +367,6 @@ function get_internet_gateway_attachment_status()
        --filters Name=tag-value,Values="${igw_nm}" \
        --query "InternetGateways[*].Attachments[?VpcId=='${dtc_id}'].[State]" \
        --output text)"
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting internet gateway attachment status.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${attachment_status}"
    
@@ -553,14 +505,6 @@ function get_route_table_id()
        --filters Name=tag-value,Values="${rtb_nm}" \
        --query 'RouteTables[*].RouteTableId' \
        --output text)"
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving route table ID.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${rtb_id}"
    
@@ -708,14 +652,6 @@ function get_security_group_id()
          --filters Name=tag-value,Values="${sgp_nm}" \
          --query 'SecurityGroups[*].GroupId' \
          --output text)"
-         
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving security group ID.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${sgp_id}"
    
@@ -1114,15 +1050,7 @@ function get_instance_state()
        --filters Name=tag-value,Values="${instance_nm}" \
        --query 'Reservations[*].Instances[*].State.Name' \
        --output text)"
-
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting instance state.'
-      return "${exit_code}"
-   fi 
-
+       
    __RESULT="${instance_st}"
    
    return "${exit_code}"
@@ -1156,14 +1084,6 @@ function get_public_ip_address_associated_with_instance()
        --filters Name=tag-value,Values="${instance_nm}" \
        --query 'Reservations[*].Instances[*].PublicIpAddress' \
        --output text )"
-
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting public IP address associated with the instance.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${instance_ip}"
    
@@ -1199,14 +1119,6 @@ function get_private_ip_address_associated_with_instance()
        --query 'Reservations[*].Instances[*].PrivateIpAddress' \
        --output text )"
 
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting private IP address associated with the instance.'
-      return "${exit_code}"
-   fi 
-
    __RESULT="${instance_ip}"
    
    return "${exit_code}"
@@ -1239,15 +1151,7 @@ function get_instance_id()
        --filters Name=tag-key,Values=Name \
        --filters Name=tag-value,Values="${instance_nm}" \
        --query 'Reservations[*].Instances[*].InstanceId' \
-       --output text)"
-       
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting instance ID.'
-      return "${exit_code}"
-   fi 
+       --output text)" 
 
    __RESULT="${instance_id}"
    
@@ -1297,15 +1201,7 @@ function run_instance()
        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${instance_nm}}]" \
        --user-data file://"${cloud_init_file}" \
        --output text \
-       --query 'Instances[*].InstanceId')"
-       
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: running Admin instance.'
-      return "${exit_code}"
-   fi    
+       --query 'Instances[*].InstanceId')"    
    
    aws ec2 wait instance-status-ok --instance-ids "${instance_id}"
    exit_code=$?
@@ -1665,14 +1561,6 @@ function __get_association_id()
    association_id="$(aws ec2 describe-iam-instance-profile-associations \
        --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}' ].AssociationId" \
        --output text)"
-  
-   exit_code=$?
-
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving the association ID.' 
-      return "${exit_code}"
-   fi
    
    __RESULT="${association_id}"
    
@@ -1710,15 +1598,7 @@ function create_image()
         --name "${img_nm}" \
         --description "${img_desc}" \
         --query 'ImageId' \
-        --output text)" 
-  
-   exit_code=$?
-
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: creating imaged.' 
-      return "${exit_code}"
-   fi   
+        --output text)"   
    
    aws ec2 wait image-available --image-ids "${img_id}"
 
@@ -1758,14 +1638,6 @@ function get_image_id()
         --filters Name=name,Values="${img_nm}" \
         --query 'Images[*].ImageId' \
         --output text)"
-  
-   exit_code=$?
-
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving the imaged ID.' 
-      return "${exit_code}"
-   fi
    
    __RESULT="${img_id}"
    
@@ -1799,14 +1671,6 @@ function get_image_state()
         --query 'Images[*].State' \
         --output text)"
   
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting image state.'
-      return "${exit_code}"
-   fi 
-
    __RESULT="${img_st}"
    
    return "${exit_code}"
@@ -1843,14 +1707,6 @@ function get_image_snapshot_ids()
        --filters Name=name,Values="${img_nm}" \
        --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' \
        --output text)"
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting image snapshot IDs.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${img_snapshot_ids}"
    
@@ -1953,14 +1809,6 @@ function get_allocation_id()
        --query 'Addresses[*].AllocationId' \
        --output text)"
 
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting allocation ID.'
-      return "${exit_code}"
-   fi 
-
    __RESULT="${allocation_id}"
    
    return "${exit_code}"
@@ -1986,14 +1834,6 @@ function get_all_allocation_ids()
    allocation_ids="$(aws ec2 describe-addresses \
        --query 'Addresses[*].AllocationId' \
        --output text)"
-
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: getting allocation IDs.'
-      return "${exit_code}"
-   fi 
 
    __RESULT="${allocation_ids}"
    
@@ -2021,13 +1861,6 @@ function get_unused_public_ip_address()
    eip_list="$(aws ec2 describe-addresses \
        --query 'Addresses[?InstanceId == null].PublicIp' \
        --output text)"
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving unused IP address.' 
-      return "${exit_code}"
-   fi
             
    if [[ -n "${eip_list}" ]]
    then
@@ -2060,13 +1893,6 @@ function allocate_public_ip_address()
    eip="$(aws ec2 allocate-address \
        --query 'PublicIp' \
        --output text)"
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: allocating IP address.' 
-      return "${exit_code}"
-   fi
 
    __RESULT="${eip}"
    
@@ -2172,14 +1998,6 @@ function check_aws_public_key_exists()
    local key=''
    
    key=$(aws ec2 describe-key-pairs --query "KeyPairs[? KeyName=='${key_nm}'].KeyFingerprint" --output text)
-  
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving key pair name.'
-      return "${exit_code}"
-   fi
    
    if [[ -n "${key}" ]]
    then

@@ -40,30 +40,8 @@ if [[ $# -lt 3 ]]
    local type="${3}"
 
    ip link add "${name}" type "${type}"
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: creating network interface.'
-      exit 1
-   fi    
-   
    ip addr add "${ip_address}" dev "${name}" 
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: configuring network interface.'
-      exit 1
-   fi 
-   
-   ip link set "${name}" up 
-   exit_code=$?
-         
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: starting network interface.'
-   fi     
+   ip link set "${name}" up   
             
    return "${exit_code}"
 }
@@ -94,13 +72,6 @@ if [[ $# -lt 1 ]]
    local name=''
 
    name="$(ip link | awk -v nm="${interface_nm}" '$2~nm {print $2}')"
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: looking for network interface.'
-      return "${exit_code}"
-   fi  
    
    if [[ -n "${name}" ]]
    then

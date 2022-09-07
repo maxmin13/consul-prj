@@ -304,7 +304,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/consul/consul-install.sh \
           }
     }
    
-echo "http://${eip}/ui"  
+echo "http://${eip}:${ADMIN_CONSUL_SERVER_HTTP_PORT}/ui"  
 echo  
     
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \

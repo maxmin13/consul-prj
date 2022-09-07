@@ -19,7 +19,6 @@ STEP 'Shared box'
 #
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
-shared_dir='shared'
 
 get_datacenter_id "${DTC_NM}"
 dtc_id="${__RESULT}"
@@ -61,7 +60,7 @@ echo
 
 # Removing old files
 # shellcheck disable=SC2115
-shared_tmp_dir="${TMP_DIR}"/sinatra
+shared_tmp_dir="${TMP_DIR}"/shared
 rm -rf  "${shared_tmp_dir:?}"
 mkdir -p "${shared_tmp_dir}"
 
@@ -211,7 +210,7 @@ echo "SSH port ${ssh_port}."
 echo
 echo 'Uploading the scripts to the box ...'
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir ${SCRIPTS_DIR}"/shared \
+ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}"/shared \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -224,7 +223,7 @@ sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
 echo 'sshd_config ready.' 
 
 sed -e "s/SEDuser_nmSED/${USER_NM}/g" \
-    -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}")/g" \
+    -e "s/SEDscripts_dirSED/$(escape ${SCRIPTS_DIR}/shared)/g" \
        "${PROVISION_DIR}"/docker/docker.sh > "${shared_tmp_dir}"/docker.sh    
        
 echo 'docker.sh ready.'     
@@ -235,12 +234,12 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${USER_NM}" "${SC
     "${PROVISION_DIR}"/security/check-linux.sh \
     "${PROVISION_DIR}"/yumupdate.sh \
     "${shared_tmp_dir}"/docker.sh \
-    "${shared_tmp_dir}"/"${shared_dir}"/sshd_config        
+    "${shared_tmp_dir}"/sshd_config        
 
 ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/shared \
     "${private_key_file}" \
     "${eip}" \
-    "${SHARED_INST_SSH_PORT}" \
+    "${ssh_port}" \
     "${USER_NM}" \
     "${USER_PWD}" 
 
@@ -261,7 +260,7 @@ set -e
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
 then
-   echo 'Box successfully secured.'
+   echo 'Box successfully secured, rebooting the instance ...'
 
    set +e
    ssh_run_remote_command_as_root "reboot" \
