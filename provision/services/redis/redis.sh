@@ -3,8 +3,7 @@
 # shellcheck disable=SC1091
 
 ############################################################
-# Installs a Redis database in a Docker container and runs 
-# it in the default Docker bridge network.
+# Runs a Redis database in a Docker container.
 ############################################################
 
 set -o errexit
