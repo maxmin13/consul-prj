@@ -37,7 +37,7 @@ USER_PWD='awsadmin'
 ## AWS Shared image ##
 ## **************** ##
 
-SHARED_INST_NM='shared-box2'
+SHARED_INST_NM='shared-box3'
 SHARED_INST_HOSTNAME='shared.maxmin.it'
 SHARED_INST_PRIVATE_IP='10.0.10.5'
 SHARED_INST_SSH_PORT='38142'
@@ -50,7 +50,7 @@ SHARED_IMG_DESC='Linux secured Image'
 ##  AWS Admin box   ##
 ## **************** ##
 
-ADMIN_INST_NM='admin-box2'
+ADMIN_INST_NM='admin-box3'
 ADMIN_INST_PRIVATE_IP='10.0.10.9'
 ADMIN_CONSUL_SERVER_RPC_PORT='8300'
 ADMIN_CONSUL_SERVER_SERF_LAN_PORT='8301'
@@ -67,7 +67,7 @@ ADMIN_AWS_ROLE_NM='AdminAWSrole'
 ## AWS Jenkins box  ##
 ## **************** ##
 
-JENKINS_INST_NM='jenkins-box2'
+JENKINS_INST_NM='jenkins-box3'
 JENKINS_INST_PRIVATE_IP='10.0.10.10'
 JENKINS_HTTP_PORT='80'
 JENKINS_INST_HOSTNAME='jenkins.maxmin.it'
@@ -81,7 +81,7 @@ JENKINS_INST_HOME_DIR='/var/jenkins_home'
 ##  AWS Nginx box   ##
 ## **************** ##
 
-NGINX_INST_NM='nginx-box2'
+NGINX_INST_NM='nginx-box3'
 NGINX_INST_PRIVATE_IP='10.0.10.20'
 NGINX_HTTP_PORT='80'
 NGINX_INST_HOSTNAME='nginx.maxmin.it'
@@ -95,7 +95,7 @@ NGINX_INST_WEBAPPS_DIR='/opt/nginx/webapps'
 ## AWS Redis db box ##
 ## **************** ##
 
-REDIS_INST_NM='redis-box2'
+REDIS_INST_NM='redis-box3'
 REDIS_INST_PRIVATE_IP='10.0.10.30'
 REDIS_IP_PORT='6379'
 REDIS_CONSUL_SERVER_RPC_PORT='8300'
@@ -113,7 +113,7 @@ REDIS_AWS_ROLE_NM='RedisAWSrole'
 ## AWS Sinatra box  ##
 ## **************** ##
 
-SINATRA_INST_NM='sinatra-box2'
+SINATRA_INST_NM='sinatra-box3'
 SINATRA_INST_PRIVATE_IP='10.0.10.33'
 SINATRA_HTTP_PORT='4567'
 SINATRA_INST_HOSTNAME='sinatra.maxmin.it'

@@ -3,7 +3,7 @@
 # shellcheck disable=SC2015
 
 #####################################################
-# Creates an EC2 Linux jumpbox.
+# Creates an EC2 Linux box for a Redis database.
 #####################################################
 
 set -o errexit
@@ -11,8 +11,11 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+SCRIPTS_DIR=/home/"${USER_NM}"/script
+REDIS_DOCKER_CONTAINER_NETWORK_NM='bridge'
+
 ####
-STEP 'Admin box'
+STEP 'Redis box'
 ####
 
 get_datacenter_id "${DTC_NM}"
@@ -50,9 +53,9 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2115
-admin_tmp_dir="${TMP_DIR}"/admin
-rm -rf  "${admin_tmp_dir:?}"
-mkdir -p "${admin_tmp_dir}"
+redis_tmp_dir="${TMP_DIR}"/redis
+rm -rf  "${redis_tmp_dir:?}"
+mkdir -p "${redis_tmp_dir}"
 
 echo
 
@@ -60,73 +63,61 @@ echo
 # Firewall
 #
 
-get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
 sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: security group is already created.'
 else
-   create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" "${ADMIN_INST_SEC_GRP_NM}" >> "${LOGS_DIR}"/admin.log
-   get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+   create_security_group "${dtc_id}" "${REDIS_INST_SEC_GRP_NM}" "${REDIS_INST_SEC_GRP_NM}" >> "${LOGS_DIR}"/redis.log   
+   get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
    sgp_id="${__RESULT}"
    
    echo 'Security group created.'
 fi
 
-check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'false' == "${is_granted}" ]]
-then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log
-   
-   echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-fi
-
 # 
-# Admin box
+# Redis box
 #
 
-check_aws_public_key_exists "${ADMIN_INST_KEY_PAIR_NM}" 
+check_aws_public_key_exists "${REDIS_INST_KEY_PAIR_NM}" 
 key_exists="${__RESULT}"
 
 if [[ 'false' == "${key_exists}" ]]
 then
    # Create a private key in the local 'access' directory.
    mkdir -p "${ACCESS_DIR}"
-   generate_aws_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ACCESS_DIR}" 
+   generate_aws_keypair "${REDIS_INST_KEY_PAIR_NM}" "${ACCESS_DIR}" 
    
    echo 'SSH private key created.'
 else
    echo 'WARN: SSH key-pair already created.'
 fi
 
-get_public_key "${ADMIN_INST_KEY_PAIR_NM}" "${ACCESS_DIR}"
+get_public_key "${REDIS_INST_KEY_PAIR_NM}" "${ACCESS_DIR}"
 public_key="${__RESULT}"
  
 echo 'SSH public key extracted.'
 
-## Removes the default user, creates the user 'awsadmin' and sets the instance's hostname.  
+## Removes the default user, creates the user 'awsadmin' and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${USER_PWD}")" 
-awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${USER_NM}" -v hostname="${ADMIN_INST_HOSTNAME}" '{
+awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${USER_NM}" -v hostname="${REDIS_INST_HOSTNAME}" '{
     sub(/SEDuser_nameSED/,user)
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
     sub(/SEDhostnameSED/,hostname)
-}1' "${INSTANCE_DIR}"/admin/config/cloud_init_template.yml > "${admin_tmp_dir}"/cloud_init.yml
+}1' "${INSTANCE_DIR}"/redis/box/config/cloud_init_template.yml > "${redis_tmp_dir}"/cloud_init.yml
  
 echo 'cloud_init.yml ready.' 
 
-get_instance_id "${ADMIN_INST_NM}"
+get_instance_id "${REDIS_INST_NM}"
 instance_id="${__RESULT}"
 
 if [[ -n "${instance_id}" ]]
 then
-   get_instance_state "${ADMIN_INST_NM}"
+   get_instance_state "${REDIS_INST_NM}"
    instance_st="${__RESULT}"
    
    if [[ 'running' == "${instance_st}" || \
@@ -143,21 +134,21 @@ else
    echo "Creating the box ..."
 
    run_instance \
-       "${ADMIN_INST_NM}" \
+       "${REDIS_INST_NM}" \
        "${sgp_id}" \
        "${subnet_id}" \
-       "${ADMIN_INST_PRIVATE_IP}" \
+       "${REDIS_INST_PRIVATE_IP}" \
        "${shared_image_id}" \
-       "${admin_tmp_dir}"/cloud_init.yml
+       "${redis_tmp_dir}"/cloud_init.yml
        
-   get_instance_id "${ADMIN_INST_NM}"
+   get_instance_id "${REDIS_INST_NM}"
    instance_id="${__RESULT}"    
 
    echo "Box created."
 fi
 
 # Get the public IP address assigned to the instance. 
-get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
 eip="${__RESULT}"
 
 echo "Public address ${eip}."
@@ -173,71 +164,51 @@ echo "Public address ${eip}."
 # service and use them. 
 # see: aws sts get-caller-identity
 
-check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
+check_instance_profile_exists "${REDIS_INST_PROFILE_NM}"
 instance_profile_exists="${__RESULT}"
 
 if [[ 'false' == "${instance_profile_exists}" ]]
 then
    echo 'Creating instance profile ...'
 
-   create_instance_profile "${ADMIN_INST_PROFILE_NM}" >> "${LOGS_DIR}"/admin.log 
+   create_instance_profile "${REDIS_INST_PROFILE_NM}" >> "${LOGS_DIR}"/redis.log 
 
    echo 'Instance profile created.'
 else
    echo 'WARN: instance profile already created.'
 fi
 
-get_instance_profile_id "${ADMIN_INST_PROFILE_NM}"
+get_instance_profile_id "${REDIS_INST_PROFILE_NM}"
 instance_profile_id="${__RESULT}"
 
-check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${instance_profile_id}"
+check_instance_has_instance_profile_associated "${REDIS_INST_NM}" "${instance_profile_id}"
 is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
    echo 'Associating instance profile to the instance ...'
    
-   associate_instance_profile_to_instance_and_wait "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" >> "${LOGS_DIR}"/admin.log 2>&1
+   associate_instance_profile_to_instance_and_wait "${REDIS_INST_NM}" "${REDIS_INST_PROFILE_NM}" >> "${LOGS_DIR}"/redis.log 2>&1
    
    echo 'Instance profile associated to the instance.'
 else
    echo 'WARN: instance profile already associated to the instance.'
 fi
 
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}" 
+check_instance_profile_has_role_associated "${REDIS_INST_PROFILE_NM}" "${REDIS_AWS_ROLE_NM}" 
 is_role_associated="${__RESULT}"
 
 if [[ 'false' == "${is_role_associated}" ]]
 then
    echo 'Associating role to instance profile ...'
    
-   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${ADMIN_AWS_ROLE_NM}"
+   associate_role_to_instance_profile "${REDIS_INST_PROFILE_NM}" "${REDIS_AWS_ROLE_NM}"
       
    echo 'Role associated to the instance profile.' 
 else
    echo 'WARN: role already associated to the instance profile.'
 fi 
 
-## 
-## Firewall.
-##
-
-check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'true' == "${is_granted}" ]]
-then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/admin.log 
-   
-   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-fi
-
-# Removing old files
-# shellcheck disable=SC2115
-rm -rf  "${admin_tmp_dir:?}"
-
-echo 'Admin box created.'       
+echo 'Redis box created.'
 echo
 

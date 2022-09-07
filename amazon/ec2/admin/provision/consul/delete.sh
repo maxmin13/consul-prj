@@ -69,9 +69,9 @@ admin_eip="${__RESULT}"
 
 if [[ -z "${admin_eip}" ]]
 then
-   echo '* WARN: Admin public IP address not found.'
+   echo '* WARN: Admin IP address not found.'
 else
-   echo "* Admin public IP address: ${admin_eip}."
+   echo "* Admin IP address: ${admin_eip}."
 fi
 
 # Removing old files

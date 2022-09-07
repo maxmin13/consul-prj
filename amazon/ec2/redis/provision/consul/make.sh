@@ -67,6 +67,18 @@ then
    fi
 fi
 
+# Get the public IP address assigned to the instance. 
+get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
+eip="${__RESULT}"
+
+if [[ -z "${eip}" ]]
+then
+   echo '* ERROR: Redis IP address not found.'
+   exit 1
+else
+   echo "* Redis IP address: ${eip}."
+fi
+
 get_security_group_id "${REDIS_INST_SEC_GRP_NM}"
 sgp_id="${__RESULT}"
 
@@ -112,18 +124,6 @@ then
    exit 1
 else
    echo "* Admin IP address: ${admin_eip}."
-fi
-
-# Get the public IP address assigned to the instance. 
-get_public_ip_address_associated_with_instance "${REDIS_INST_NM}"
-eip="${__RESULT}"
-
-if [[ -z "${eip}" ]]
-then
-   echo '* ERROR: public IP address not found.'
-   exit 1
-else
-   echo "* public IP address: ${eip}."
 fi
 
 # Removing old files
@@ -340,10 +340,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/consul/consul-install.sh" \
               exit 1          
           }
     }
-    
-echo "http://${admin_eip}:${ADMIN_CONSUL_SERVER_HTTP_PORT}/ui"  
-echo     
-    
+   
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
     "${private_key_file}" \
     "${eip}" \
@@ -383,7 +380,10 @@ then
 else
    echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi 
-
+    
+echo "http://${admin_eip}:${ADMIN_CONSUL_SERVER_HTTP_PORT}/ui"  
+echo     
+ 
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${redis_tmp_dir:?}"

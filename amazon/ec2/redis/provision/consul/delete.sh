@@ -69,9 +69,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: public IP address not found.'
+   echo '* WARN: Redis IP address not found.'
 else
-   echo "* Public IP address ${eip}."
+   echo "* Redis IP address ${eip}."
 fi
 
 # Removing old files

@@ -26,16 +26,9 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/ecr/delete.sh 
 
 # AWS instances.
-## TODO jenkins web delete
 . "${PROJECT_DIR}"/amazon/ec2/jenkins/box/delete.sh
-
-## TODO nginx web delete
 . "${PROJECT_DIR}"/amazon/ec2/nginx/box/delete.sh
-
-## TODO sinatra web delete
 . "${PROJECT_DIR}"/amazon/ec2/sinatra/box/delete.sh
-
-## TODO redis db delete file 
 . "${PROJECT_DIR}"/amazon/ec2/redis/consul/delete.sh
 . "${PROJECT_DIR}"/amazon/ec2/redis/box/delete.sh
 
@@ -44,7 +37,7 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/ec2/admin/box/delete.sh
 
 # AWS shared image.
-. "${PROJECT_DIR}"/amazon/ec2/shared/delete.sh              
+. "${PROJECT_DIR}"/amazon/ec2/shared/box/delete.sh            
 . "${PROJECT_DIR}"/amazon/image/shared/delete.sh             
 
 # Users and policies

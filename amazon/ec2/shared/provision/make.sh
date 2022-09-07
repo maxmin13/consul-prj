@@ -1,13 +1,12 @@
 #!/usr/bin/bash
 
-##########################################
-# makes a secure linux box image:
-# hardened, ssh on 38142.
-# No root access to the instance.
-# Remove the ec2-user default user and 
-# creates the shared-user user.
+####################################################################################
+# makes a secure linux box:
+# hardened, ssh on 38142
+# No root access to the instance
+# Remove the ec2-user default user and creates the shared-user user
 # Install Docker.
-##########################################
+####################################################################################
 
 set -o errexit
 set -o pipefail
@@ -15,7 +14,7 @@ set -o nounset
 set +o xtrace
 
 #
-STEP 'Shared box'
+STEP 'Shared box provision'
 #
 
 SCRIPTS_DIR=/home/"${USER_NM}"/script
@@ -42,18 +41,51 @@ else
    echo "* main subnet ID: ${subnet_id}."
 fi
 
-get_image_id "${SHARED_IMG_NM}"
-image_id="${__RESULT}"
-image_st=''
+get_instance_id "${SHARED_INST_NM}"
+instance_id="${__RESULT}"
 
-if [[ -z "${image_id}" ]]
+if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Shared image not found.'
-else
-   get_image_state "${SHARED_IMG_NM}"
-   image_st="${__RESULT}"
+   echo '* ERROR: Shared box not found.'
+   exit 1
+fi
+
+if [[ -n "${instance_id}" ]]
+then
+   get_instance_state "${SHARED_INST_NM}"
+   instance_st="${__RESULT}"
    
-   echo "* Shared image ID: ${image_id} (${image_st})."
+   if [[ 'running' == "${instance_st}" ]]
+   then
+      echo "* Shared box ready (${instance_st})."
+   else
+      echo "* ERROR: Shared box is not ready. (${instance_st})."
+      
+      exit 1
+   fi
+fi
+
+# Get the public IP address assigned to the instance. 
+get_public_ip_address_associated_with_instance "${SHARED_INST_NM}"
+eip="${__RESULT}"
+
+if [[ -z "${eip}" ]]
+then
+   echo '* ERROR: Shared IP address not found.'
+   exit 1
+else
+   echo "* Shared IP address: ${eip}."
+fi
+
+get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
+
+if [[ -z "${sgp_id}" ]]
+then
+   echo '* ERROR: security group not found.'
+   exit 1
+else
+   echo "* security group ID: ${sgp_id}."
 fi
 
 echo
@@ -67,20 +99,6 @@ mkdir -p "${shared_tmp_dir}"
 ## 
 ## Firewall
 ##
-
-get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
-sgp_id="${__RESULT}"
-
-if [[ -n "${sgp_id}" ]]
-then
-   echo 'WARN: the security group is already created.'
-else
-   create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.' >> "${LOGS_DIR}"/shared.log
-   get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
-   sgp_id="${__RESULT}"
-
-   echo 'Created security group.'
-fi
 
 check_access_is_granted "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -106,94 +124,9 @@ else
    echo "WARN: access already granted ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
 fi
 
-##
-## SSH keys.
-##
-
-check_aws_public_key_exists "${SHARED_INST_KEY_PAIR_NM}" 
-key_exists="${__RESULT}"
-
-if [[ 'false' == "${key_exists}" ]]
-then
-   # Create a private key in the local 'access' directory.
-   mkdir -p "${ACCESS_DIR}"
-   generate_aws_keypair "${SHARED_INST_KEY_PAIR_NM}" "${ACCESS_DIR}" 
-   
-   echo 'SSH private key created.'
-else
-   echo 'WARN: SSH key-pair already created.'
-fi
-
-get_public_key "${SHARED_INST_KEY_PAIR_NM}" "${ACCESS_DIR}"
-public_key="${__RESULT}"
-   
-echo 'SSH public key extracted.'
-
-##
-## Cloud init
-##   
-
-## Removes the default user, creates the admin-user user and sets the instance's hostname.     
-
-hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${USER_PWD}")" 
-
-awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${USER_NM}" -v hostname="${SHARED_INST_HOSTNAME}" '{
-    sub(/SEDuser_nameSED/,user)
-    sub(/SEDhashed_passwordSED/,pwd)
-    sub(/SEDpublic_keySED/,key)
-    sub(/SEDhostnameSED/,hostname)
-}1' "${INSTANCE_DIR}"/shared/config/cloud_init_template.yml > "${shared_tmp_dir}"/cloud_init.yml
-  
-echo 'cloud_init.yml ready.'  
-
-## 
-## Shared box
-## 
-
-get_instance_id "${SHARED_INST_NM}"
-instance_id="${__RESULT}"
-
-if [[ -n "${image_id}" && 'available' == "${image_st}" ]]
-then    
-   echo 'Shared image already created, skipping creating Shared box.'
-   echo
-   return 0
-   
-elif [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${SHARED_INST_NM}"
-   instance_st="${__RESULT}"
-
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "WARN: Shared box already created (${instance_st})."
-      echo
-   else
-      # An istance lasts in terminated status for about an hour, before that change name.
-      echo "ERROR: Shared box already created (${instance_st})."
-      exit 1
-   fi
-else
-   echo 'Creating the Shared box ...'
-   
-   run_instance \
-       "${SHARED_INST_NM}" \
-       "${sgp_id}" \
-       "${subnet_id}" \
-       "${SHARED_INST_PRIVATE_IP}" \
-       "${AWS_BASE_IMG_ID}" \
-       "${shared_tmp_dir}"/cloud_init.yml
-       
-   get_instance_id "${SHARED_INST_NM}"
-   instance_id="${__RESULT}"   
-
-   echo "Shared box created."
-fi  
-       
-get_public_ip_address_associated_with_instance "${SHARED_INST_NM}"
-eip="${__RESULT}"
-
-echo "Public address ${eip}."
+#
+echo 'Provisioning the instance ...'
+# 
 
 # Verify it the SSH port is still 22 or it has changed.
 private_key_file="${ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
@@ -202,13 +135,6 @@ get_ssh_port "${private_key_file}" "${eip}" "${USER_NM}" '22' "${SHARED_INST_SSH
 ssh_port="${__RESULT}"
 
 echo "SSH port ${ssh_port}."
-
-##
-## Upload the scripts to the instance
-## 
-
-echo
-echo 'Uploading the scripts to the box ...'
 
 ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}"/shared \
     "${private_key_file}" \
@@ -260,7 +186,7 @@ set -e
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
 then
-   echo 'Box successfully secured, rebooting the instance ...'
+   echo 'Box successfully secured, rebooting ...'
 
    set +e
    ssh_run_remote_command_as_root "reboot" \
@@ -292,7 +218,6 @@ else
 fi
 
 wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
-
 get_ssh_port "${private_key_file}" "${eip}" "${USER_NM}" '22' "${SHARED_INST_SSH_PORT}" 
 ssh_port="${__RESULT}"
 
@@ -306,7 +231,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/shared/check-linux.sh \
     "${USER_NM}" \
     "${USER_PWD}" >> "${LOGS_DIR}"/shared.log    
     
-echo 'Provisioning Docker ...'
+echo 'Installing Docker ...'
 
 set +e                                
 ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/shared/docker.sh \
@@ -339,7 +264,7 @@ ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
 
 stop_instance "${instance_id}" >> "${LOGS_DIR}"/shared.log
 
-echo 'Box stopped.'   
+echo 'Shared box stopped.'   
 
 ## 
 ## Firewall
@@ -360,6 +285,6 @@ fi
 # Removing old files
 rm -rf "${shared_tmp_dir:?}"
 
-echo 'Shared box created.'
+echo 'Shared box provisioned.'
 echo
 

@@ -29,30 +29,31 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/permissions/make.sh  
 
 # AWS shared image.
-. "${PROJECT_DIR}"/amazon/ec2/shared/make.sh              
+. "${PROJECT_DIR}"/amazon/ec2/shared/box/make.sh    
+. "${PROJECT_DIR}"/amazon/ec2/shared/provision/make.sh              
 . "${PROJECT_DIR}"/amazon/image/shared/make.sh            
-. "${PROJECT_DIR}"/amazon/ec2/shared/delete.sh  
+. "${PROJECT_DIR}"/amazon/ec2/shared/box/delete.sh  
 
 # Linux jumpbox.
 . "${PROJECT_DIR}"/amazon/ec2/admin/box/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/admin/consul/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/admin/provision/consul/make.sh
 
 # Docker base images.
 . "${PROJECT_DIR}"/amazon/ecr/make.sh 
 
 # AWS instances.
 . "${PROJECT_DIR}"/amazon/ec2/redis/box/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/redis/consul/make.sh 
-. "${PROJECT_DIR}"/amazon/ec2/redis/db/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/redis/provision/consul/make.sh 
+. "${PROJECT_DIR}"/amazon/ec2/redis/provision/db/make.sh
 
 . "${PROJECT_DIR}"/amazon/ec2/sinatra/box/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/sinatra/web/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/sinatra/provision/web/make.sh
 
 . "${PROJECT_DIR}"/amazon/ec2/jenkins/box/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/jenkins/web/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/jenkins/provision/web/make.sh
 
 . "${PROJECT_DIR}"/amazon/ec2/nginx/box/make.sh
-. "${PROJECT_DIR}"/amazon/ec2/nginx/web/make.sh
+. "${PROJECT_DIR}"/amazon/ec2/nginx/provision/web/make.sh
 
 
 

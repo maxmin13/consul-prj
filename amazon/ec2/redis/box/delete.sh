@@ -40,9 +40,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: public IP address not found.'
+   echo '* WARN: Redis IP address not found.'
 else
-   echo "* public IP address: ${eip}."
+   echo "* Redis IP address: ${eip}."
 fi
 
 get_instance_profile_id "${REDIS_INST_PROFILE_NM}"

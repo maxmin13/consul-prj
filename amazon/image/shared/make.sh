@@ -60,13 +60,13 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: box not found.'
+   echo '* ERROR: Shared box not found.'
    exit 1
 else
    get_instance_state "${SHARED_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* box ID: ${instance_id} (${instance_st})."
+   echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 echo

@@ -40,9 +40,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: public IP address not found.'
+   echo '* WARN: Admin IP address not found.'
 else
-   echo "* public IP address: ${eip}."
+   echo "* Admin IP address: ${eip}."
 fi
 
 get_instance_profile_id "${ADMIN_INST_PROFILE_NM}"

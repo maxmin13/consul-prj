@@ -422,7 +422,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/sinatra")/g" \
     -e "s/SEDsinatra_http_portSED/${SINATRA_HTTP_PORT}/g" \
        "${SERVICES_DIR}"/sinatra/sinatra-install.sh > "${ecr_tmp_dir}"/sinatra/sinatra-install.sh  
                         
-echo 'sinatra.sh ready.'  
+echo 'sinatra-install.sh ready.'  
 
 # The Sinatra image is built from the base Ruby image.
 sed -e "s/SEDrepository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \

@@ -4,7 +4,6 @@
 
 #####################################################
 # Creates an EC2 Linux Jenkins box.
-# Install a Jenkins server in a Docker container.
 #####################################################
 
 set -o errexit
@@ -77,20 +76,6 @@ else
    echo 'Created security group.'
 fi
 
-check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'false' == "${is_granted}" ]]
-then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
-   
-   echo "Access granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already granted on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-fi
-   
-echo 'Granted SSH access to the box.'
-
 # 
 # Jenkins box
 #
@@ -122,7 +107,7 @@ awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${USER_NM}" -v hostna
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
     sub(/SEDhostnameSED/,hostname)
-}1' "${INSTANCE_DIR}"/jenkins/config/cloud_init_template.yml > "${jenkins_tmp_dir}"/cloud_init.yml
+}1' "${INSTANCE_DIR}"/jenkins/box/config/cloud_init_template.yml > "${jenkins_tmp_dir}"/cloud_init.yml
  
 echo 'cloud_init.yml ready.' 
 
@@ -221,150 +206,8 @@ then
    echo 'Role associated to the instance profile.' 
 else
    echo 'WARN: role already associated to the instance profile.'
-fi 
+fi  
 
-check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
-is_permission_policy_associated="${__RESULT}"
-
-if [[ 'false' == "${is_permission_policy_associated}" ]]
-then
-   echo 'Attaching permission policy to the role ...'
-
-   attach_permission_policy_to_role "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
-      
-   echo 'Permission policy associated to the role.' 
-else
-   echo 'WARN: permission policy already associated to the role.'
-fi   
-
-#
-echo 'Provisioning the instance ...'
-# 
-
-private_key_file="${ACCESS_DIR}"/"${JENKINS_INST_KEY_PAIR_NM}" 
-wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}"
-
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}/jenkins" \
-    "${private_key_file}" \
-    "${eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${USER_NM}"  
-
-# Prepare the scripts to run on the server.
-
-ecr_get_repostory_uri "${JENKINS_DOCKER_IMG_NM}"
-jenkins_docker_repository_uri="${__RESULT}"
-
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/jenkins)/g" \
-    -e "s/SEDjenkins_docker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
-    -e "s/SEDjenkins_docker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
-    -e "s/SEDjenkins_docker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDjenkins_docker_container_nmSED/${JENKINS_DOCKER_CONTAINER_NM}/g" \
-    -e "s/SEDjenkins_http_addressSED/${eip}/g" \
-    -e "s/SEDjenkins_http_portSED/${JENKINS_HTTP_PORT}/g" \
-    -e "s/SEDjenkins_inst_home_dirSED/$(escape "${JENKINS_INST_HOME_DIR}")/g" \
-       "${SERVICES_DIR}"/jenkins/jenkins.sh > "${jenkins_tmp_dir}"/jenkins.sh       
-  
-echo 'jenkins.sh ready.'  
-     
-scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${USER_NM}" "${SCRIPTS_DIR}"/jenkins \
-    "${LIBRARY_DIR}"/constants/app_consts.sh \
-    "${LIBRARY_DIR}"/general_utils.sh \
-    "${LIBRARY_DIR}"/dockerlib.sh \
-    "${LIBRARY_DIR}"/ecr.sh \
-    "${jenkins_tmp_dir}"/jenkins.sh    
-
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/jenkins \
-    "${private_key_file}" \
-    "${eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${USER_NM}" \
-    "${USER_PWD}" 
-
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins/jenkins.sh" \
-    "${private_key_file}" \
-    "${eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${USER_NM}" \
-    "${USER_PWD}" >> "${LOGS_DIR}"/jenkins.log && echo 'Jenkins successfully installed.' ||
-    {
-    
-       echo 'The role may not have been associated to the profile yet.'
-       echo 'Let''s wait a bit and check again (first time).' 
-      
-       wait 180  
-      
-       echo 'Let''s try now.' 
-    
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins/jenkins.sh" \
-          "${private_key_file}" \
-          "${eip}" \
-          "${SHARED_INST_SSH_PORT}" \
-          "${USER_NM}" \
-          "${USER_PWD}" >> "${LOGS_DIR}"/jenkins.log && echo 'Jenkins successfully installed.' ||
-          {
-              echo 'ERROR: the problem persists after 3 minutes.'
-              exit 1          
-          }
-    }
-    
-echo "http://${eip}:${JENKINS_HTTP_PORT}/jenkins"
-echo    
-
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
-    "${private_key_file}" \
-    "${eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${USER_NM}" 
-    
-#
-# Permissions.
-#
-
-check_role_has_permission_policy_attached "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
-is_permission_policy_associated="${__RESULT}"
-
-if [[ 'true' == "${is_permission_policy_associated}" ]]
-then
-   echo 'Detaching permission policy from role ...'
-   
-   detach_permission_policy_from_role "${JENKINS_AWS_ROLE_NM}" "${ECR_POLICY_NM}"
-      
-   echo 'Permission policy detached.'
-else
-   echo 'WARN: permission policy already detached from the role.'
-fi 
-
-## 
-## Firewall.
-##
-
-check_access_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'true' == "${is_granted}" ]]
-then
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
-   
-   echo "Access revoked on ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already revoked ${SHARED_INST_SSH_PORT} tcp 0.0.0.0/0."
-fi
-   
-# Make Jenkins accessible from anywhere in the internet.
-
-check_access_is_granted "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'false' == "${is_granted}" ]]
-then
-   allow_access_from_cidr "${sgp_id}" "${JENKINS_HTTP_PORT}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/jenkins.log  
-   
-   echo "Access granted on ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already granted ${JENKINS_HTTP_PORT} tcp 0.0.0.0/0."
-fi 
- 
 # Removing old files
 # shellcheck disable=SC2115
 rm -rf  "${jenkins_tmp_dir:?}"

@@ -17,12 +17,12 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: box not found.'
+   echo '* WARN: Shared box not found.'
 else
    get_instance_state "${SHARED_INST_NM}"
    instance_st="${__RESULT}"
    
-   echo "* box ID: ${instance_id} (${instance_st})."
+   echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 # The temporary security group used to build the image, it should be already deleted.
