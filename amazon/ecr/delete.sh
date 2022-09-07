@@ -22,8 +22,8 @@ dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
 then
-   echo '* ERROR: data center not found.'
-   exit 1
+   echo '* WARN: data center not found.'
+   return 0
 else
    echo "* data center ID: ${dtc_id}."
 fi
@@ -33,8 +33,8 @@ subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo '* ERROR: main subnet not found.'
-   exit 1
+   echo '* WARN: main subnet not found.'
+   return 0 
 else
    echo "* main subnet ID: ${subnet_id}."
 fi
@@ -45,8 +45,7 @@ instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Admin box not found.'
-   exit 1
+   echo '* WARN: Admin box not found.'
 fi
 
 if [[ -n "${instance_id}" ]]
@@ -77,7 +76,7 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Admin security group not found.'
+   echo '* WARN: Admin security group not found.' 
 else
    echo "* Admin security group ID: ${sgp_id}."
 fi
