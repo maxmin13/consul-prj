@@ -4,8 +4,6 @@
 
 ########################################################################################################################
 # 
-# TODO building after Consul cluster is in place. TODO
-#
 ########################################################################################################################
 
 set -o errexit
@@ -18,7 +16,6 @@ NETWORK_NM='SEDnetwork__nmSED'
 NETWORK_CIDR='SEDnetwork_cidrSED'
 NETWORK_GATE='SEDnetwork__gateSED'
 
-source "${SCRIPTS_DIR}"/app_consts.sh
 source "${SCRIPTS_DIR}"/general_utils.sh
 source "${SCRIPTS_DIR}"/dockerlib.sh
 

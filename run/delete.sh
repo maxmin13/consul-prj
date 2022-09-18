@@ -8,42 +8,57 @@ set -o nounset
 set +o xtrace
  
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../consul-prj && pwd)"
+LIBRARY_DIR="${PROJECT_DIR}"/amazon/lib
 
-source "${PROJECT_DIR}"/amazon/lib/constants/app_consts.sh
-source "${PROJECT_DIR}"/amazon/lib/constants/project_dirs.sh
-source "${PROJECT_DIR}"/amazon/lib/constants/docker.sh
-source "${PROJECT_DIR}"/amazon/lib/ssh_utils.sh
-source "${PROJECT_DIR}"/amazon/lib/general_utils.sh
-source "${PROJECT_DIR}"/amazon/lib/ec2.sh
-source "${PROJECT_DIR}"/amazon/lib/ecr.sh
-source "${PROJECT_DIR}"/amazon/lib/dockerlib.sh
-source "${PROJECT_DIR}"/amazon/lib/iam.sh
-source "${PROJECT_DIR}"/amazon/lib/secretsmanager.sh
+source "${LIBRARY_DIR}"/constants/project_dirs.sh
+source "${LIBRARY_DIR}"/constants/app_consts.sh
+source "${LIBRARY_DIR}"/constants/docker.sh
+source "${LIBRARY_DIR}"/ec2_consts_utils.sh
+source "${LIBRARY_DIR}"/ssh_utils.sh
+source "${LIBRARY_DIR}"/general_utils.sh
+source "${LIBRARY_DIR}"/ec2.sh
+source "${LIBRARY_DIR}"/ecr.sh
+source "${LIBRARY_DIR}"/dockerlib.sh
+source "${LIBRARY_DIR}"/iam.sh
+source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
-# Docker base images.
-. "${PROJECT_DIR}"/amazon/ecr/delete.sh 
+## Docker base images ##
 
-# AWS instances.
-. "${PROJECT_DIR}"/amazon/ec2/jenkins/box/delete.sh
-. "${PROJECT_DIR}"/amazon/ec2/nginx/box/delete.sh
-. "${PROJECT_DIR}"/amazon/ec2/sinatra/box/delete.sh
-. "${PROJECT_DIR}"/amazon/ec2/redis/consul/delete.sh
-. "${PROJECT_DIR}"/amazon/ec2/redis/box/delete.sh
+. "${PROJECT_DIR}"/amazon/registry/delete.sh  ##  TODO TODO check jenkins repo not deleted
 
-# Jumpbox.
-. "${PROJECT_DIR}"/amazon/ec2/admin/consul/delete.sh   
-. "${PROJECT_DIR}"/amazon/ec2/admin/box/delete.sh
+## AWS EC2 instances ##
 
-# AWS shared image.
-. "${PROJECT_DIR}"/amazon/ec2/shared/box/delete.sh            
-. "${PROJECT_DIR}"/amazon/image/shared/delete.sh             
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'jenkins'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins'
 
-# Users and policies
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'nginx'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx'
+
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'sinatra'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra'
+
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis' 
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'redis'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis'
+
+   # Jumpbox.
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin'   ##  TODO TODO check key not deleted
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'admin'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin'
+
+## AWS custom images ##
+
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared'          
+. "${PROJECT_DIR}"/amazon/image/delete.sh 'shared'           
+
+## Permission policies ##
+
 . "${PROJECT_DIR}"/amazon/permissions/delete.sh  
 
-# Datacenter.
+## Datacenter ##
+
 . "${PROJECT_DIR}"/amazon/datacenter/delete.sh  
 
 echo

@@ -1,8 +1,6 @@
 #!/usr/bin/bash
 
 set -o errexit
-## turn on -e in subshells
-## shopt -s inherit_errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
@@ -23,12 +21,13 @@ set +o xtrace
 #  None
 # Arguments:
 # +repository_nm -- the repository name.
+# +region_nm     -- the region name.
 # Returns:      
 #  true/false in the global __RESULT variable.  
 #===============================================================================
 function ecr_check_repository_exists()
 {
-   if [[ $# -lt 1 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -37,13 +36,14 @@ function ecr_check_repository_exists()
    __RESULT=''
    local exit_code=0
    local -r repository_nm="${1}"
+   local -r region_nm="${2}"
    local repository_desc=''
    local exists='false'
 
    # error if repository not found.
    repository_desc="$(aws ecr describe-repositories \
               --repository-names "${repository_nm}" \
-              --region "${DTC_REGION}" \
+              --region "${region_nm}" \
               --query repositories[0].repositoryArn \
               --output text)"          
    
@@ -64,12 +64,13 @@ function ecr_check_repository_exists()
 #  None
 # Arguments:
 # +repository_nm -- the repository name.
+# +region_nm     -- the region name.
 # Returns:      
 #  none.  
 #===============================================================================
 function ecr_create_repository()
 {
-   if [[ $# -lt 1 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -77,10 +78,18 @@ function ecr_create_repository()
   
    local exit_code=0
    local -r repository_nm="${1}"
-       
+   local -r region_nm="${2}"
+   
    aws ecr create-repository \
       --repository-name "${repository_nm}" \
-      --region "${DTC_REGION}"   
+      --region "${region_nm}"  
+      
+   exit_code=$?     
+      
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating repository.'
+   fi    
                        
    return "${exit_code}"
 }
@@ -92,6 +101,7 @@ function ecr_create_repository()
 #  None
 # Arguments:
 # +repository_nm -- the repository name.
+# +region_nm     -- the region name.
 # Returns:      
 #  none.  
 #===============================================================================
@@ -105,9 +115,10 @@ function ecr_delete_repository()
   
    local exit_code=0
    local -r repository_nm="${1}"
+   local -r region_nm="${2}"
        
    aws ecr delete-repository --repository-name "${repository_nm}" \
-      --region "${DTC_REGION}" \
+      --region "${region_nm}" \
       --force   
        
    exit_code=$?    
@@ -115,7 +126,6 @@ function ecr_delete_repository()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: deleting repository.'
-      return "${exit_code}"
    fi     
             
    return "${exit_code}"
@@ -130,12 +140,13 @@ function ecr_delete_repository()
 # Arguments:
 # +repository_nm -- the ECR repository name that hosts the image.
 # +img_tag       -- the the tag associated with the image in the ECR repository.
+# +region_nm     -- the region name.
 # Returns:      
 #  true/false in the global __RESULT variable.  
 #===============================================================================
 function ecr_check_img_exists()
 {
-   if [[ $# -lt 1 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -145,13 +156,14 @@ function ecr_check_img_exists()
    local exit_code=0
    local -r repository_nm="${1}"
    local -r img_tag="${2}"
+   local -r region_nm="${3}"
    local image_desc=''
    local exists='false'
-
+   
    # the command throws an error if repository or image not found.
    image_desc="$(aws ecr describe-images \
               --repository-name "${repository_nm}" \
-              --region "${DTC_REGION}" \
+              --region "${region_nm}" \
               --image-ids imageTag="${img_tag}" \
               --query text)"      
    
@@ -167,11 +179,18 @@ function ecr_check_img_exists()
 
 function ecr_get_login_pwd()
 {
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
    __RESULT=''
    local exit_code=0
+   local -r region_nm="${1}"
    local login_pwd=''
    
-   login_pwd="$(aws ecr get-login-password --region "${DTC_REGION}")"
+   login_pwd="$(aws ecr get-login-password --region "${region_nm}")"
    
    __RESULT="${login_pwd}"
      
@@ -180,12 +199,19 @@ function ecr_get_login_pwd()
 
 function ecr_get_registry_uri()
 {
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
    __RESULT=''
+   local -r region_nm="${1}"
    local aws_account_id=''
    local registry_uri=''
    
    aws_account_id=$(aws sts get-caller-identity --query 'Account' --output text)
-   registry_uri="${aws_account_id}.dkr.ecr.${DTC_REGION}.amazonaws.com"
+   registry_uri="${aws_account_id}.dkr.ecr.${region_nm}.amazonaws.com"
    
    __RESULT="${registry_uri}"
    
@@ -194,7 +220,7 @@ function ecr_get_registry_uri()
 
 function ecr_get_repostory_uri()
 {
-   if [[ $# -lt 1 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -203,11 +229,7 @@ function ecr_get_repostory_uri()
    __RESULT=''
    local exit_code=0
    local -r repository_nm="${1}"
-   local registry_uri=''
-   local repository_uri=''
- 
-   ecr_get_registry_uri
-   registry_uri="${__RESULT}"
+   local -r registry_uri="${2}"
 
    __RESULT="${registry_uri}"/"${repository_nm}"
    

@@ -2,7 +2,8 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/Security Group/security group/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's///g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/sinatra_key/sinatra/g' {} \;
 
 
    sudo docker events&
@@ -18,4 +19,5 @@ find . -type f -exec chmod 644 -- {} +
 find . -type f -name *.sh -exec chmod 644 -- {} +
 find . -type f -name Dockerfile -exec chmod 644 -- {} +
 
-
+     aws secretsmanager delete-secret --force-delete-without-recovery \
+      --secret-id "consulkey" --region 'eu-west-1'

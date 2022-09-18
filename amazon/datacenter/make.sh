@@ -15,16 +15,20 @@ set +o xtrace
 STEP 'Data center'
 ###
 
-get_datacenter_id "${DTC_NM}"
+get_datacenter_name
+dtc_nm="${__RESULT}"
+get_datacenter_id "${dtc_nm}"
 data_center_id="${__RESULT}"
+get_datacenter_cidr
+datacenter_cidr="${__RESULT}"  
 
 if [[ -n "${data_center_id}" ]]
 then
    echo 'WARN: the data center has already been created.'
 else
    ## Make a new VPC with a master 10.0.10.0/16 subnet
-   create_datacenter "${DTC_NM}" >> "${LOGS_DIR}"/datacenter.log
-   get_datacenter_id "${DTC_NM}"
+   create_datacenter "${dtc_nm}" "${datacenter_cidr}" >> "${LOGS_DIR}"/datacenter.log
+   get_datacenter_id "${dtc_nm}"
    data_center_id="${__RESULT}"
     
    echo 'Data center created.'
@@ -34,23 +38,24 @@ fi
 # Internet gateway
 #
 
-## Create an internet gateway (to allow access out to the Internet)
-get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
+get_internet_gateway_name
+gateway_nm="${__RESULT}"
+get_internet_gateway_id "${gateway_nm}"
 internet_gate_id="${__RESULT}"
 
 if [[ -n "${internet_gate_id}" ]]
 then
    echo 'WARN: the internet gateway has already been created.'
 else
-   create_internet_gateway "${DTC_INTERNET_GATEWAY_NM}" "${data_center_id}" >> "${LOGS_DIR}"/datacenter.log
-   get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
+   create_internet_gateway "${gateway_nm}" "${data_center_id}" >> "${LOGS_DIR}"/datacenter.log
+   get_internet_gateway_id "${gateway_nm}"
    internet_gate_id="${__RESULT}"
 	              
    echo 'Internet gateway created.' 
 fi
   
 ## Check if the internet gateway is already attached to the VPC.
-get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${data_center_id}"
+get_internet_gateway_attachment_status "${gateway_nm}" "${data_center_id}"
 attach_status="${__RESULT}"
 
 if [[ 'available' != "${attach_status}" ]]
@@ -64,15 +69,18 @@ fi
 # Route table
 # 
 
-get_route_table_id "${DTC_ROUTE_TABLE_NM}"
+get_route_table_name
+route_table_nm="${__RESULT}"
+
+get_route_table_id "${route_table_nm}"
 route_table_id="${__RESULT}"
 							
 if [[ -n "${route_table_id}" ]]
 then
    echo 'WARN: the route table has already been created.'
 else
-   create_route_table "${DTC_ROUTE_TABLE_NM}" "${data_center_id}" >> "${LOGS_DIR}"/datacenter.log
-   get_route_table_id "${DTC_ROUTE_TABLE_NM}"
+   create_route_table "${route_table_nm}" "${data_center_id}" >> "${LOGS_DIR}"/datacenter.log
+   get_route_table_id "${route_table_nm}"
    route_table_id="${__RESULT}"
                    
    echo 'Created route table.'
@@ -86,22 +94,30 @@ echo 'Created route that points all traffic to the internet gateway.'
 # Main subnet
 #
 
-get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+get_subnet_name
+subnet_nm="${__RESULT}"
+get_subnet_id "${subnet_nm}"
 main_subnet_id="${__RESULT}"
 
 if [[ -n "${main_subnet_id}" ]]
 then
    echo 'WARN: the main subnet has already been created.'
 else
-   create_subnet "${DTC_SUBNET_MAIN_NM}" \
-       "${DTC_SUBNET_MAIN_CIDR}" "${DTC_AZ_1}" "${data_center_id}" "${route_table_id}" >> "${LOGS_DIR}"/datacenter.log
+
+   get_availability_zone_name
+   az_nm="${__RESULT}"
+   get_subnet_cidr
+   subnet_cidr="${__RESULT}"
+   
+   create_subnet "${subnet_nm}" \
+       "${subnet_cidr}" "${az_nm}" "${data_center_id}" "${route_table_id}" >> "${LOGS_DIR}"/datacenter.log
        
-   get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+   get_subnet_id "${subnet_nm}"
    main_subnet_id="${__RESULT}"
    
-   echo "The main subnet has been created in the ${DTC_AZ_1} availability zone and associated to the route table."    
+   echo "The main subnet has been created in the ${az_nm} availability zone and associated to the route table."    
 fi
 
 echo
 echo 'Data center up and running.'
-
+echo

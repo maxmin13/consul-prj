@@ -9,7 +9,9 @@ set +o xtrace
 STEP 'Data center'
 ###
 
-get_datacenter_id "${DTC_NM}"
+get_datacenter_name
+dtc_nm="${__RESULT}"
+get_datacenter_id "${dtc_nm}"
 dtc_id="${__RESULT}"
 
 if [[ -z "${dtc_id}" ]]
@@ -19,7 +21,9 @@ else
    echo "* data center ID: ${dtc_id}"
 fi
 
-get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
+get_internet_gateway_name
+gateway_nm="${__RESULT}"
+get_internet_gateway_id "${gateway_nm}"
 internet_gate_id="${__RESULT}"
 internet_gate_attach_status=''
 
@@ -27,7 +31,7 @@ if [[ -z "${internet_gate_id}" ]]
 then
    echo '* WARN: internet gateway not found.'
 else
-   get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}"
+   get_internet_gateway_attachment_status "${gateway_nm}" "${dtc_id}"
    internet_gate_attach_status="${__RESULT}"
    
    if [[ -n "${internet_gate_attach_status}" ]]
@@ -38,7 +42,9 @@ else
    fi
 fi
 
-get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+get_subnet_name
+subnet_nm="${__RESULT}"
+get_subnet_id "${subnet_nm}"
 main_subnet_id="${__RESULT}"
 
 if [[ -z "${main_subnet_id}" ]]
@@ -48,7 +54,9 @@ else
    echo "* main subnet ID: ${main_subnet_id}."
 fi
 
-get_route_table_id "${DTC_ROUTE_TABLE_NM}"
+get_route_table_name
+route_table_nm="${__RESULT}"
+get_route_table_id "${route_table_nm}"
 rtb_id="${__RESULT}"
 
 if [[ -z "${rtb_id}" ]]

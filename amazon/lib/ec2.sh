@@ -61,7 +61,7 @@ function get_datacenter_id()
 #===============================================================================
 function create_datacenter()
 {
-   if [[ $# -lt 1 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -69,11 +69,11 @@ function create_datacenter()
   
    local exit_code=0
    local -r dtc_nm="${1}"
-  
+   local -r datacenter_cidr="${2}"
+
    aws ec2 create-vpc \
-       --cidr-block "${DTC_CDIR}" \
+       --cidr-block "${datacenter_cidr}" \
        --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" \
-      
        
    exit_code=$?    
   
@@ -119,7 +119,6 @@ function delete_datacenter()
    local -r dtc_id="${1}"
   
    aws ec2 delete-vpc --vpc-id "${dtc_id}"
-  
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
@@ -291,7 +290,6 @@ function delete_subnet()
    local -r subnet_id="${1}"
  
    aws ec2 delete-subnet --subnet-id "${subnet_id}"
- 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -431,7 +429,6 @@ function delete_internet_gateway()
    local -r igw_id="${1}"
  
    aws ec2 delete-internet-gateway --internet-gateway-id "${igw_id}"
-  
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -466,7 +463,6 @@ function attach_internet_gateway()
    local -r dtc_id="${2}"
   
    aws ec2 attach-internet-gateway --vpc-id "${dtc_id}" --internet-gateway-id "${igw_id}"
-   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -536,8 +532,7 @@ function create_route_table()
   
    aws ec2 create-route-table \
        --vpc-id "${dtc_id}" \
-       --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" \
-       
+       --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" 
  
    exit_code=$?
    
@@ -572,7 +567,6 @@ function delete_route_table()
    local -r rtb_id="${1}"
   
    aws ec2 delete-route-table --route-table-id "${rtb_id}"
- 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -611,8 +605,7 @@ function set_route()
    
    aws ec2 create-route --route-table-id "${rtb_id}" \
        --destination-cidr-block "${destination_cidr}" \
-       --gateway-id "${target_id}" \
-       
+       --gateway-id "${target_id}" 
 
    exit_code=$?
    
@@ -692,8 +685,7 @@ function create_security_group()
         --group-name "${sgp_nm}" \
         --description "${sgp_desc}" \
         --vpc-id "${dtc_id}" \
-        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
-        
+        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" 
         
    exit_code=$?
    
@@ -727,7 +719,6 @@ function delete_security_group()
    local -r sgp_id="${1}"
       
    aws ec2 delete-security-group --group-id "${sgp_id}" 
-   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -908,7 +899,7 @@ function check_access_is_granted()
       return 0   
    fi
    
-   cidr="$(echo ${rule} | \
+   cidr="$(echo "${rule}" | \
       jq --arg from "${from}" -c '. | 
          select(.IpRanges[].CidrIp | contains($from))')"
          
@@ -917,7 +908,7 @@ function check_access_is_granted()
       __RESULT='true' 
    fi
    
-   group="$(echo ${rule} | \
+   group="$(echo "${rule}" | \
       jq --arg from "${from}" -c '. | 
          select(.UserIdGroupPairs[].GroupId | contains($from))')"
    
@@ -1164,6 +1155,7 @@ function get_instance_id()
 #  None
 # Arguments:
 # +instance_nm     -- name assigned to the instance.
+# +az_nm           -- availability zone name.
 # +sgp_id          -- security group identifier.
 # +subnet_id       -- subnet identifier.
 # +private_ip      -- private IP address assigned to the instance.
@@ -1174,7 +1166,7 @@ function get_instance_id()
 #===============================================================================
 function run_instance()
 {
-   if [[ $# -lt 6 ]]
+   if [[ $# -lt 7 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -1182,18 +1174,19 @@ function run_instance()
    
    local exit_code=0
    local -r instance_nm="${1}"
-   local -r sgp_id="${2}"
-   local -r subnet_id="${3}"
-   local -r private_ip="${4}"
-   local -r image_id="${5}"
-   local -r cloud_init_file="${6}"
+   local -r az_nm="${2}"
+   local -r sgp_id="${3}"
+   local -r subnet_id="${4}"
+   local -r private_ip="${5}"
+   local -r image_id="${6}"
+   local -r cloud_init_file="${7}"
    local instance_id=''
-     
+        
    instance_id="$(aws ec2 run-instances \
        --image-id "${image_id}" \
        --security-group-ids "${sgp_id}" \
        --instance-type 't2.micro' \
-       --placement "AvailabilityZone=${DTC_AZ_1},Tenancy=default" \
+       --placement "AvailabilityZone=${az_nm},Tenancy=default" \
        --subnet-id "${subnet_id}" \
        --private-ip-address "${private_ip}" \
        --associate-public-ip-address \
@@ -1246,7 +1239,6 @@ function stop_instance()
    fi   
  
    aws ec2 wait instance-stopped --instance-ids "${instance_id}" 
-   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1290,7 +1282,6 @@ function delete_instance()
    fi
 
    aws ec2 terminate-instances --instance-ids "${instance_id}"
-   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1302,7 +1293,6 @@ function delete_instance()
    if [[ 'and_wait' == "${wait_terminated}" ]]
    then
       aws ec2 wait instance-terminated --instance-ids "${instance_id}"
-      
       exit_code=$?
    
       if [[ 0 -ne "${exit_code}" ]]
@@ -1444,7 +1434,6 @@ function associate_instance_profile_to_instance_and_wait()
    local exit_code=0
    local -r instance_nm="${1}"
    local -r profile_nm="${2}"
-   local instance_id=''
    
    associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
    {
@@ -1482,7 +1471,6 @@ function disassociate_instance_profile_from_instance()
    local exit_code=0
    local -r instance_nm="${1}"
    local -r profile_id="${2}"
-   local instance_id=''
    local association_id=''
    
    __get_association_id "${instance_nm}" "${profile_id}"
@@ -1592,7 +1580,7 @@ function create_image()
    local -r img_nm="${2}"
    local -r img_desc="${3}"
    local img_id=''
-   
+  
    img_id="$(aws ec2 create-image \
         --instance-id "${instance_id}" \
         --name "${img_nm}" \
@@ -1601,7 +1589,6 @@ function create_image()
         --output text)"   
    
    aws ec2 wait image-available --image-ids "${img_id}"
-
    exit_code=$?
 
    if [[ 0 -ne "${exit_code}" ]]
@@ -1735,7 +1722,6 @@ function delete_image()
    local -r img_id="${1}"
 
    aws ec2 deregister-image --image-id "${img_id}"
-
    exit_code=$?
 
    if [[ 0 -ne "${exit_code}" ]]
@@ -2051,6 +2037,11 @@ function generate_aws_keypair()
    chmod 600 "${key}"
    exit_code=$?
    
+   if [[ 0 -ne "${exit_code}" ]] 
+      then
+         echo 'ERROR: changing file permissions.'
+      fi 
+   
    return "${exit_code}"
 }
 
@@ -2080,7 +2071,6 @@ function delete_aws_keypair()
    
    # Delete the key on AWS EC2.
    aws ec2 delete-key-pair --key-name "${key_nm}"
-   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]

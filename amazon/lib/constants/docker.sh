@@ -48,7 +48,6 @@ SINATRA_DOCKER_IMG_NM='maxmin13/sinatra'
 SINATRA_DOCKER_IMG_TAG='v1'
 SINATRA_DOCKER_CONTAINER_NM='sinatra'
 SINATRA_DOCKER_CONTAINER_VOLUME_DIR='/opt/sinatra'
-SINATRA_DOCKER_HOST_VOLUME_DIR='/opt/sinatra'
 
 ## ************************* ##
 ##   Sinatra/Redis network   ##

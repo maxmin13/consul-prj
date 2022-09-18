@@ -8,3 +8,8 @@ create admin/box/permissions/make.sh and admin/box/permissions/delete.sh (and al
 in admin/box/permissions/make.sh, create the role, profile, associate the role to the profile, profile to the instance
 
 
+
+do the same with provision/consul
+
+
+
