@@ -44,7 +44,7 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/box/delete.sh 'redis'
 
    # Jumpbox.
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin'   ##  TODO TODO check key not deleted
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin'
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'admin'
 . "${PROJECT_DIR}"/amazon/box/delete.sh 'admin'
 
