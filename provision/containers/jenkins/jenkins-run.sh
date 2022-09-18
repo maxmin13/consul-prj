@@ -66,11 +66,11 @@ then
 fi
 
 # Create a volume directory where to store Jenkins configuration.
-mkdir -p "${JENKINS_INST_HOME_DIR}" 
-chmod 700 "${JENKINS_INST_HOME_DIR}" 
+mkdir -p "${JENKINS_HOST_VOLUME_DIR}" 
+chmod 700 "${JENKINS_HOST_VOLUME_DIR}" 
 
 # 1000 is the UID of the jenkins user inside the image.
-chown -R 1000:1000 "${JENKINS_INST_HOME_DIR}"
+chown -R 1000:1000 "${JENKINS_HOST_VOLUME_DIR}"
 
 docker_run_jenkins_container "${JENKINS_DOCKER_CONTAINER_NM}" \
                              "${JENKINS_DOCKER_REPOSITORY_URI}" \
@@ -87,11 +87,11 @@ echo 'Logged out of ECR registry.'
 echo
 echo "http://${JENKINS_HTTP_ADDRESS}:${JENKINS_HTTP_PORT}/jenkins"
 
-if [[ -f "${JENKINS_INST_HOME_DIR}"/secrets/initialAdminPassword ]]
+if [[ -f "${JENKINS_HOST_VOLUME_DIR}"/secrets/initialAdminPassword ]]
 then
    echo
    echo 'Access code:'
-   cat "${JENKINS_INST_HOME_DIR}"/secrets/initialAdminPassword
+   cat "${JENKINS_HOST_VOLUME_DIR}"/secrets/initialAdminPassword
 fi
 
 echo
