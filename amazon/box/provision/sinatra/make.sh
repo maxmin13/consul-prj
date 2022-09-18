@@ -207,7 +207,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/sinatra/sinatra-run.sh" \
     "${user_pwd}">> "${LOGS_DIR}"/"${logfile_nm}"  && echo 'Sinatra web server successfully installed.' ||
     {
     
-       echo 'The role may not have been associated to the profile yet.'
+       echo 'WARN: the role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
       
        wait 180  

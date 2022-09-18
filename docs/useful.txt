@@ -2,7 +2,7 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's///g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/The role may not have/WARN: the role may not have/g' {} \;
 find ./ -type f -name "*.sh" -exec sed -i 's/sinatra_key/sinatra/g' {} \;
 
 

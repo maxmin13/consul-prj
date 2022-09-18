@@ -208,7 +208,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx-run.sh \
     "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Nginx web server successfully installed.' ||
     {
     
-       echo 'The role may not have been associated to the profile yet.'
+       echo 'WARN: the role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
       
        wait 180  

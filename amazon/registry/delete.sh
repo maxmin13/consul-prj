@@ -176,7 +176,7 @@ then
        "${user_nm}" \
        "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
        {
-          echo 'The role may not have been associated to the profile yet.'
+          echo 'WARN: the role may not have been associated to the profile yet.'
           echo 'Let''s wait a bit and check again (first time).' 
       
           wait 180  
