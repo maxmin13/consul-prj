@@ -60,14 +60,17 @@ mkdir -p "${LOGS_DIR}"
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra'
 . "${PROJECT_DIR}"/amazon/box/provision/sinatra/make.sh 'sinatra'
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'jenkins'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins'
 . "${PROJECT_DIR}"/amazon/box/provision/jenkins/make.sh 'jenkins'
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'nginx'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'nginx'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'nginx'
 . "${PROJECT_DIR}"/amazon/box/provision/nginx/make.sh 'nginx'
 
 

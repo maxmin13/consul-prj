@@ -5,8 +5,9 @@
 ########################################################################################################################
 # Consul is a datacenter runtime that provides service discovery, configuration, and orchestration.
 # Consul agents exchange messages on the 'main-subnet' network.
+#
 #  8500: handles HTTP API requests from clients
-#  8400: handles requests from CLI
+#  8300: handles requests from CLI
 #  8600: answers DNS queries
 #
 #   dig @0.0.0.0 -p 8600 node1.node.consul

@@ -4,7 +4,10 @@
 
 ##########################################################################################################
 # Consul is a datacenter runtime that provides service discovery, configuration, and orchestration.
-# The script installs Consul in the Admin instance and runs a cluster with one server.
+# The script installs Consul in the Admin instance, as a server or client, depending on the ConsulMode 
+# set in the ec2_consts.json configuration file.
+# The cluster is composed by a Consul server that runs in the Admin instance and a Consul client installed
+# in every host in the network.
 ##########################################################################################################
 
 set -o errexit
@@ -288,13 +291,13 @@ then
     
    echo 'consul-server.json ready.'
 else
-   # The admin box runs the Consul server.
+   # The admin box runs the Consul server, each Consul client binds to it at start-up.
    get_private_ip 'admin'
-   bind_ip="${__RESULT}"
+   server_bind_ip="${__RESULT}"
 
    sed -e "s/SEDbind_addressSED/${private_ip}/g" \
        -e "s/SEDbootstrap_expectSED/1/g" \
-       -e "s/SEDstart_join_bind_addressSED/${bind_ip}/g" \
+       -e "s/SEDstart_join_bind_addressSED/${server_bind_ip}/g" \
        "${PROVISION_DIR}"/consul/consul-client.json > "${tmp_dir}"/consul-config.json
        
    echo 'consul-client.json ready.'  
