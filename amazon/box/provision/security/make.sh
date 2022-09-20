@@ -14,14 +14,9 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-set -o errexit
-set -o pipefail
-set -o nounset
-set +o xtrace
-
 get_user_name
 user_nm="${__RESULT}"
-SCRIPTS_DIR=/home/"${user_nm}"/script
+remote_script_dir=/home/"${user_nm}"/script
 
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
@@ -32,37 +27,26 @@ if [ "$#" -lt 1 ]; then
 fi
 
 instance_key="${1}"
+logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} box provision security."
 ####
 
-logfile_nm="${instance_key}".log
-
 get_instance_name "${instance_key}"
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
 
-if [[ -z "${instance_id}" ]]
+if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ERROR: ${instance_key} box not found."
-   exit 1
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* ${instance_key} box ready (${instance_st})."
-   else
-      echo "* ERROR: ${instance_key} box is not ready. (${instance_st})."
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
       
-      exit 1
-   fi
+   return 0
 fi
 
 # Get the public IP address assigned to the instance. 
@@ -97,7 +81,7 @@ tmp_dir="${TMP_DIR}"/"${instance_key}"
 rm -rf  "${tmp_dir:?}"
 mkdir -p "${tmp_dir}"
 
-remote_tmp_dir="${SCRIPTS_DIR}"/"${instance_key}"
+remote_tmp_dir="${remote_script_dir}"/"${instance_key}"
 
 
 ## 
@@ -145,7 +129,7 @@ current_ssh_port="${__RESULT}"
 
 echo "SSH port ${current_ssh_port}."
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${remote_tmp_dir}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_tmp_dir}" \
     "${private_key_file}" \
     "${eip}" \
     "${current_ssh_port}" \
@@ -243,7 +227,7 @@ ssh_run_remote_command_as_root "${remote_tmp_dir}"/check-linux.sh \
     "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}"    
        
 # Clear remote directory.
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \

@@ -20,7 +20,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-SCRIPTS_DIR='SEDscripts_dirSED'
+remote_script_dir='SEDscripts_dirSED'
 DTC_REGION='SEDdtc_regionSED'
 INSTANCE_EIP_ADDRESS='SEDinstance_eip_addressSED'
 INSTANCE_PRIVATE_ADDRESS='SEDinstance_private_addressSED'
@@ -31,8 +31,8 @@ CONSUL_HTTP_PORT='SEDconsul_http_portSED'
 CONSUL_DNS_PORT='SEDconsul_dns_portSED'
 CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 
-source "${SCRIPTS_DIR}"/general_utils.sh
-source "${SCRIPTS_DIR}"/secretsmanager.sh
+source "${remote_script_dir}"/general_utils.sh
+source "${remote_script_dir}"/secretsmanager.sh
 
 yum update -y && yum install -y jq
 
@@ -85,7 +85,7 @@ fi
 sm_get_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}"
 secret="${__RESULT}"
 
-cd "${SCRIPTS_DIR}"
+cd "${remote_script_dir}"
 jq --arg secret "${secret}" '.encrypt = $secret' "${CONSUL_CONFIG_FILE_NM}" > /etc/consul.d/"${CONSUL_CONFIG_FILE_NM}"
 cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
@@ -96,12 +96,14 @@ systemctl restart consul
 systemctl status consul 
 consul version
 
+# shellcheck disable=SC2015
 consul members && echo "Consul successfully started." || 
 {
    echo "Waiting for Consul to start" 
       
    wait 60
    
+   # shellcheck disable=SC2015
    consul members && echo "Consul successfully started." || 
    {
       echo "ERROR: Consul not started after 1 minute."

@@ -7,14 +7,14 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-SCRIPTS_DIR='SEDscripts_dirSED'
+remote_script_dir='SEDscripts_dirSED'
 DTC_REGION='SEDdtc_regionSED'
 CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
 CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 CONSUL_IS_SERVER='SEDconsul_is_serverSED'
 
-source "${SCRIPTS_DIR}"/general_utils.sh
-source "${SCRIPTS_DIR}"/secretsmanager.sh
+source "${remote_script_dir}"/general_utils.sh
+source "${remote_script_dir}"/secretsmanager.sh
 
 ####
 echo 'Removing Consul ...'

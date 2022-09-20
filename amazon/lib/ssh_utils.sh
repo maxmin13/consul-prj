@@ -709,26 +709,18 @@ function check_keypair_exists()
       return 128
    fi
 
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r pkey_nm="${1}"
    local -r keypair_dir="${2}"
-   local pkey_file="${keypair_dir}"/"${pkey_nm}"
-   local keypair_exists='false'
 
-   if [[ ! -d "${keypair_dir}" ]]
+   # shellcheck disable=SC2034      
+   if [[ -f "${keypair_dir}"/"${pkey_nm}" ]]
    then
-      echo 'WARN: directory does not exist.'
-      keypair_exists='false'
-      __RESULT="${keypair_exists}"
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi
-               
-   if [[ -f "${pkey_file}" ]]
-   then
-      keypair_exists='true'
-   fi
-   
-   __RESULT="${keypair_exists}"
 
    return "${exit_code}"
 }

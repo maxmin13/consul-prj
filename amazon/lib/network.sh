@@ -68,18 +68,17 @@ if [[ $# -lt 1 ]]
    __RESULT='false'
    local exit_code=0
    local -r interface_nm="${1}"  
-   local exists='false'
    local name=''
 
    name="$(ip link | awk -v nm="${interface_nm}" '$2~nm {print $2}')"
    
+   # shellcheck disable=SC2034
    if [[ -n "${name}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi
-
-   # shellcheck disable=SC2034  
-   __RESULT="${exists}"
-            
+      
    return "${exit_code}"
 }

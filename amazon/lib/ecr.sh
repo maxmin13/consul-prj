@@ -33,12 +33,11 @@ function ecr_check_repository_exists()
       return 128
    fi
 
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r repository_nm="${1}"
    local -r region_nm="${2}"
    local repository_desc=''
-   local exists='false'
 
    # error if repository not found.
    repository_desc="$(aws ecr describe-repositories \
@@ -49,11 +48,11 @@ function ecr_check_repository_exists()
    
    if [[ -n "${repository_desc}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi 
 
-   __RESULT="${exists}"
-   
    return "${exit_code}"
 }
 
@@ -158,8 +157,7 @@ function ecr_check_img_exists()
    local -r img_tag="${2}"
    local -r region_nm="${3}"
    local image_desc=''
-   local exists='false'
-   
+
    # the command throws an error if repository or image not found.
    image_desc="$(aws ecr describe-images \
               --repository-name "${repository_nm}" \
@@ -169,11 +167,11 @@ function ecr_check_img_exists()
    
    if [[ -n "${image_desc}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi 
 
-   __RESULT="${exists}"
-   
    return "${exit_code}"
 }
 
@@ -231,6 +229,7 @@ function ecr_get_repostory_uri()
    local -r repository_nm="${1}"
    local -r registry_uri="${2}"
 
+   # shellcheck disable=SC2034
    __RESULT="${registry_uri}"/"${repository_nm}"
    
    return "${exit_code}"

@@ -11,20 +11,20 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+get_user_name
+user_nm="${__RESULT}"
+remote_script_dir=/home/"${user_nm}"/script
+
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
-  echo "EXAMPLE: redis"
+  echo "EXAMPLE: admin"
   echo "Only provided $# arguments"
   exit 1
 fi
 
 instance_key="${1}"
 logfile_nm="${instance_key}".log
-
-get_user_name
-user_nm="${__RESULT}"
-SCRIPTS_DIR=/home/"${user_nm}"/script
 REDIS_DOCKER_CONTAINER_NETWORK_NM='bridge'
 
 ####
@@ -33,28 +33,18 @@ STEP "${instance_key} box provision Redis database."
 
 get_instance_name "${instance_key}"
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
 
-if [[ -z "${instance_id}" ]]
+if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ERROR: ${instance_key} box not found."
-   exit 1
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* ${instance_key} box ready (${instance_st})."
-   else
-      echo "* ERROR: ${instance_key} box is not ready. (${instance_st})."
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
       
-      exit 1
-   fi
+   return 0
 fi
 
 # Get the public IP address assigned to the instance. 
@@ -84,12 +74,9 @@ fi
 
 echo
 
-# Removing old files
-tmp_dir="${TMP_DIR}"/"${instance_key}"
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
-
-remote_tmp_dir="${SCRIPTS_DIR}"/"${instance_key}"
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 #
 # Firewall
@@ -139,7 +126,7 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}/redis" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/redis" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -156,7 +143,7 @@ redis_docker_repository_uri="${__RESULT}"
 get_application_port 'redis'
 redis_port="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/redis)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/redis)/g" \
     -e "s/SEDregionSED/${region}/g" \
     -e "s/SEDredis_docker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
     -e "s/SEDredis_docker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
@@ -165,27 +152,27 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/redis)/g" \
     -e "s/SEDredis_docker_container_network_nmSED/${REDIS_DOCKER_CONTAINER_NETWORK_NM}/g" \
     -e "s/SEDredis_ip_addressSED/${eip}/g" \
     -e "s/SEDredis_ip_portSED/${redis_port}/g" \
-       "${CONTAINERS_DIR}"/redis/redis-run.sh > "${tmp_dir}"/redis-run.sh  
+       "${CONTAINERS_DIR}"/redis/redis-run.sh > "${temporary_dir}"/redis-run.sh  
   
 echo 'redis-run.sh ready.'  
   
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/redis \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/redis \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${tmp_dir}"/redis-run.sh
+    "${temporary_dir}"/redis-run.sh
 
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/redis \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/redis \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}" 
     
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis-run.sh" \
+ssh_run_remote_command_as_root "${remote_script_dir}/redis/redis-run.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -199,7 +186,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis-run.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis-run.sh" \
+       ssh_run_remote_command_as_root "${remote_script_dir}/redis/redis-run.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
@@ -211,7 +198,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}/redis/redis-run.sh" \
           }
     }
     
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -265,7 +252,7 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${tmp_dir:?}"
+rm -rf  "${temporary_dir:?}"
 
 echo "${instance_key} box Redis database provisioned."
 echo "redis-cli -h ${eip} -p ${redis_port}"

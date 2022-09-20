@@ -11,7 +11,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-SCRIPTS_DIR='SEDscripts_dirSED'
+remote_script_dir='SEDscripts_dirSED'
 IMAGE_DESC='SEDimage_descSED'
 REGION='SEDregionSED'
 DOCKER_CTX='SEDdocker_ctxSED'
@@ -19,9 +19,9 @@ DOCKER_REPOSITORY_URI='SEDdocker_repository_uriSED'
 DOCKER_IMG_NM='SEDdocker_img_nmSED'
 DOCKER_IMG_TAG='SEDdocker_img_tagSED'
  
-source "${SCRIPTS_DIR}"/general_utils.sh
-source "${SCRIPTS_DIR}"/dockerlib.sh
-source "${SCRIPTS_DIR}"/ecr.sh
+source "${remote_script_dir}"/general_utils.sh
+source "${remote_script_dir}"/dockerlib.sh
+source "${remote_script_dir}"/ecr.sh
 
 yum update -y
 
@@ -39,9 +39,9 @@ if [[ 'false' == "${repository_exists}" ]]
 then
    ecr_create_repository "${DOCKER_IMG_NM}" ${REGION}
    
-   echo ""${IMAGE_DESC}" repository created."
+   echo "${IMAGE_DESC} repository created."
 else
-   echo ""${IMAGE_DESC}" repository already created."
+   echo "${IMAGE_DESC} repository already created."
 fi
 
 echo 'Logging into ECR registry ...'
@@ -58,7 +58,7 @@ echo 'Logged into ECR registry.'
 # Image
 #
 
-echo "Building "${IMAGE_DESC}" image ..."
+echo "Building ${IMAGE_DESC} image ..."
 
 docker_build_img "${DOCKER_IMG_NM}" "${DOCKER_IMG_TAG}" "${DOCKER_CTX}"
 

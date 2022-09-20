@@ -11,14 +11,14 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-SCRIPTS_DIR='SEDscripts_dirSED'
+remote_script_dir='SEDscripts_dirSED'
 REGION='SEDregionSED'
 DOCKER_REPOSITORY_URI='SEDdocker_repository_uriSED'
 DOCKER_IMG_NM='SEDdocker_img_nmSED'
 DOCKER_IMG_TAG='SEDdocker_img_tagSED'
  
-source "${SCRIPTS_DIR}"/dockerlib.sh
-source "${SCRIPTS_DIR}"/ecr.sh
+source "${remote_script_dir}"/dockerlib.sh
+source "${remote_script_dir}"/ecr.sh
 
 ####
 echo "Removing ${DOCKER_IMG_NM} ..."

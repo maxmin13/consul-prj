@@ -15,10 +15,14 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+get_user_name
+user_nm="${__RESULT}"
+remote_script_dir=/home/"${user_nm}"/script
+
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
-  echo "EXAMPLE: sinatra"
+  echo "EXAMPLE: admin"
   echo "Only provided $# arguments"
   exit 1
 fi
@@ -26,41 +30,24 @@ fi
 instance_key="${1}"
 logfile_nm="${instance_key}".log
 
-get_user_name
-user_nm="${__RESULT}"
-get_user_password
-user_pwd="${__RESULT}"
-
-SCRIPTS_DIR=/home/"${user_nm}"/script
-
 ####
 STEP "${instance_key} box Consul"
 ####
 
 get_instance_name "${instance_key}"
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
 
-if [[ -z "${instance_id}" ]]
+if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ERROR: ${instance_key} box not found."
-   exit 1
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* ${instance_key} box ready (${instance_st})."
-   else
-      echo "* ERROR: ${instance_key} box not ready. (${instance_st})."
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
       
-      exit 1
-   fi
+   return 0
 fi
 
 # Get the public IP address assigned to the instance. 
@@ -89,7 +76,7 @@ else
 fi
 
 # Removing old files
-# shellcheck disable=SC2115
+# shellcheck disable=SC2153
 tmp_dir="${TMP_DIR}"/${instance_key}/consul
 rm -rf  "${tmp_dir:?}"
 mkdir -p "${tmp_dir}"
@@ -102,6 +89,7 @@ echo
 
 get_role_name "${instance_key}"
 role_nm="${__RESULT}" 
+
 check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
@@ -127,9 +115,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${ssh_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${ssh_port} tcp 0.0.0.0/0."
 fi
@@ -141,9 +129,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${serflan_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${serflan_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${serflan_port} tcp 0.0.0.0/0."
 fi
@@ -153,9 +141,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${serflan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${serflan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${serflan_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${serflan_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${serflan_port} udp 0.0.0.0/0."
 fi
@@ -167,9 +155,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${serfwan_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${serfwan_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${serfwan_port} tcp 0.0.0.0/0."
 fi
@@ -179,9 +167,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${serfwan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${serfwan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${serfwan_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${serfwan_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${serfwan_port} udp 0.0.0.0/0."
 fi
@@ -193,9 +181,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${rpc_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${rpc_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${rpc_port} tcp 0.0.0.0/0."
 fi
@@ -207,9 +195,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${http_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${http_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${http_port} tcp 0.0.0.0/0."
 fi
@@ -221,9 +209,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${dns_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${dns_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${dns_port} tcp 0.0.0.0/0."
 fi
@@ -233,9 +221,9 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${dns_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   allow_access_from_cidr "${sgp_id}" "${dns_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on "${dns_port}" tcp 0.0.0.0/0."
+   echo "Access granted on ${dns_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted ${dns_port} udp 0.0.0.0/0."
 fi
@@ -247,7 +235,7 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}"/${instance_key}/consul \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/${instance_key}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -269,7 +257,7 @@ then
    consul_is_server='true'
 fi
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/"${instance_key}/consul)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/"${instance_key}"/consul)/g" \
     -e "s/SEDdtc_regionSED/${region_nm}/g" \
     -e "s/SEDinstance_eip_addressSED/${eip}/g" \
     -e "s/SEDinstance_private_addressSED/${private_ip}/g" \
@@ -303,7 +291,7 @@ else
    echo 'consul-client.json ready.'  
 fi  
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/${instance_key}/consul \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/"${instance_key}"/consul \
     "${tmp_dir}"/consul-install.sh \
     "${tmp_dir}"/consul-config.json \
     "${PROVISION_DIR}"/consul/consul.service \
@@ -319,19 +307,22 @@ else
    echo 'Installing Consul in client mode ...'
 fi
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/${instance_key}/consul \
+get_user_password
+user_pwd="${__RESULT}"
+
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}/${instance_key}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}"      
 
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/${instance_key}/consul/consul-install.sh \
+ssh_run_remote_command_as_root "${remote_script_dir}"/"${instance_key}"/consul/consul-install.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}" >> "${LOGS_DIR}"/${logfile_nm} && echo 'Consul successfully installed.' ||
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Consul successfully installed.' ||
     {    
        echo 'WARN: the role may not have been associated to the profile yet.'
        echo 'Let''s wait a bit and check again (first time).' 
@@ -340,19 +331,19 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/${instance_key}/consul/consul-in
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/${instance_key}/consul/consul-install.sh \
+       ssh_run_remote_command_as_root "${remote_script_dir}"/"${instance_key}"/consul/consul-install.sh \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
           "${user_nm}" \
-          "${user_pwd}" >> "${LOGS_DIR}"/${logfile_nm} && echo 'Consul successfully installed.' ||
+          "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Consul successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
           }
     }
    
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -385,9 +376,9 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/${logfile_nm}
+   revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access revoked on "${ssh_port}" tcp 0.0.0.0/0."
+   echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
 fi  

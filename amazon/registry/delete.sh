@@ -14,38 +14,31 @@ set +o xtrace
 
 get_user_name
 user_nm="${__RESULT}"
-SCRIPTS_DIR=/home/"${user_nm}"/script
-logfile_nm=ecr.log
+remote_script_dir=/home/"${user_nm}"/script
+instance_key='admin'
+logfile_nm="${instance_key}".log
 
 ####
 STEP "ECR registry"
 ####
 
-# Jumpbox where the images are built.
-get_instance_name 'admin'
-admin_instance_nm="${__RESULT}"
-get_instance_id "${admin_instance_nm}"
-instance_id="${__RESULT}"
+get_instance_name "${instance_key}"
+instance_nm="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
 
-if [[ -z "${instance_id}" ]]
+if [[ 'true' == "${is_running}" ]]
 then
-   echo '* WARN: admin jumpbox not found.'
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${admin_instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* admin jumpbox ready (${instance_st})."
-   else
-      echo "* WARN: admin jumpbox not ready. (${instance_st})."
-   fi
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+      
+   return 0
 fi
  
-get_public_ip_address_associated_with_instance "${admin_instance_nm}"
+get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
@@ -55,9 +48,9 @@ else
    echo "* admin IP address: ${eip}."
 fi
 
-get_security_group_name 'admin'
-admin_sgp_nm="${__RESULT}"
-get_security_group_id "${admin_sgp_nm}"
+get_security_group_name "${instance_key}"
+sgp_nm="${__RESULT}"
+get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
@@ -67,411 +60,405 @@ else
    echo "* admin security group ID: ${sgp_id}."
 fi
 
-# Removing old files
-# shellcheck disable=SC2115
-tmp_dir="${TMP_DIR}"/ecr
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
+temporary_dir="${TMP_DIR}"/ecr
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 echo
 
+#
+# Firewall
+#
 
-if [[ -n "${instance_id}" && 'running' == "${instance_st}" ]]
+get_application_port 'ssh'
+ssh_port="${__RESULT}"
+check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
 then
-   #
-   # Firewall
-   #
+   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
 
-   get_application_port 'ssh'
-   ssh_port="${__RESULT}"
-   check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
-   is_granted="${__RESULT}"
+   echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already granted on ${ssh_port} tcp 0.0.0.0/0."
+fi
 
-   if [[ 'false' == "${is_granted}" ]]
-   then
-      allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
-   
-      echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
-   else
-      echo "WARN: access already granted on ${ssh_port} tcp 0.0.0.0/0."
-   fi
+#
+# Permissions.
+#
 
-   #
-   # Permissions.
-   #
+get_role_name "${instance_key}"
+role_nm="${__RESULT}"
+check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
 
-   get_role_name 'admin'
-   admin_role_nm="${__RESULT}"
-   check_role_has_permission_policy_attached "${admin_role_nm}" "${ECR_POLICY_NM}"
-   is_permission_policy_associated="${__RESULT}"
+if [[ 'false' == "${is_permission_policy_associated}" ]]
+then
+  echo 'Attaching permission policy to the role ...'
 
-   if [[ 'false' == "${is_permission_policy_associated}" ]]
-   then
-      echo 'Attaching permission policy to the role ...'
+  attach_permission_policy_to_role "${role_nm}" "${ECR_POLICY_NM}"
 
-      attach_permission_policy_to_role "${admin_role_nm}" "${ECR_POLICY_NM}"
-      
-      echo 'Permission policy associated to the role.' 
-   else
-      echo 'WARN: permission policy already associated to the role.'
-   fi   
+  echo 'Permission policy associated to the role.' 
+else
+  echo 'WARN: permission policy already associated to the role.'
+fi   
 
-   get_keypair_name 'admin'
-   admin_keypair_nm="${__RESULT}"
-   private_key_file="${ACCESS_DIR}"/"${admin_keypair_nm}" 
-   wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
-  
-   # Prepare the scripts to run on the server.
+get_keypair_name "${instance_key}"
+keypair_nm="${__RESULT}"
+private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-   ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
+# Prepare the scripts to run on the server.
 
-   #
-   # Jenkins
-   #
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
 
-   echo 'Provisioning Jenkins scripts ...'
+#
+# Jenkins
+#
 
-   mkdir -p "${tmp_dir}"/jenkins
+echo 'Provisioning Jenkins scripts ...'
 
-   ssh_run_remote_command "mkdir -p ${SCRIPTS_DIR}/jenkins" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
-       
-   get_region_name
-   region="${__RESULT}"
-   ecr_get_registry_uri "${region}"
-   registry_uri="${__RESULT}"
-   ecr_get_repostory_uri "${JENKINS_DOCKER_IMG_NM}" "${registry_uri}"
-   jenkins_docker_repository_uri="${__RESULT}"
+mkdir -p "${temporary_dir}"/jenkins
 
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/jenkins")/g" \
-       -e "s/SEDregionSED/${region}/g" \
-       -e "s/SEDdocker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
-       -e "s/SEDdocker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
-       -e "s/SEDdocker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
-          "${CONTAINERS_DIR}"/image-remove.sh > "${tmp_dir}"/jenkins/jenkins-remove.sh    
-     
-   echo 'jenkins-remove.sh ready.'        
-     
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/jenkins \
-       "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/ecr.sh \
-       "${tmp_dir}"/jenkins/jenkins-remove.sh     
+ssh_run_remote_command "mkdir -p ${remote_script_dir}/jenkins" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
 
-   echo 'Deleting Jenkins image and ECR repository ...'
+get_region_name
+region="${__RESULT}"
+ecr_get_registry_uri "${region}"
+registry_uri="${__RESULT}"
+ecr_get_repostory_uri "${JENKINS_DOCKER_IMG_NM}" "${registry_uri}"
+jenkins_docker_repository_uri="${__RESULT}"
 
-   get_user_password
-   user_pwd="${__RESULT}"
-                                         
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/jenkins/jenkins-remove.sh" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/jenkins")/g" \
+  -e "s/SEDregionSED/${region}/g" \
+  -e "s/SEDdocker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
+  -e "s/SEDdocker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
+  -e "s/SEDdocker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
+    "${CONTAINERS_DIR}"/image-remove.sh > "${temporary_dir}"/jenkins/jenkins-remove.sh    
+
+echo 'jenkins-remove.sh ready.'        
+
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/jenkins \
+  "${LIBRARY_DIR}"/dockerlib.sh \
+  "${LIBRARY_DIR}"/ecr.sh \
+  "${temporary_dir}"/jenkins/jenkins-remove.sh     
+
+echo 'Deleting Jenkins image and ECR repository ...'
+
+get_user_password
+user_pwd="${__RESULT}"
+                                 
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/jenkins/jenkins-remove.sh" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}" \
+  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
+  {
+    echo 'WARN: the role may not have been associated to the profile yet.'
+    echo 'Let''s wait a bit and check again (first time).' 
+
+    wait 180  
+
+    echo 'Let''s try now.' 
+
+    ssh_run_remote_command_as_root "${remote_script_dir}/jenkins/jenkins-remove.sh" \
        "${private_key_file}" \
        "${eip}" \
        "${ssh_port}" \
        "${user_nm}" \
        "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
        {
-          echo 'WARN: the role may not have been associated to the profile yet.'
-          echo 'Let''s wait a bit and check again (first time).' 
-      
-          wait 180  
-      
-          echo 'Let''s try now.' 
-    
-          ssh_run_remote_command_as_root "${SCRIPTS_DIR}/jenkins/jenkins-remove.sh" \
-             "${private_key_file}" \
-             "${eip}" \
-             "${ssh_port}" \
-             "${user_nm}" \
-             "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
-             {
-                 echo 'ERROR: the problem persists after 3 minutes.'
-                 exit 1          
-             }
-       } 
-       
-   echo   
-
-   #
-   # Nginx
-   #
-
-   echo 'Provisioning Nginx scripts ...'
-
-   mkdir -p "${tmp_dir}"/nginx
-
-
-   ssh_run_remote_command "mkdir -p ${SCRIPTS_DIR}/nginx" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
-
-   ecr_get_repostory_uri "${NGINX_DOCKER_IMG_NM}" "${registry_uri}"
-   nginx_docker_repository_uri="${__RESULT}"
-
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/nginx")/g" \
-       -e "s/SEDregionSED/${region}/g" \
-       -e "s/SEDdocker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
-       -e "s/SEDdocker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
-       -e "s/SEDdocker_img_tagSED/${NGINX_DOCKER_IMG_TAG}/g" \
-          "${CONTAINERS_DIR}"/image-remove.sh > "${tmp_dir}"/nginx/nginx-remove.sh  
-       
-   echo 'nginx-remove.sh ready.'        
-     
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/nginx \
-       "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/ecr.sh \
-       "${tmp_dir}"/nginx/nginx-remove.sh     
-
-   echo 'Deleting Nginx image and ECR repository ...'
-                                     
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/nginx/nginx-remove.sh" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Nginx image and ECR repository successfully deleted.' ||
-       {
-           echo 'ERROR: deleting Nginx.'
-           exit 1   
+           echo 'ERROR: the problem persists after 3 minutes.'
+           exit 1          
        }
-    
-   echo 
+  } 
 
-   #
-   # Sinatra
-   #
+echo   
 
-   echo 'Provisioning Sinatra scripts ...'
+#
+# Nginx
+#
 
-   mkdir -p "${tmp_dir}"/sinatra
+echo 'Provisioning Nginx scripts ...'
 
-   ssh_run_remote_command "mkdir -p ${SCRIPTS_DIR}/sinatra" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
+mkdir -p "${temporary_dir}"/nginx
 
-   ecr_get_repostory_uri "${SINATRA_DOCKER_IMG_NM}" "${registry_uri}"
-   sinatra_docker_repository_uri="${__RESULT}"
+ssh_run_remote_command "mkdir -p ${remote_script_dir}/nginx" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
 
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/sinatra")/g" \
-       -e "s/SEDregionSED/${region}/g" \
-       -e "s/SEDdocker_repository_uriSED/$(escape "${sinatra_docker_repository_uri}")/g" \
-       -e "s/SEDdocker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
-       -e "s/SEDdocker_img_tagSED/${SINATRA_DOCKER_IMG_TAG}/g" \
-       "${CONTAINERS_DIR}"/image-remove.sh > "${tmp_dir}"/sinatra/sinatra-remove.sh  
-       
-   echo 'sinatra-remove.sh ready.'        
-     
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/sinatra \
-       "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/ecr.sh \
-       "${tmp_dir}"/sinatra/sinatra-remove.sh     
+ecr_get_repostory_uri "${NGINX_DOCKER_IMG_NM}" "${registry_uri}"
+nginx_docker_repository_uri="${__RESULT}"
 
-   echo 'Deleting Sinatra image and ECR repository ...'
-                                        
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/sinatra/sinatra-remove.sh" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Sinatra image and ECR repository successfully deleted.' ||
-       {
-           echo 'ERROR: deleting Sinatra.'
-           exit 1   
-       } 
-    
-   echo
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/nginx")/g" \
+  -e "s/SEDregionSED/${region}/g" \
+  -e "s/SEDdocker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
+  -e "s/SEDdocker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
+  -e "s/SEDdocker_img_tagSED/${NGINX_DOCKER_IMG_TAG}/g" \
+    "${CONTAINERS_DIR}"/image-remove.sh > "${temporary_dir}"/nginx/nginx-remove.sh  
 
-   #
-   # Redis
-   #
+echo 'nginx-remove.sh ready.'        
 
-   echo 'Provisioning Redis scripts ...'
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/nginx \
+  "${LIBRARY_DIR}"/dockerlib.sh \
+  "${LIBRARY_DIR}"/ecr.sh \
+  "${temporary_dir}"/nginx/nginx-remove.sh     
 
-   mkdir -p "${tmp_dir}"/redis
+echo 'Deleting Nginx image and ECR repository ...'
+                             
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/nginx/nginx-remove.sh" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}" \
+  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Nginx image and ECR repository successfully deleted.' ||
+  {
+     echo 'ERROR: deleting Nginx.'
+     exit 1   
+  }
 
-   ssh_run_remote_command "mkdir -p ${SCRIPTS_DIR}/redis" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
+echo 
 
-   ecr_get_repostory_uri "${REDIS_DOCKER_IMG_NM}" "${registry_uri}"
-   redis_docker_repository_uri="${__RESULT}"
+#
+# Sinatra
+#
 
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/redis")/g" \
-       -e "s/SEDregionSED/${region}/g" \
-       -e "s/SEDdocker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
-       -e "s/SEDdocker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
-       -e "s/SEDdocker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
-         "${CONTAINERS_DIR}"/image-remove.sh > "${tmp_dir}"/redis/redis-remove.sh  
-       
-   echo 'redis-remove.sh ready.'        
-     
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/redis \
-       "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/ecr.sh \
-       "${tmp_dir}"/redis/redis-remove.sh     
+echo 'Provisioning Sinatra scripts ...'
 
-   echo 'Deleting Redis image and ECR repository ...'
-                                        
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/redis/redis-remove.sh" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis image and ECR repository successfully deleted.' ||
-       {
-           echo 'ERROR: deleting Redis.'
-           exit 1   
-       } 
-    
-   echo
+mkdir -p "${temporary_dir}"/sinatra
 
-   #
-   # Ruby
-   #
+ssh_run_remote_command "mkdir -p ${remote_script_dir}/sinatra" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
 
-   echo 'Provisioning Ruby scripts ...'
+ecr_get_repostory_uri "${SINATRA_DOCKER_IMG_NM}" "${registry_uri}"
+sinatra_docker_repository_uri="${__RESULT}"
 
-   mkdir -p "${tmp_dir}"/ruby
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/sinatra")/g" \
+  -e "s/SEDregionSED/${region}/g" \
+  -e "s/SEDdocker_repository_uriSED/$(escape "${sinatra_docker_repository_uri}")/g" \
+  -e "s/SEDdocker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
+  -e "s/SEDdocker_img_tagSED/${SINATRA_DOCKER_IMG_TAG}/g" \
+  "${CONTAINERS_DIR}"/image-remove.sh > "${temporary_dir}"/sinatra/sinatra-remove.sh  
 
-   ssh_run_remote_command "mkdir -p ${SCRIPTS_DIR}/ruby" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
+echo 'sinatra-remove.sh ready.'        
 
-   ecr_get_repostory_uri "${RUBY_DOCKER_IMG_NM}" "${registry_uri}"
-   ruby_docker_repository_uri="${__RESULT}"
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/sinatra \
+  "${LIBRARY_DIR}"/dockerlib.sh \
+  "${LIBRARY_DIR}"/ecr.sh \
+  "${temporary_dir}"/sinatra/sinatra-remove.sh     
 
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/ruby")/g" \
-       -e "s/SEDregionSED/${region}/g" \
-       -e "s/SEDdocker_repository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
-       -e "s/SEDdocker_img_nmSED/$(escape "${RUBY_DOCKER_IMG_NM}")/g" \
-       -e "s/SEDdocker_img_tagSED/${RUBY_DOCKER_IMG_TAG}/g" \
-          "${CONTAINERS_DIR}"/image-remove.sh > "${tmp_dir}"/ruby/ruby-remove.sh  
-       
-   echo 'ruby-remove.sh ready.'        
-     
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/ruby \
-       "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/ecr.sh \
-       "${tmp_dir}"/ruby/ruby-remove.sh     
+echo 'Deleting Sinatra image and ECR repository ...'
+                                
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/sinatra/sinatra-remove.sh" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}" \
+  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Sinatra image and ECR repository successfully deleted.' ||
+  {
+     echo 'ERROR: deleting Sinatra.'
+     exit 1   
+  } 
 
-   echo 'Deleting Ruby image and ECR repository ...'
-                                         
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/ruby/ruby-remove.sh" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Ruby image and ECR repository successfully deleted.' ||
-       {
-           echo 'ERROR: deleting Ruby.'
-           exit 1   
-       }
+echo
 
-   echo
+#
+# Redis
+#
 
-   #
-   # Centos
-   #
+echo 'Provisioning Redis scripts ...'
 
-   echo 'Provisioning Centos scripts ...'
+mkdir -p "${temporary_dir}"/redis
 
-   mkdir -p "${tmp_dir}"/centos
+ssh_run_remote_command "mkdir -p ${remote_script_dir}/redis" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
 
-   ssh_run_remote_command "mkdir -p ${SCRIPTS_DIR}/centos" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
+ecr_get_repostory_uri "${REDIS_DOCKER_IMG_NM}" "${registry_uri}"
+redis_docker_repository_uri="${__RESULT}"
 
-   ecr_get_repostory_uri "${CENTOS_DOCKER_IMG_NM}" "${registry_uri}"
-   centos_docker_repository_uri="${__RESULT}"
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/redis")/g" \
+  -e "s/SEDregionSED/${region}/g" \
+  -e "s/SEDdocker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
+  -e "s/SEDdocker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
+  -e "s/SEDdocker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
+   "${CONTAINERS_DIR}"/image-remove.sh > "${temporary_dir}"/redis/redis-remove.sh  
 
-   sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}/centos")/g" \
-       -e "s/SEDregionSED/${region}/g" \
-       -e "s/SEDdocker_repository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
-       -e "s/SEDdocker_img_nmSED/$(escape "${CENTOS_DOCKER_IMG_NM}")/g" \
-       -e "s/SEDdocker_img_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
-          "${CONTAINERS_DIR}"/image-remove.sh > "${tmp_dir}"/centos/centos-remove.sh           
-       
-   echo 'centos-remove.sh ready.' 
-    
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/centos \
-       "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/ecr.sh \
-       "${tmp_dir}"/centos/centos-remove.sh 
-    
-   echo 'Deleting Centos image and ECR repository ...'
-                                       
-   ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR} && ${SCRIPTS_DIR}/centos/centos-remove.sh" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Centos image and ECR repository successfully deleted.' ||
-       {    
-           echo 'ERROR: deleting Centos.'
-           exit 1 
-       }
+echo 'redis-remove.sh ready.'        
 
-   echo         
-                        
-   ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}"
-    
-   #
-   # Permissions.
-   #
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/redis \
+  "${LIBRARY_DIR}"/dockerlib.sh \
+  "${LIBRARY_DIR}"/ecr.sh \
+  "${temporary_dir}"/redis/redis-remove.sh     
 
-   check_role_has_permission_policy_attached "${admin_role_nm}" "${ECR_POLICY_NM}"
-   is_permission_policy_associated="${__RESULT}"
+echo 'Deleting Redis image and ECR repository ...'
+                                
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/redis/redis-remove.sh" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}" \
+  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis image and ECR repository successfully deleted.' ||
+  {
+     echo 'ERROR: deleting Redis.'
+     exit 1   
+  } 
 
-   if [[ 'true' == "${is_permission_policy_associated}" ]]
-   then
-      echo 'Detaching permission policy from role ...'
-   
-      detach_permission_policy_from_role "${admin_role_nm}" "${ECR_POLICY_NM}"
-      
-      echo 'Permission policy detached.'
-   else
-      echo 'WARN: permission policy already detached from the role.'
-   fi 
+echo
 
-   ## 
-   ## Firewall.
-   ##
+#
+# Ruby
+#
 
-   check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
-   is_granted="${__RESULT}"
+echo 'Provisioning Ruby scripts ...'
 
-   if [[ 'true' == "${is_granted}" ]]
-   then
-      revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
-   
-      echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
-   else
-      echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
-   fi
+mkdir -p "${temporary_dir}"/ruby
 
-   echo 'Revoked SSH access to the box.'      
-   echo
+ssh_run_remote_command "mkdir -p ${remote_script_dir}/ruby" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
 
-   # Removing old files
-   # shellcheck disable=SC2115
-   rm -rf  "${tmp_dir:?}"
+ecr_get_repostory_uri "${RUBY_DOCKER_IMG_NM}" "${registry_uri}"
+ruby_docker_repository_uri="${__RESULT}"
+
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/ruby")/g" \
+  -e "s/SEDregionSED/${region}/g" \
+  -e "s/SEDdocker_repository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
+  -e "s/SEDdocker_img_nmSED/$(escape "${RUBY_DOCKER_IMG_NM}")/g" \
+  -e "s/SEDdocker_img_tagSED/${RUBY_DOCKER_IMG_TAG}/g" \
+    "${CONTAINERS_DIR}"/image-remove.sh > "${temporary_dir}"/ruby/ruby-remove.sh  
+
+echo 'ruby-remove.sh ready.'        
+
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/ruby \
+  "${LIBRARY_DIR}"/dockerlib.sh \
+  "${LIBRARY_DIR}"/ecr.sh \
+  "${temporary_dir}"/ruby/ruby-remove.sh     
+
+echo 'Deleting Ruby image and ECR repository ...'
+                                 
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/ruby/ruby-remove.sh" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}" \
+  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Ruby image and ECR repository successfully deleted.' ||
+  {
+     echo 'ERROR: deleting Ruby.'
+     exit 1   
+  }
+
+echo
+
+#
+# Centos
+#
+
+echo 'Provisioning Centos scripts ...'
+
+mkdir -p "${temporary_dir}"/centos
+
+ssh_run_remote_command "mkdir -p ${remote_script_dir}/centos" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
+
+ecr_get_repostory_uri "${CENTOS_DOCKER_IMG_NM}" "${registry_uri}"
+centos_docker_repository_uri="${__RESULT}"
+
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/centos")/g" \
+  -e "s/SEDregionSED/${region}/g" \
+  -e "s/SEDdocker_repository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
+  -e "s/SEDdocker_img_nmSED/$(escape "${CENTOS_DOCKER_IMG_NM}")/g" \
+  -e "s/SEDdocker_img_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
+    "${CONTAINERS_DIR}"/image-remove.sh > "${temporary_dir}"/centos/centos-remove.sh           
+
+echo 'centos-remove.sh ready.' 
+
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/centos \
+  "${LIBRARY_DIR}"/dockerlib.sh \
+  "${LIBRARY_DIR}"/ecr.sh \
+  "${temporary_dir}"/centos/centos-remove.sh 
+
+echo 'Deleting Centos image and ECR repository ...'
+                               
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/centos/centos-remove.sh" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}" \
+  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Centos image and ECR repository successfully deleted.' ||
+  {    
+     echo 'ERROR: deleting Centos.'
+     exit 1 
+  }
+
+echo         
+                
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+  "${private_key_file}" \
+  "${eip}" \
+  "${ssh_port}" \
+  "${user_nm}"
+
+#
+# Permissions.
+#
+
+check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
+is_permission_policy_associated="${__RESULT}"
+
+if [[ 'true' == "${is_permission_policy_associated}" ]]
+then
+  echo 'Detaching permission policy from role ...'
+
+  detach_permission_policy_from_role "${role_nm}" "${ECR_POLICY_NM}"
+
+  echo 'Permission policy detached.'
+else
+  echo 'WARN: permission policy already detached from the role.'
+fi 
+
+## 
+## Firewall.
+##
+
+check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+  revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
+
+  echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
+else
+  echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
 fi
+
+echo 'Revoked SSH access to the box.'      
+echo
+
+# Removing old files
+# shellcheck disable=SC2115
+rm -rf  "${temporary_dir:?}"
+

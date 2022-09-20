@@ -20,45 +20,30 @@ if [ "$#" -lt 1 ]; then
 fi
 
 instance_key="${1}"
+logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} box permissions"
 ####
 
-logfile_nm="${instance_key}".log
-
-#
-# Get the configuration values from the file ec2_consts.json
-#
-
 get_instance_name "${instance_key}"
-instance_nm="${__RESULT}" 
+instance_nm="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
+
+if [[ 'true' == "${is_running}" ]]
+then
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+      
+   return 0
+fi
+
 get_instance_profile_name "${instance_key}"
 instance_profile_nm="${__RESULT}" 
-get_role_name "${instance_key}"
-role_nm="${__RESULT}"
-
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
-
-if [[ -z "${instance_id}" ]]
-then
-   echo "* WARN: ${instance_key} box not found."
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* ${instance_key} box ready (${instance_st})."
-   else
-      echo "* WARN: ${instance_key} box is not ready. (${instance_st})."
-   fi
-fi
-
 check_instance_profile_exists "${instance_profile_nm}"
 instance_profile_exists="${__RESULT}"
 
@@ -72,6 +57,8 @@ else
    echo "* WARN: ${instance_key} instance profile not found."
 fi
 
+get_role_name "${instance_key}"
+role_nm="${__RESULT}"
 check_role_exists "${role_nm}"
 role_exists="${__RESULT}"
 
@@ -113,7 +100,6 @@ else
    echo "WARN: ${instance_key} instance profile already deleted."
 fi
 
-  
 echo  
 echo "${instance_key} box permissions deleted."
 echo

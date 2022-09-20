@@ -160,20 +160,19 @@ function sm_check_secret_exists()
    local -r secret_nm="${1}"
    local -r region="${2}"
    local secret_desc=''
-   local exists='false'
 
    # error if the secret is not found.
    secret_desc="$(aws secretsmanager describe-secret --secret-id "${secret_nm}" \
       --region "${region}" --output text)"          
    
+   # shellcheck disable=SC2034
    if [[ -n "${secret_desc}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi 
-
-   # shellcheck disable=SC2034
-   __RESULT="${exists}"
    
- return "${exit_code}"
+   return "${exit_code}"
 }
 

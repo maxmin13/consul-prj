@@ -11,10 +11,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-SCRIPTS_DIR=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_nm"
@@ -24,12 +20,11 @@ if [ "$#" -lt 1 ]; then
 fi
 
 instance_key="${1}"
+logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} box"
 ####
-
-logfile_nm="${instance_key}".log
 
 get_instance_name "${instance_key}"
 instance_nm="${__RESULT}"
@@ -83,11 +78,11 @@ then
    then
       echo "Deleting ${instance_key} box ..."
       
-      delete_instance "${instance_id}" 'and_wait' >> "${LOGS_DIR}"/${logfile_nm}
+      delete_instance "${instance_id}" 'and_wait' >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
       
       echo "${instance_key} box deleted."
    else
-      echo echo "${instance_key} box already deleted."
+      echo "${instance_key} box already deleted."
    fi
 fi
 
@@ -99,7 +94,7 @@ if [[ -n "${sgp_id}" ]]
 then  
    echo "Deleting ${instance_key} security group ..."
 
-   delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/${logfile_nm} 2>&1 
+   delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
    
    echo "${instance_key} security group deleted."
 fi

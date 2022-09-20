@@ -11,20 +11,20 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+get_user_name
+user_nm="${__RESULT}"
+remote_script_dir=/home/"${user_nm}"/script
+
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
-  echo "EXAMPLE: nginx"
+  echo "EXAMPLE: admin"
   echo "Only provided $# arguments"
   exit 1
 fi
 
 instance_key="${1}"
 logfile_nm="${instance_key}".log
-get_user_name
-user_nm="${__RESULT}"
-
-SCRIPTS_DIR=/home/"${user_nm}"/script
 WEBSITE_ARCHIVE='welcome.zip'
 WEBSITE_NM='welcome'
 
@@ -34,28 +34,18 @@ STEP "${instance_key} box Nginx provision."
 
 get_instance_name "${instance_key}"
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
 
-if [[ -z "${instance_id}" ]]
+if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ERROR: ${instance_key} box not found."
-   exit 1
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* ${instance_key} box ready (${instance_st})."
-   else
-      echo "* ERROR: ${instance_key} box is not ready. (${instance_st})."
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
       
-      exit 1
-   fi
+   return 0
 fi
 
 # Get the public IP address assigned to the instance. 
@@ -85,12 +75,9 @@ fi
 
 echo
 
-# Removing old files
-tmp_dir="${TMP_DIR}"/"${instance_key}"
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
-
-remote_tmp_dir="${SCRIPTS_DIR}"/"${instance_key}"
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 #
 # Firewall
@@ -140,7 +127,7 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${SCRIPTS_DIR}/nginx" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/nginx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -159,7 +146,7 @@ nginx_home="${__RESULT}"
 get_application_port 'nginx'
 nginx_port="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/nginx)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/nginx)/g" \
     -e "s/SEDregionSED/${region}/g" \
     -e "s/SEDnginx_docker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
     -e "s/SEDnginx_docker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
@@ -171,36 +158,36 @@ sed -e "s/SEDscripts_dirSED/$(escape "${SCRIPTS_DIR}"/nginx)/g" \
     -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
     -e "s/SEDwebsite_archiveSED/${WEBSITE_ARCHIVE}/g" \
     -e "s/SEDwebsite_nmSED/${WEBSITE_NM}/g" \
-       "${CONTAINERS_DIR}"/nginx/nginx-run.sh > "${tmp_dir}"/nginx-run.sh  
+       "${CONTAINERS_DIR}"/nginx/nginx-run.sh > "${temporary_dir}"/nginx-run.sh  
                         
 echo 'nginx-run.sh ready.'  
 
 ## Website sources
-cd "${tmp_dir}" || exit
+cd "${temporary_dir}" || exit
 cp -R "${CONTAINERS_DIR}"/nginx/website './'
-cd "${tmp_dir}"/website || exit
+cd "${temporary_dir}"/website || exit
 zip -r ../"${WEBSITE_ARCHIVE}" ./*  >> "${LOGS_DIR}"/"${logfile_nm}"
 
 echo "${WEBSITE_ARCHIVE} ready"
      
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${SCRIPTS_DIR}"/nginx \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/nginx \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${tmp_dir}"/nginx-run.sh \
-    "${tmp_dir}"/"${WEBSITE_ARCHIVE}" 
+    "${temporary_dir}"/nginx-run.sh \
+    "${temporary_dir}"/"${WEBSITE_ARCHIVE}" 
 
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${SCRIPTS_DIR}"/nginx \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/nginx \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}" 
     
-ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx-run.sh \
+ssh_run_remote_command_as_root "${remote_script_dir}"/nginx/nginx-run.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -215,7 +202,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx-run.sh \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx-run.sh \
+       ssh_run_remote_command_as_root "${remote_script_dir}"/nginx/nginx-run.sh \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
@@ -227,7 +214,7 @@ ssh_run_remote_command_as_root "${SCRIPTS_DIR}"/nginx/nginx-run.sh \
           }
     }
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -281,7 +268,7 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${tmp_dir:?}"
+rm -rf  "${temporary_dir:?}"
     
 echo "${instance_key} box Nginx provisioned."
 echo "http://${eip}:${nginx_port}/${WEBSITE_NM}"

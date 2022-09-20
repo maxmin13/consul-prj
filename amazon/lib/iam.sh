@@ -192,11 +192,10 @@ function check_permission_policy_exists()
       return 128
    fi
    
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r policy_nm="${1}"
    local policy_arn=''
-   local exists='false'
 
    get_permission_policy_arn "${policy_nm}"
    
@@ -212,11 +211,11 @@ function check_permission_policy_exists()
     
    if [[ -n "${policy_arn}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi
-       
-   __RESULT="${exists}"      
-   
+
    return 0
 }
 
@@ -304,11 +303,10 @@ function check_role_has_permission_policy_attached()
       return 128
    fi
 
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r role_nm="${1}"
    local -r policy_nm="${2}"
-   local attached='false'
    local role_exists='false'
    local policy_exists='false'
    local policy_arn=''
@@ -324,7 +322,6 @@ function check_role_has_permission_policy_attached()
    fi
    
    role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -343,7 +340,6 @@ function check_role_has_permission_policy_attached()
    fi
    
    policy_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -356,11 +352,11 @@ function check_role_has_permission_policy_attached()
    
    if [[ -n "${policy_arn}" ]]
    then
-      attached='true' 
+      __RESULT='true'
+   else
+      __RESULT='false' 
    fi
        
-   __RESULT="${attached}"
-
    return "${exit_code}" 
 }
 
@@ -402,7 +398,6 @@ function detach_permission_policy_from_role()
    fi
    
    role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -421,7 +416,6 @@ function detach_permission_policy_from_role()
    fi
    
    policy_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -439,7 +433,6 @@ function detach_permission_policy_from_role()
    fi
    
    policy_arn="${__RESULT}"
-   __RESULT=''
 
    aws iam detach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" 
    exit_code=$?
@@ -561,7 +554,6 @@ function delete_role()
    fi
    
    role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -636,11 +628,10 @@ function check_role_exists()
       return 128
    fi
    
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r role_nm="${1}"
    local role_id=''
-   local exists='false'
 
    get_role_id "${role_nm}"
    
@@ -653,15 +644,14 @@ function check_role_exists()
    fi
    
    role_id="${__RESULT}"
-   __RESULT=''
    
    if [[ -n "${role_id}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi
-       
-   __RESULT="${exists}"      
-   
+
    return 0
 }
 
@@ -841,11 +831,10 @@ function check_instance_profile_exists()
       return 128
    fi
 
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r profile_nm="${1}"
    local profile_id=''
-   local exists='false'
 
    get_instance_profile_id "${profile_nm}"
    exit_code=$? 
@@ -858,15 +847,13 @@ function check_instance_profile_exists()
    
    profile_id="${__RESULT}"
 
-   __RESULT=''
-   
    if [[ -n "${profile_id}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi
-       
-   __RESULT="${exists}" 
-  
+
    return 0
 }
 
@@ -921,11 +908,10 @@ function check_instance_profile_has_role_associated()
       return 128
    fi    
     
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r profile_nm="${1}"
    local -r role_nm="${2}"
-   local associated='false'
    local role_exists=''
    local profile_exists=''
    local role_found=''
@@ -941,7 +927,6 @@ function check_instance_profile_has_role_associated()
    fi
    
    role_exists="${__RESULT}"
-   __RESULT=''
 
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -960,8 +945,7 @@ function check_instance_profile_has_role_associated()
    fi
    
    profile_exists="${__RESULT}"
-   __RESULT=''
- 
+  
    if [[ 'false' == "${profile_exists}" ]]
    then
       echo 'ERROR: instance profile not found.' 
@@ -975,10 +959,10 @@ function check_instance_profile_has_role_associated()
 
    if [[ "${role_nm}" == "${role_found}" ]]
    then
-      associated='true' 
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi
-   
-   __RESULT="${associated}"
    
    return "${exit_code}"
 }

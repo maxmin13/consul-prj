@@ -20,43 +20,8 @@ STEP "${instance_key} image"
 ####
 
 logfile_nm="${instance_key}".log
-
-#
-# Get the configuration values from the file ec2_consts.json
-#
-
-get_instance_name "${instance_key}"
-instance_nm="${__RESULT}"
-get_security_group_name "${instance_key}"
-sgp_nm="${__RESULT}"
 get_target_image_name "${instance_key}"
 target_image_name="${__RESULT}" 
-
-# The temporary box used to build the image, it should be already deleted.
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
-
-if [[ -z "${instance_id}" ]]
-then
-   echo "* WARN: ${instance_key} box not found."
-else
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   echo "* ${instance_key} box ID: ${instance_id} (${instance_st})."
-fi
-
-# The temporary security group used to build the image, it should be already deleted.
-get_security_group_id "${sgp_nm}"
-sgp_id="${__RESULT}"
-
-if [[ -z "${sgp_id}" ]]
-then
-   echo "* WARN: ${instance_key} security group not found."
-else
-   echo "* ${instance_key} security group. ${sgp_id}."
-fi
-
 get_image_id "${target_image_name}"
 image_id="${__RESULT}"
 

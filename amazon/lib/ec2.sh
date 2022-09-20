@@ -236,13 +236,19 @@ function create_subnet()
    local -r rtb_id="${5}"
    local subnet_id=''
  
-   subnet_id="$(aws ec2 create-subnet \
+   aws ec2 create-subnet \
       --vpc-id "${dtc_id}" \
       --cidr-block "${subnet_cidr}" \
       --availability-zone "${subnet_az}" \
-      --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${subnet_nm}'}]" \
-      --query 'Subnet.SubnetId' \
-      --output text)"    
+      --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${subnet_nm}'}]"
+      
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating subnet.'
+      return "${exit_code}"
+   fi
  
    aws ec2 wait subnet-available --filters Name=tag-key,Values=Name \
        --filters Name=tag-value,Values="${subnet_nm}"
@@ -253,7 +259,18 @@ function create_subnet()
    then
       echo 'ERROR: waiting fo subnet.'
       return "${exit_code}"
-   fi        
+   fi 
+   
+   get_subnet_id "${subnet_nm}"
+   subnet_id="${__RESULT}"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving subnet ID.'
+      return "${exit_code}"
+   fi 
   
    ## Associate this subnet with our route table 
    aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}"
@@ -394,9 +411,8 @@ function create_internet_gateway()
    local -r igw_nm="${1}"
   
    aws ec2 create-internet-gateway \
-       --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \
+       --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]"
       
-  
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -893,35 +909,36 @@ function check_access_is_granted()
          select(.FromPort | contains($fromPort|tonumber)) | 
          select(.ToPort | contains($toPort|tonumber)) | 
          select(.IpProtocol | contains($protocol))')"
-        
+         
    if [[ -z "${rule}" ]]
    then
-      return 0   
+      __RESULT='false'
+      return "${exit_code}"
    fi
-   
+        
    cidr="$(echo "${rule}" | \
       jq --arg from "${from}" -c '. | 
          select(.IpRanges[].CidrIp | contains($from))')"
-         
+
    if [[ -n "${cidr}" ]]
    then
       __RESULT='true' 
+      return "${exit_code}"
+   else
+      __RESULT='false'
    fi
    
    group="$(echo "${rule}" | \
       jq --arg from "${from}" -c '. | 
          select(.UserIdGroupPairs[].GroupId | contains($from))')"
-   
+           
    if [[ -n "${group}" ]]
    then
-      __RESULT='true'  
+      __RESULT='true' 
+   else
+      __RESULT='false'
    fi
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: allowing access from CIDR.'
-   fi  
- 
+
    return "${exit_code}"
 }
 
@@ -1044,6 +1061,49 @@ function get_instance_state()
        
    __RESULT="${instance_st}"
    
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Checks if an instance exists and is running.
+#
+# Globals:
+#  None
+# Arguments:
+# +instance_nm -- the instance name.
+# Returns:      
+#  true/false in the  __RESULT variable.  
+#===============================================================================
+function instance_is_running()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT='false'
+   local exit_code=0
+   local -r instance_nm="${1}"
+   local instance_st=''
+  
+   get_instance_state "${instance_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: checking if instance is running.'
+      
+      return "${exit_code}"
+   fi 
+   
+   instance_st="${__RESULT}"
+       
+   if [[ -n "${instance_st}" && 'running' == "${instance_st}" ]] 
+   then
+      __RESULT='true'
+   fi   
+       
    return "${exit_code}"
 }
 
@@ -1306,56 +1366,6 @@ function delete_instance()
 }
 
 #===============================================================================
-# Checks if the specified EC2 instance has an IAM instance profile associated.
-#
-# Globals:
-#  None
-# Arguments:
-# +instance_nm -- the instance name.
-# +instance_id -- the instance ID.
-# +profile_nm  -- the IAM instance profile name.
-# Returns:      
-#  true or false value in the __RESULT global variable.  
-#===============================================================================
-function check_instance_has_instance_profile_associated()
-{
-   if [[ $# -lt 2 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi 
-   
-   __RESULT=''
-   local exit_code=0
-   local -r instance_nm="${1}"
-   local -r profile_nm="${2}"
-   local instance_id=''
-   local profile_id=''
-   local association_id=''
-   local associated='false'
-   
-   __get_association_id "${instance_nm}" "${profile_nm}"
-
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving the association ID.' 
-      return "${exit_code}"
-   fi
-   
-   association_id="${__RESULT}"
-   __RESULT=''
-   
-   if [[ -n "${association_id}" ]]
-   then
-      associated='true' 
-   fi
-       
-   __RESULT="${associated}"
-
-   return "${exit_code}" 
-}
-
-#===============================================================================
 # Associates the specified instance profile to an EC2 instance.
 #
 # Globals:
@@ -1474,6 +1484,7 @@ function disassociate_instance_profile_from_instance()
    local association_id=''
    
    __get_association_id "${instance_nm}" "${profile_id}"
+   exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
@@ -1549,10 +1560,57 @@ function __get_association_id()
    association_id="$(aws ec2 describe-iam-instance-profile-associations \
        --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}' ].AssociationId" \
        --output text)"
-   
+       
    __RESULT="${association_id}"
    
    return "${exit_code}"
+}
+
+#===============================================================================
+# Checks if the specified EC2 instance has an IAM instance profile associated.
+#
+# Globals:
+#  None
+# Arguments:
+# +instance_nm -- the instance name.
+# +profile_id -- the instance profile ID.
+# Returns:      
+#  true/false value in the __RESULT global variable.  
+#===============================================================================
+function check_instance_has_instance_profile_associated()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi 
+   
+   __RESULT='false'
+   local exit_code=0
+   local -r instance_nm="${1}"
+   local -r profile_id="${2}"
+   local instance_id=''
+   local association_id=''
+  
+   __get_association_id "${instance_nm}" "${profile_id}"
+   exit_code=$?
+
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the association ID.' 
+      return "${exit_code}"
+   fi
+   
+   association_id="${__RESULT}"
+
+   if [[ -n "${association_id}" ]]
+   then
+      __RESULT='true' 
+   else
+      __RESULT='false' 
+   fi
+       
+   return "${exit_code}" 
 }
 
 #===============================================================================
@@ -1581,13 +1639,30 @@ function create_image()
    local -r img_desc="${3}"
    local img_id=''
   
-   img_id="$(aws ec2 create-image \
+   aws ec2 create-image \
         --instance-id "${instance_id}" \
         --name "${img_nm}" \
-        --description "${img_desc}" \
-        --query 'ImageId' \
-        --output text)"   
+        --description "${img_desc}"
+        
+   exit_code=$?
    
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating the image.'
+      return "${exit_code}"
+   fi
+   
+   get_image_id "${img_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving image ID.' 
+      return "${exit_code}"
+   fi
+   
+   img_id="${__RESULT}"
+
    aws ec2 wait image-available --image-ids "${img_id}"
    exit_code=$?
 
@@ -1977,20 +2052,19 @@ function check_aws_public_key_exists()
       return 128
    fi
    
-   __RESULT=''
+   __RESULT='false'
    local exit_code=0
    local -r key_nm="${1}"
-   local exists='false'
    local key=''
    
    key=$(aws ec2 describe-key-pairs --query "KeyPairs[? KeyName=='${key_nm}'].KeyFingerprint" --output text)
    
    if [[ -n "${key}" ]]
    then
-      exists='true'
+      __RESULT='true' 
+   else
+      __RESULT='false'
    fi
-   
-   __RESULT="${exists}"
    
    return "${exit_code}"
 }

@@ -22,40 +22,30 @@ if [ "$#" -lt 1 ]; then
 fi
 
 instance_key="${1}"
+logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} image"
 ####
 
-logfile_nm="${instance_key}".log
-
-#
-# Get the configuration values from the file ec2_consts.json
-#
-
-get_instance_name "${instance_key}"
-instance_nm="${__RESULT}"
 get_target_image_name "${instance_key}"
 target_image_name="${__RESULT}" 
-
 get_image_id "${target_image_name}"
 image_id="${__RESULT}"
 
 if [[ -n "${image_id}" ]]
 then
+   # If the image is in 'terminated' state, it takes about an hour to disappear,
+   # to create a new image you have to change the name.
+   
    get_image_state "${target_image_name}"
    image_st="${__RESULT}"
    
-   if [[ 'available' == "${image_st}" ]]
+   if [[ -n "${image_st}" ]]
    then
       echo "* WARN: the image is already created (${image_st})"
-      echo
-      return
-   else
-      # This is the case the image is in 'terminated' state, it takes about an hour to disappear,
-      # if you want to create a new image you have to change the name.
-      echo "* ERROR: the image is already created (${image_st})" 
-      exit 1  
+      
+      return 0
    fi
 fi
 
@@ -63,6 +53,8 @@ fi
 # Amazon EC2 powers down the instance before creating the AMI to ensure that everything on the 
 # instance is stopped and in a consistent state during the creation process.
 
+get_instance_name "${instance_key}"
+instance_nm="${__RESULT}"
 get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
 

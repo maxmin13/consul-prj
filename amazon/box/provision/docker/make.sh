@@ -13,7 +13,7 @@ set +o xtrace
 
 get_user_name
 user_nm="${__RESULT}"
-SCRIPTS_DIR=/home/"${user_nm}"/script
+remote_script_dir=/home/"${user_nm}"/script
 
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
@@ -24,37 +24,26 @@ if [ "$#" -lt 1 ]; then
 fi
 
 instance_key="${1}"
+logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} box provision Docker."
 ####
 
-logfile_nm="${instance_key}".log
-
 get_instance_name "${instance_key}"
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
-instance_id="${__RESULT}"
+instance_is_running "${instance_nm}"
+is_running="${__RESULT}"
+get_instance_state "${instance_nm}"
+instance_st="${__RESULT}"
 
-if [[ -z "${instance_id}" ]]
+if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ERROR: ${instance_key} box not found."
-   exit 1
-fi
-
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${instance_nm}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" ]]
-   then
-      echo "* ${instance_key} box ready (${instance_st})."
-   else
-      echo "* ERROR: ${instance_key} box is not ready. (${instance_st})."
+   echo "* ${instance_key} box ready (${instance_st})."
+else
+   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
       
-      exit 1
-   fi
+   return 0
 fi
 
 # Get the public IP address assigned to the instance. 
@@ -89,7 +78,7 @@ tmp_dir="${TMP_DIR}"/"${instance_key}"
 rm -rf  "${tmp_dir:?}"
 mkdir -p "${tmp_dir}"
 
-remote_tmp_dir="${SCRIPTS_DIR}"/"${instance_key}"
+remote_tmp_dir="${remote_script_dir}"/"${instance_key}"
 
 
 ## 
@@ -118,14 +107,13 @@ get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
 
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?} && mkdir -p ${remote_tmp_dir}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_tmp_dir}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}"                     
    
-sed -e "s/SEDuser_nmSED/${user_nm}/g" \
-    -e "s/SEDscripts_dirSED/$(escape "${remote_tmp_dir}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_tmp_dir}")/g" \
        "${PROVISION_DIR}"/docker/docker.sh > "${tmp_dir}"/docker.sh    
        
 echo 'docker.sh ready.'     
@@ -167,7 +155,7 @@ else
 fi     
    
 # Clear remote directory.
-ssh_run_remote_command "rm -rf ${SCRIPTS_DIR:?}" \
+ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \

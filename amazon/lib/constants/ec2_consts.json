@@ -15,8 +15,18 @@
 		"UserPassword":"awsadmin",
 		"Boxes": [ 	
 			{
+				"Name":"shared",
+				"InstanceName":"shared-box",
+				"PrivateIP":"10.0.10.35",
+				"Hostname":"shared.maxmin.it",
+				"SgpName":"shared-sgp",
+				"KeypairName":"shared-key",
+				"ParentImageName":"amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
+				"TargetImageName":"shared-image"
+			},
+			{
 				"Name":"redis",
-				"InstanceName":"redis-box",
+				"InstanceName":"redis-box2",
 				"PrivateIP":"10.0.10.30",
 				"Hostname":"redis.maxmin.it",
 				"SgpName":"redis-sgp",
@@ -28,7 +38,7 @@
 			},
 			{
 				"Name":"sinatra",
-				"InstanceName":"sinatra-box",
+				"InstanceName":"sinatra-box2",
 				"PrivateIP":"10.0.10.31",
 				"Hostname":"sinatra.maxmin.it",
 				"SgpName":"sinatra-sgp",
@@ -40,7 +50,7 @@
 			},
 			{
 				"Name":"nginx",
-				"InstanceName":"nginx-box",
+				"InstanceName":"nginx-box2",
 				"PrivateIP":"10.0.10.32",
 				"Hostname":"nginx.maxmin.it",
 				"SgpName":"nginx-sgp",
@@ -52,7 +62,7 @@
 			},
 			{
 				"Name":"jenkins",
-				"InstanceName":"jenkins-box",
+				"InstanceName":"jenkins-box2",
 				"PrivateIP":"10.0.10.33",
 				"Hostname":"jenkins.maxmin.it",
 				"SgpName":"jenkins-sgp",
@@ -64,7 +74,7 @@
 			},
 			{
 				"Name":"admin",
-				"InstanceName":"admin-box",
+				"InstanceName":"admin-box2",
 				"PrivateIP":"10.0.10.34",
 				"Hostname":"admin.maxmin.it",
 				"SgpName":"admin-sgp",
@@ -73,16 +83,6 @@
 				"RoleName":"AdminAWSrole",
 				"ParentImageName":"shared-image",
 				"ConsulMode":"server"
-			},
-			{
-				"Name":"shared",
-				"InstanceName":"shared-box",
-				"PrivateIP":"10.0.10.35",
-				"Hostname":"shared.maxmin.it",
-				"SgpName":"shared-sgp",
-				"KeypairName":"shared-key",
-				"ParentImageName":"amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
-				"TargetImageName":"shared-image"
 			}
 		]
 	},

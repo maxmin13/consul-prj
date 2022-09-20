@@ -67,11 +67,9 @@ else
    echo "* parent image ID: ${parent_image_id}."
 fi
 
-# Removing old files
-# shellcheck disable=SC2115
-tmp_dir="${TMP_DIR}"/"${instance_key}"
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 echo
 
@@ -136,7 +134,7 @@ awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${user_nm}" -v hostna
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
     sub(/SEDhostnameSED/,hostname)
-}1' "${PROJECT_DIR}"/amazon/box/config/cloud_init_template.yml > "${tmp_dir}"/cloud_init.yml
+}1' "${PROJECT_DIR}"/amazon/box/config/cloud_init_template.yml > "${temporary_dir}"/cloud_init.yml
  
 echo 'cloud_init.yml ready.' 
 
@@ -150,48 +148,49 @@ then
    get_instance_state "${instance_nm}"
    instance_st="${__RESULT}"
    
-   if [[ 'running' == "${instance_st}" || \
-         'stopped' == "${instance_st}" || \
-         'pending' == "${instance_st}" ]]
+   if [[ -n "${instance_st}" ]]
    then
       echo "WARN: ${instance_key} box already created (${instance_st})."
-   else
-      echo "ERROR: ${instance_key} box already created (${instance_st})."
       
-      exit 1
+      return 0
    fi
-else
-   echo "Creating ${instance_key} box ..."
-   
-   get_private_ip "${instance_key}"
-   private_ip="${__RESULT}" 
-   get_availability_zone_name
-   az_nm="${__RESULT}"
-
-   run_instance \
-       "${instance_nm}" \
-       "${az_nm}" \
-       "${sgp_id}" \
-       "${subnet_id}" \
-       "${private_ip}" \
-       "${parent_image_id}" \
-       "${tmp_dir}"/cloud_init.yml
-       
-   get_instance_id "${instance_nm}"
-   instance_id="${__RESULT}"    
-
-   echo "${instance_key} box created."
 fi
+
+echo "Creating ${instance_key} box ..."
+   
+get_private_ip "${instance_key}"
+private_ip="${__RESULT}" 
+get_availability_zone_name
+az_nm="${__RESULT}"
+
+run_instance \
+    "${instance_nm}" \
+    "${az_nm}" \
+    "${sgp_id}" \
+    "${subnet_id}" \
+    "${private_ip}" \
+    "${parent_image_id}" \
+    "${temporary_dir}"/cloud_init.yml
+       
+get_instance_id "${instance_nm}"
+instance_id="${__RESULT}"    
+
+echo "${instance_key} box created."
 
 # Get the public IP address assigned to the instance. 
 get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
-echo "${instance_key} box public address ${eip}."
+if [[ -n "${eip}" ]]
+then
+   echo "${instance_key} box public address ${eip}."
+else
+   echo "WARN: ${instance_key} box public address not found."
+fi
 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${tmp_dir:?}"
+rm -rf  "${temporary_dir:?}"
     
 echo "${instance_key} box created."
 echo

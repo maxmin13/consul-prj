@@ -114,15 +114,17 @@ function docker_check_img_exists()
    local exit_code=0
    local -r repository="${1}"
    local -r tag="${2}"
-   local exists='true'
-
-   if [[ "$(docker images -q "${repository}":"${tag}")" == "" ]]
+   local image_id=''
+   
+   image_id="$(docker images -q "${repository}":"${tag}")"
+   
+   if [[ -n "${image_id}" ]]
    then
-      exists='false'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi 
    
-   __RESULT="${exists}"
-
    return "${exit_code}"
 }
 
@@ -492,17 +494,16 @@ function docker_check_container_exists()
    __RESULT='false'
    local exit_code=0
    local -r container_nm="${1}"
-   local exists='false'
    local container_id=''
    
    container_id="$(docker container ls -a --filter "name=${container_nm}" --format "{{.ID}}")"
 
    if [[ -n "${container_id}" ]]
    then
-      exists='true'
+      __RESULT='true'
+   else
+      __RESULT='false'
    fi 
-   
-   __RESULT="${exists}"
 
    return "${exit_code}"
 }
