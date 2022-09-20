@@ -37,8 +37,7 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/box/make.sh 'shared'   
 . "${PROJECT_DIR}"/amazon/box/provision/security/make.sh 'shared'  
 . "${PROJECT_DIR}"/amazon/box/provision/docker/make.sh 'shared'              
-. "${PROJECT_DIR}"/amazon/image/make.sh 'shared'             
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared'   
+. "${PROJECT_DIR}"/amazon/image/make.sh 'shared'              
 
    # Jumpbox.
 . "${PROJECT_DIR}"/amazon/box/make.sh 'admin'
