@@ -11,10 +11,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
@@ -126,7 +122,11 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/redis" \
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
+
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/redis" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -143,7 +143,7 @@ redis_docker_repository_uri="${__RESULT}"
 get_application_port 'redis'
 redis_port="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/redis)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/redis)/g" \
     -e "s/SEDregionSED/${region}/g" \
     -e "s/SEDredis_docker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
     -e "s/SEDredis_docker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
@@ -156,7 +156,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/redis)/g" \
   
 echo 'redis-run.sh ready.'  
   
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/redis \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/redis \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -165,14 +165,14 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/redis \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/redis \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}" 
     
-ssh_run_remote_command_as_root "${remote_script_dir}/redis/redis-run.sh" \
+ssh_run_remote_command_as_root "${remote_dir}/redis/redis-run.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -186,7 +186,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}/redis/redis-run.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_script_dir}/redis/redis-run.sh" \
+       ssh_run_remote_command_as_root "${remote_dir}/redis/redis-run.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
@@ -198,7 +198,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}/redis/redis-run.sh" \
           }
     }
     
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \

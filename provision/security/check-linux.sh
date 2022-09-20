@@ -1,8 +1,5 @@
 #!/bin/bash
 
-shared_log_file=/var/log/secured_linux_checks.log
-
-{
 echo 'Script to check some Linux security issues' 
 echo '#' 
 echo '# * root account' 
@@ -46,6 +43,4 @@ echo 'Files not owned by any user or group can pose a security problem.'
 find / -xdev \( -nouser -o -nogroup \) 
 echo
 
-} >> "${shared_log_file}" 2>&1
-
-echo "Linux security issues checked, see: ${shared_log_file}."
+echo "Linux security issues checked."

@@ -11,10 +11,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
@@ -75,9 +71,9 @@ echo
 
 # Removing old files
 # shellcheck disable=SC2153
-tmp_dir="${TMP_DIR}"/"${instance_key}"
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 #
 # Firewall
@@ -127,7 +123,11 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/jenkins" \
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
+
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/jenkins" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -146,7 +146,7 @@ jenkins_home="${__RESULT}"
 get_application_port 'jenkins'
 jenkins_port="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/jenkins)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/jenkins)/g" \
     -e "s/SEDregionSED/${region}/g" \
     -e "s/SEDjenkins_docker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
     -e "s/SEDjenkins_docker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
@@ -155,27 +155,27 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/jenkins)/g" \
     -e "s/SEDjenkins_http_addressSED/${eip}/g" \
     -e "s/SEDjenkins_http_portSED/${jenkins_port}/g" \
     -e "s/SEDjenkins_host_volume_dirSED/$(escape "${jenkins_home}")/g" \
-       "${CONTAINERS_DIR}"/jenkins/jenkins-run.sh > "${tmp_dir}"/jenkins-run.sh       
+       "${CONTAINERS_DIR}"/jenkins/jenkins-run.sh > "${temporary_dir}"/jenkins-run.sh       
   
 echo 'jenkins-run.sh ready.'  
      
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/jenkins \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/jenkins \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${tmp_dir}"/jenkins-run.sh    
+    "${temporary_dir}"/jenkins-run.sh    
 
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/jenkins \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/jenkins \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}" 
 
-ssh_run_remote_command_as_root "${remote_script_dir}/jenkins/jenkins-run.sh" \
+ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-run.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -190,7 +190,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}/jenkins/jenkins-run.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_script_dir}/jenkins/jenkins-run.sh" \
+       ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-run.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
@@ -202,7 +202,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}/jenkins/jenkins-run.sh" \
           }
     } 
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -256,7 +256,7 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${tmp_dir:?}"
+rm -rf  "${temporary_dir:?}"
     
 echo "${instance_key} box Jenkins provisioned."
 echo "http://${eip}:${jenkins_port}/jenkins"

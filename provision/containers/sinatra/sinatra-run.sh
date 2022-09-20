@@ -12,7 +12,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_script_dir='SEDscripts_dirSED'
+remote_dir='SEDscripts_dirSED'
 REGION='SEDregionSED'
 SINATRA_DOCKER_REPOSITORY_URI='SEDsinatra_docker_repository_uriSED'
 SINATRA_DOCKER_IMG_NM='SEDsinatra_docker_img_nmSED'
@@ -25,9 +25,9 @@ SINATRA_HTTP_ADDRESS='SEDsinatra_http_addressSED'
 SINATRA_HTTP_PORT='SEDsinatra_http_portSED'  
 SINATRA_ARCHIVE='SEDsinatra_archiveSED'
 
-source "${remote_script_dir}"/general_utils.sh
-source "${remote_script_dir}"/dockerlib.sh
-source "${remote_script_dir}"/ecr.sh
+source "${remote_dir}"/general_utils.sh
+source "${remote_dir}"/dockerlib.sh
+source "${remote_dir}"/ecr.sh
 
 yum update -y 
 
@@ -78,7 +78,7 @@ chmod 700 "${SINATRA_DOCKER_HOST_VOLUME_DIR}"
 
 echo 'Deploying the welcome website ...'                             
 
-unzip -o "${remote_script_dir}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
+unzip -o "${remote_dir}"/"${SINATRA_ARCHIVE}" -d "${SINATRA_DOCKER_HOST_VOLUME_DIR}" 
 find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type d -exec chmod 755 {} + 
 find "${SINATRA_DOCKER_HOST_VOLUME_DIR}" -type f -exec chmod 744 {} +
 

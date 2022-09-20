@@ -12,7 +12,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_script_dir='SEDscripts_dirSED'
+remote_dir='SEDscripts_dirSED'
 REGION='SEDregionSED'
 REDIS_DOCKER_REPOSITORY_URI='SEDredis_docker_repository_uriSED'
 REDIS_DOCKER_IMG_NM='SEDredis_docker_img_nmSED'
@@ -22,9 +22,9 @@ REDIS_DOCKER_CONTAINER_NETWORK_NM='SEDredis_docker_container_network_nmSED'
 REDIS_IP_ADDRESS='SEDredis_ip_addressSED'
 REDIS_IP_PORT='SEDredis_ip_portSED'  
 
-source "${remote_script_dir}"/general_utils.sh
-source "${remote_script_dir}"/dockerlib.sh
-source "${remote_script_dir}"/ecr.sh
+source "${remote_dir}"/general_utils.sh
+source "${remote_dir}"/dockerlib.sh
+source "${remote_dir}"/ecr.sh
 
 yum update -y 
 

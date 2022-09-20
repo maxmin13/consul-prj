@@ -9,12 +9,11 @@ set +o xtrace
 # Script to make Linux more secure
 # ********************************
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-shared_log_file=/var/log/shared_install.log
+script_dir='SEDscript_dirSED'
 
 cd "${script_dir}"
 
-yum -y update >> "${shared_log_file}" 2>&1
+yum -y update 
 echo 'Programs installed.'
 
 cp yumupdate.sh /etc/cron.daily/yumupdate.sh
@@ -49,7 +48,7 @@ echo 'IPV6 disabled.'
 
 echo 'Kernel hardened.'
 
-yum remove -y expect >> "${shared_log_file}" 2>&1
+yum remove -y expect 
 
 echo 'Reboot the server.'
 

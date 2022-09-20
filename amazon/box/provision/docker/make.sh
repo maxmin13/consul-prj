@@ -11,10 +11,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
@@ -74,12 +70,9 @@ fi
 echo
 
 # Removing old files
-tmp_dir="${TMP_DIR}"/"${instance_key}"
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
-
-remote_tmp_dir="${remote_script_dir}"/"${instance_key}"
-
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 ## 
 ## Firewall
@@ -106,26 +99,29 @@ echo 'Provisioning the instance ...'
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_tmp_dir}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/docker \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}"                     
    
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_tmp_dir}")/g" \
-       "${PROVISION_DIR}"/docker/docker.sh > "${tmp_dir}"/docker.sh    
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}")/g" \
+       "${PROVISION_DIR}"/docker/docker-install.sh > "${temporary_dir}"/docker-install.sh    
        
-echo 'docker.sh ready.'     
+echo 'docker-install.sh ready.'     
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_tmp_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}" \
     "${LIBRARY_DIR}"/dockerlib.sh \
-    "${tmp_dir}"/docker.sh       
+    "${temporary_dir}"/docker-install.sh       
 
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_tmp_dir}" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -135,7 +131,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_tmp_dir}" \
 echo 'Installing Docker ...'
 
 set +e                                
-ssh_run_remote_command_as_root "${remote_tmp_dir}"/docker.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/docker-install.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -155,7 +151,7 @@ else
 fi     
    
 # Clear remote directory.
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -178,7 +174,7 @@ else
 fi
 
 # Removing old files
-rm -rf "${tmp_dir:?}"
+rm -rf "${temporary_dir:?}"
 
 echo "${instance_key} box provisioned Docker."
 echo

@@ -1,0 +1,2 @@
+./temp/docker.sh:32:1: warning: LOGIN_USER appears unused. Verify use (or export if used externally). [SC2034]
+./temp/docker.sh:35:8: note: Not following: ./dockerlib.sh was not specified as input (see shellcheck -x). [SC1091]

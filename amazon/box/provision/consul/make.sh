@@ -15,10 +15,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
@@ -77,9 +73,9 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2153
-tmp_dir="${TMP_DIR}"/${instance_key}/consul
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
+temporary_dir="${TMP_DIR}"/${instance_key}/consul
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 echo
 
@@ -235,7 +231,11 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/${instance_key}/consul" \
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
+
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/${instance_key}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -257,7 +257,7 @@ then
    consul_is_server='true'
 fi
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/"${instance_key}"/consul)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/"${instance_key}"/consul)/g" \
     -e "s/SEDdtc_regionSED/${region_nm}/g" \
     -e "s/SEDinstance_eip_addressSED/${eip}/g" \
     -e "s/SEDinstance_private_addressSED/${private_ip}/g" \
@@ -267,7 +267,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/"${instance_key}"/co
     -e "s/SEDconsul_dns_portSED/${dns_port}/g" \
     -e "s/SEDconsul_is_serverSED/${consul_is_server}/g" \
     -e "s/SEDconsul_secret_nmSED/${consul_key_nm}/g" \
-       "${PROVISION_DIR}"/consul/consul-install.sh > "${tmp_dir}"/consul-install.sh  
+       "${PROVISION_DIR}"/consul/consul-install.sh > "${temporary_dir}"/consul-install.sh  
        
 echo 'consul-install.sh ready.'  
 
@@ -275,7 +275,7 @@ if [[ 'true' == "${consul_is_server}" ]]
 then
    sed -e "s/SEDbind_addressSED/${private_ip}/g" \
        -e "s/SEDbootstrap_expectSED/1/g" \
-       "${PROVISION_DIR}"/consul/consul-server.json > "${tmp_dir}"/consul-config.json
+       "${PROVISION_DIR}"/consul/consul-server.json > "${temporary_dir}"/consul-config.json
     
    echo 'consul-server.json ready.'
 else
@@ -286,14 +286,14 @@ else
    sed -e "s/SEDbind_addressSED/${private_ip}/g" \
        -e "s/SEDbootstrap_expectSED/1/g" \
        -e "s/SEDstart_join_bind_addressSED/${server_bind_ip}/g" \
-       "${PROVISION_DIR}"/consul/consul-client.json > "${tmp_dir}"/consul-config.json
+       "${PROVISION_DIR}"/consul/consul-client.json > "${temporary_dir}"/consul-config.json
        
    echo 'consul-client.json ready.'  
 fi  
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/"${instance_key}"/consul \
-    "${tmp_dir}"/consul-install.sh \
-    "${tmp_dir}"/consul-config.json \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/"${instance_key}"/consul \
+    "${temporary_dir}"/consul-install.sh \
+    "${temporary_dir}"/consul-config.json \
     "${PROVISION_DIR}"/consul/consul.service \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh 
@@ -310,14 +310,14 @@ fi
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}/${instance_key}/consul" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/${instance_key}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}"      
 
-ssh_run_remote_command_as_root "${remote_script_dir}"/"${instance_key}"/consul/consul-install.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/"${instance_key}"/consul/consul-install.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -331,7 +331,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}"/"${instance_key}"/consul/c
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_script_dir}"/"${instance_key}"/consul/consul-install.sh \
+       ssh_run_remote_command_as_root "${remote_dir}"/"${instance_key}"/consul/consul-install.sh \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
@@ -343,7 +343,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}"/"${instance_key}"/consul/c
           }
     }
    
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -385,7 +385,7 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${tmp_dir:?}"
+rm -rf  "${temporary_dir:?}"
 
 echo "http://${eip}:${http_port}/ui"  
 echo  

@@ -12,7 +12,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_script_dir='SEDscripts_dirSED'
+remote_dir='SEDscripts_dirSED'
 REGION='SEDregionSED'
 NGINX_DOCKER_REPOSITORY_URI='SEDnginx_docker_repository_uriSED'
 NGINX_DOCKER_IMG_NM='SEDnginx_docker_img_nmSED'
@@ -25,9 +25,9 @@ NGINX_CONTAINER_VOLUME_DIR='SEDnginx_container_volume_dirSED'
 WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_NM='SEDwebsite_nmSED'
 
-source "${remote_script_dir}"/general_utils.sh
-source "${remote_script_dir}"/dockerlib.sh
-source "${remote_script_dir}"/ecr.sh
+source "${remote_dir}"/general_utils.sh
+source "${remote_dir}"/dockerlib.sh
+source "${remote_dir}"/ecr.sh
 
 yum update -y 
 
@@ -92,7 +92,7 @@ docker_logout_ecr_registry "${registry_uri}"
 echo 'Logged out of ECR registry.'                                              
 echo 'Deploying the welcome website ...'
 
-unzip -o "${remote_script_dir}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_HOST_VOLUME_DIR}"/"${WEBSITE_NM}"
+unzip -o "${remote_dir}"/"${WEBSITE_ARCHIVE}" -d "${NGINX_HOST_VOLUME_DIR}"/"${WEBSITE_NM}"
 find "${NGINX_HOST_VOLUME_DIR}" -type d -exec chmod 755 {} + 
 find "${NGINX_HOST_VOLUME_DIR}" -type f -exec chmod 744 {} +
 

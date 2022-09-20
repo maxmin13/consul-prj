@@ -14,10 +14,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
@@ -77,12 +73,9 @@ fi
 echo
 
 # Removing old files
-tmp_dir="${TMP_DIR}"/"${instance_key}"
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
-
-remote_tmp_dir="${remote_script_dir}"/"${instance_key}"
-
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 ## 
 ## Firewall
@@ -129,7 +122,11 @@ current_ssh_port="${__RESULT}"
 
 echo "SSH port ${current_ssh_port}."
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_tmp_dir}" \
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
+
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/security \
     "${private_key_file}" \
     "${eip}" \
     "${current_ssh_port}" \
@@ -137,28 +134,25 @@ ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_tmp_d
    
 sed -e "s/SEDssh_portSED/${ssh_port}/g" \
     -e "s/AllowUsers/#AllowUsers/g" \
-       "${PROVISION_DIR}"/security/sshd_config_template > "${tmp_dir}"/sshd_config
+       "${PROVISION_DIR}"/security/sshd_config_template > "${temporary_dir}"/sshd_config
        
 echo 'sshd_config ready.' 
 
-sed -e "s/SEDuser_nmSED/${user_nm}/g" \
-    -e "s/SEDscripts_dirSED/$(escape "${remote_tmp_dir}")/g" \
-       "${PROVISION_DIR}"/docker/docker.sh > "${tmp_dir}"/docker.sh    
-       
-echo 'docker.sh ready.'     
+sed -e "s/SEDscript_dirSED/$(escape "${remote_dir}")/g" \
+       "${PROVISION_DIR}"/security/secure-linux.sh > "${temporary_dir}"/secure-linux.sh
 
-scp_upload_files "${private_key_file}" "${eip}" "${current_ssh_port}" "${user_nm}" "${remote_tmp_dir}" \
-    "${LIBRARY_DIR}"/dockerlib.sh \
-    "${PROVISION_DIR}"/security/secure-linux.sh \
+echo 'secure-linux.sh ready'
+
+scp_upload_files "${private_key_file}" "${eip}" "${current_ssh_port}" "${user_nm}" "${remote_dir}" \
+    "${temporary_dir}"/secure-linux.sh \
     "${PROVISION_DIR}"/security/check-linux.sh \
     "${PROVISION_DIR}"/yumupdate.sh \
-    "${tmp_dir}"/docker.sh \
-    "${tmp_dir}"/sshd_config        
+    "${temporary_dir}"/sshd_config        
 
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_tmp_dir}" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
     "${private_key_file}" \
     "${eip}" \
     "${current_ssh_port}" \
@@ -169,7 +163,7 @@ echo 'Securing the box ...'
                 
 set +e
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
-ssh_run_remote_command_as_root "${remote_tmp_dir}"/secure-linux.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/secure-linux.sh \
     "${private_key_file}" \
     "${eip}" \
     "${current_ssh_port}" \
@@ -219,7 +213,7 @@ wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 echo "SSH port ${ssh_port}."
 echo 'Running security checks ...'
 
-ssh_run_remote_command_as_root "${remote_tmp_dir}"/check-linux.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/check-linux.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -227,7 +221,7 @@ ssh_run_remote_command_as_root "${remote_tmp_dir}"/check-linux.sh \
     "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}"    
        
 # Clear remote directory.
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -250,7 +244,7 @@ else
 fi
 
 # Removing old files
-rm -rf "${tmp_dir:?}"
+rm -rf "${temporary_dir:?}"
 
 echo "${instance_key} box provisioned security."
 echo

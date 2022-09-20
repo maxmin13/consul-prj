@@ -11,7 +11,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_script_dir='SEDscripts_dirSED'
+remote_dir='SEDscripts_dirSED'
 IMAGE_DESC='SEDimage_descSED'
 REGION='SEDregionSED'
 DOCKER_CTX='SEDdocker_ctxSED'
@@ -19,9 +19,9 @@ DOCKER_REPOSITORY_URI='SEDdocker_repository_uriSED'
 DOCKER_IMG_NM='SEDdocker_img_nmSED'
 DOCKER_IMG_TAG='SEDdocker_img_tagSED'
  
-source "${remote_script_dir}"/general_utils.sh
-source "${remote_script_dir}"/dockerlib.sh
-source "${remote_script_dir}"/ecr.sh
+source "${remote_dir}"/general_utils.sh
+source "${remote_dir}"/dockerlib.sh
+source "${remote_dir}"/ecr.sh
 
 yum update -y
 

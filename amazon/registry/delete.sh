@@ -12,9 +12,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
 instance_key='admin'
 logfile_nm="${instance_key}".log
 
@@ -109,9 +106,13 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
+
 # Prepare the scripts to run on the server.
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -125,7 +126,7 @@ echo 'Provisioning Jenkins scripts ...'
 
 mkdir -p "${temporary_dir}"/jenkins
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/jenkins" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/jenkins" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -138,7 +139,7 @@ registry_uri="${__RESULT}"
 ecr_get_repostory_uri "${JENKINS_DOCKER_IMG_NM}" "${registry_uri}"
 jenkins_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/jenkins")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/jenkins")/g" \
   -e "s/SEDregionSED/${region}/g" \
   -e "s/SEDdocker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
   -e "s/SEDdocker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
@@ -147,7 +148,7 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/jenkins")/g" \
 
 echo 'jenkins-remove.sh ready.'        
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/jenkins \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/jenkins \
   "${LIBRARY_DIR}"/dockerlib.sh \
   "${LIBRARY_DIR}"/ecr.sh \
   "${temporary_dir}"/jenkins/jenkins-remove.sh     
@@ -157,7 +158,7 @@ echo 'Deleting Jenkins image and ECR repository ...'
 get_user_password
 user_pwd="${__RESULT}"
                                  
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/jenkins/jenkins-remove.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenkins/jenkins-remove.sh" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -171,7 +172,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_scr
 
     echo 'Let''s try now.' 
 
-    ssh_run_remote_command_as_root "${remote_script_dir}/jenkins/jenkins-remove.sh" \
+    ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-remove.sh" \
        "${private_key_file}" \
        "${eip}" \
        "${ssh_port}" \
@@ -193,7 +194,7 @@ echo 'Provisioning Nginx scripts ...'
 
 mkdir -p "${temporary_dir}"/nginx
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/nginx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/nginx" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -202,7 +203,7 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/nginx" \
 ecr_get_repostory_uri "${NGINX_DOCKER_IMG_NM}" "${registry_uri}"
 nginx_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/nginx")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/nginx")/g" \
   -e "s/SEDregionSED/${region}/g" \
   -e "s/SEDdocker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
   -e "s/SEDdocker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
@@ -211,14 +212,14 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/nginx")/g" \
 
 echo 'nginx-remove.sh ready.'        
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/nginx \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/nginx \
   "${LIBRARY_DIR}"/dockerlib.sh \
   "${LIBRARY_DIR}"/ecr.sh \
   "${temporary_dir}"/nginx/nginx-remove.sh     
 
 echo 'Deleting Nginx image and ECR repository ...'
                              
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/nginx/nginx-remove.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/nginx/nginx-remove.sh" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -239,7 +240,7 @@ echo 'Provisioning Sinatra scripts ...'
 
 mkdir -p "${temporary_dir}"/sinatra
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/sinatra" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/sinatra" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -248,7 +249,7 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/sinatra" \
 ecr_get_repostory_uri "${SINATRA_DOCKER_IMG_NM}" "${registry_uri}"
 sinatra_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/sinatra")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/sinatra")/g" \
   -e "s/SEDregionSED/${region}/g" \
   -e "s/SEDdocker_repository_uriSED/$(escape "${sinatra_docker_repository_uri}")/g" \
   -e "s/SEDdocker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
@@ -257,14 +258,14 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/sinatra")/g" \
 
 echo 'sinatra-remove.sh ready.'        
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/sinatra \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/sinatra \
   "${LIBRARY_DIR}"/dockerlib.sh \
   "${LIBRARY_DIR}"/ecr.sh \
   "${temporary_dir}"/sinatra/sinatra-remove.sh     
 
 echo 'Deleting Sinatra image and ECR repository ...'
                                 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/sinatra/sinatra-remove.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/sinatra/sinatra-remove.sh" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -285,7 +286,7 @@ echo 'Provisioning Redis scripts ...'
 
 mkdir -p "${temporary_dir}"/redis
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/redis" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/redis" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -294,7 +295,7 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/redis" \
 ecr_get_repostory_uri "${REDIS_DOCKER_IMG_NM}" "${registry_uri}"
 redis_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/redis")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/redis")/g" \
   -e "s/SEDregionSED/${region}/g" \
   -e "s/SEDdocker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
   -e "s/SEDdocker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
@@ -303,14 +304,14 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/redis")/g" \
 
 echo 'redis-remove.sh ready.'        
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/redis \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/redis \
   "${LIBRARY_DIR}"/dockerlib.sh \
   "${LIBRARY_DIR}"/ecr.sh \
   "${temporary_dir}"/redis/redis-remove.sh     
 
 echo 'Deleting Redis image and ECR repository ...'
                                 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/redis/redis-remove.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/redis/redis-remove.sh" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -331,7 +332,7 @@ echo 'Provisioning Ruby scripts ...'
 
 mkdir -p "${temporary_dir}"/ruby
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/ruby" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/ruby" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -340,7 +341,7 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/ruby" \
 ecr_get_repostory_uri "${RUBY_DOCKER_IMG_NM}" "${registry_uri}"
 ruby_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/ruby")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/ruby")/g" \
   -e "s/SEDregionSED/${region}/g" \
   -e "s/SEDdocker_repository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
   -e "s/SEDdocker_img_nmSED/$(escape "${RUBY_DOCKER_IMG_NM}")/g" \
@@ -349,14 +350,14 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/ruby")/g" \
 
 echo 'ruby-remove.sh ready.'        
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/ruby \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/ruby \
   "${LIBRARY_DIR}"/dockerlib.sh \
   "${LIBRARY_DIR}"/ecr.sh \
   "${temporary_dir}"/ruby/ruby-remove.sh     
 
 echo 'Deleting Ruby image and ECR repository ...'
                                  
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/ruby/ruby-remove.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/ruby/ruby-remove.sh" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -377,7 +378,7 @@ echo 'Provisioning Centos scripts ...'
 
 mkdir -p "${temporary_dir}"/centos
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/centos" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/centos" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -386,7 +387,7 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/centos" \
 ecr_get_repostory_uri "${CENTOS_DOCKER_IMG_NM}" "${registry_uri}"
 centos_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/centos")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/centos")/g" \
   -e "s/SEDregionSED/${region}/g" \
   -e "s/SEDdocker_repository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
   -e "s/SEDdocker_img_nmSED/$(escape "${CENTOS_DOCKER_IMG_NM}")/g" \
@@ -395,14 +396,14 @@ sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/centos")/g" \
 
 echo 'centos-remove.sh ready.' 
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/centos \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/centos \
   "${LIBRARY_DIR}"/dockerlib.sh \
   "${LIBRARY_DIR}"/ecr.sh \
   "${temporary_dir}"/centos/centos-remove.sh 
 
 echo 'Deleting Centos image and ECR repository ...'
                                
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/centos/centos-remove.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/centos/centos-remove.sh" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \
@@ -415,7 +416,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_scr
 
 echo         
                 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
   "${private_key_file}" \
   "${eip}" \
   "${ssh_port}" \

@@ -24,4 +24,4 @@ find . -type f -name Dockerfile -exec chmod 644 -- {} +
       
       
       
-      find . -type f -name "*.sh" -exec "shellcheck" "--format=gcc" {} \;
+find . -type f -name "*.sh" -exec "shellcheck" "--format=gcc" {} \; > docs/schellcheck.txt

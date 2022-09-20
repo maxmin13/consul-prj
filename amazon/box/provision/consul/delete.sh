@@ -12,10 +12,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
-
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
@@ -73,9 +69,9 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2153
-tmp_dir="${TMP_DIR}"/${instance_key}/consul
-rm -rf  "${tmp_dir:?}"
-mkdir -p "${tmp_dir}"
+temporary_dir="${TMP_DIR}"/${instance_key}/consul
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
 
 echo
 
@@ -230,7 +226,11 @@ keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?} && mkdir -p ${remote_script_dir}/consul" \
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
+
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -250,26 +250,26 @@ then
    consul_is_server='true'
 fi
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/consul")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/consul")/g" \
     -e "s/SEDdtc_regionSED/${region_nm}/g" \
     -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
     -e "s/SEDconsul_secret_nmSED/${consul_key_nm}/g" \
     -e "s/SEDconsul_is_serverSED/${consul_is_server}/g" \
-    "${PROVISION_DIR}"/consul/consul-remove.sh > "${tmp_dir}"/consul-remove.sh  
+    "${PROVISION_DIR}"/consul/consul-remove.sh > "${temporary_dir}"/consul-remove.sh  
 
 echo 'consul-remove.sh ready.' 
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/consul \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/consul \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
-    "${tmp_dir}"/consul-remove.sh 
+    "${temporary_dir}"/consul-remove.sh 
    
 echo 'Consul scripts provisioned.'
 
 get_user_password
 user_pwd="${__RESULT}"
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/consul \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/consul \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -277,7 +277,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/consul \
     "${user_pwd}"  
 
 # shellcheck disable=SC2015
-ssh_run_remote_command_as_root "${remote_script_dir}"/consul/consul-remove.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/consul/consul-remove.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -288,7 +288,7 @@ ssh_run_remote_command_as_root "${remote_script_dir}"/consul/consul-remove.sh \
        exit 1
     }
  
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -329,6 +329,6 @@ else
 fi  
 
 ## Clearing
-rm -rf "${tmp_dir:?}"
+rm -rf "${temporary_dir:?}"
 
 echo

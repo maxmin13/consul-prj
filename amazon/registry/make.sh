@@ -20,9 +20,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-get_user_name
-user_nm="${__RESULT}"
-remote_script_dir=/home/"${user_nm}"/script
 instance_key='admin'
 logfile_nm="${instance_key}".log
 
@@ -119,10 +116,14 @@ get_keypair_name "${instance_key}"
 admin_keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${admin_keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
+
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
     
 # Prepare the scripts to run on the server.
 
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -136,7 +137,7 @@ echo 'Provisioning Centos scripts ...'
 
 mkdir -p "${temporary_dir}"/centos
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/centos/dockerctx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/centos/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -149,10 +150,10 @@ registry_uri="${__RESULT}"
 ecr_get_repostory_uri "${CENTOS_DOCKER_IMG_NM}" "${registry_uri}"
 centos_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/centos")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/centos")/g" \
     -e "s/SEDimage_descSED/centos/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDdocker_ctxSED/$(escape "${remote_script_dir}"/centos/dockerctx)/g" \
+    -e "s/SEDdocker_ctxSED/$(escape "${remote_dir}"/centos/dockerctx)/g" \
     -e "s/SEDdocker_repository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
     -e "s/SEDdocker_img_nmSED/$(escape "${CENTOS_DOCKER_IMG_NM}")/g" \
     -e "s/SEDdocker_img_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
@@ -166,10 +167,10 @@ sed -e "s/SEDbase_centos_docker_repository_uriSED/${BASE_CENTOS_DOCKER_IMG_NM}/g
     
 echo 'Dockerfile ready.'     
 
-scp_upload_file "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/centos/dockerctx \
+scp_upload_file "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/centos/dockerctx \
     "${temporary_dir}"/centos/Dockerfile   
     
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/centos \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/centos \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -181,7 +182,7 @@ get_user_password
 user_pwd="${__RESULT}"
            
 # build Centos images in the box and send it to ECR.                             
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/centos/centos-build.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/centos/centos-build.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -195,7 +196,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_scr
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_script_dir}/centos/centos-build.sh" \
+       ssh_run_remote_command_as_root "${remote_dir}/centos/centos-build.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
@@ -217,7 +218,7 @@ echo 'Provisioning Ruby scripts ...'
 
 mkdir -p "${temporary_dir}"/ruby
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/ruby/dockerctx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/ruby/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -226,10 +227,10 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/ruby/dockerctx" \
 ecr_get_repostory_uri "${RUBY_DOCKER_IMG_NM}" "${registry_uri}"
 ruby_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/ruby")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/ruby")/g" \
     -e "s/SEDimage_descSED/ruby/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDdocker_ctxSED/$(escape "${remote_script_dir}"/ruby/dockerctx)/g" \
+    -e "s/SEDdocker_ctxSED/$(escape "${remote_dir}"/ruby/dockerctx)/g" \
     -e "s/SEDdocker_repository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
     -e "s/SEDdocker_img_nmSED/$(escape "${RUBY_DOCKER_IMG_NM}")/g" \
     -e "s/SEDdocker_img_tagSED/${RUBY_DOCKER_IMG_TAG}/g" \
@@ -243,10 +244,10 @@ sed -e "s/SEDruby_docker_repository_uriSED/$(escape "${centos_docker_repository_
        
 echo 'ruby Dockerfile ready.'        
 
-scp_upload_file "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/ruby/dockerctx \
+scp_upload_file "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/ruby/dockerctx \
     "${temporary_dir}"/ruby/Dockerfile
      
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/ruby \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/ruby \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -255,7 +256,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
 echo 'Building Ruby image ...'
             
 # build Ruby images in the box and send it to ECR.                             
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/ruby/ruby-build.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/ruby/ruby-build.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -276,7 +277,7 @@ echo 'Provisioning Jenkins scripts ...'
 
 mkdir -p "${temporary_dir}"/jenkins
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/jenkins/dockerctx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/jenkins/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -285,10 +286,10 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/jenkins/dockerctx" \
 ecr_get_repostory_uri "${JENKINS_DOCKER_IMG_NM}" "${registry_uri}"
 jenkins_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/jenkins")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/jenkins")/g" \
     -e "s/SEDimage_descSED/jenkins/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDdocker_ctxSED/$(escape "${remote_script_dir}"/jenkins/dockerctx)/g" \
+    -e "s/SEDdocker_ctxSED/$(escape "${remote_dir}"/jenkins/dockerctx)/g" \
     -e "s/SEDdocker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
     -e "s/SEDdocker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
     -e "s/SEDdocker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
@@ -302,11 +303,11 @@ sed -e "s/SEDbase_jenkins_docker_repository_uriSED/$(escape "${BASE_JENKINS_DOCK
        
 echo 'Dockerfile ready.'        
    
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/jenkins/dockerctx \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/jenkins/dockerctx \
     "${temporary_dir}"/jenkins/Dockerfile \
     "${CONTAINERS_DIR}"/jenkins/plugins.txt  
     
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/jenkins \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/jenkins \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -314,7 +315,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
 
 echo 'Building Jenkins image ...'
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/jenkins/jenkins-build.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenkins/jenkins-build.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -335,7 +336,7 @@ echo 'Provisioning Nginx scripts ...'
 
 mkdir -p "${temporary_dir}"/nginx
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/nginx/dockerctx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/nginx/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -344,10 +345,10 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/nginx/dockerctx" \
 ecr_get_repostory_uri "${NGINX_DOCKER_IMG_NM}" "${registry_uri}"
 nginx_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/nginx")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/nginx")/g" \
     -e "s/SEDimage_descSED/nginx/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDdocker_ctxSED/$(escape "${remote_script_dir}"/nginx/dockerctx)/g" \
+    -e "s/SEDdocker_ctxSED/$(escape "${remote_dir}"/nginx/dockerctx)/g" \
     -e "s/SEDdocker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
     -e "s/SEDdocker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
     -e "s/SEDdocker_img_tagSED/${NGINX_DOCKER_IMG_TAG}/g" \
@@ -372,12 +373,12 @@ sed -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DI
     
 echo 'global.conf ready.'  
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/nginx/dockerctx \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/nginx/dockerctx \
     "${temporary_dir}"/nginx/Dockerfile \
     "${temporary_dir}"/nginx/global.conf \
     "${CONTAINERS_DIR}"/nginx/nginx.conf
     
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/nginx \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/nginx \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -385,7 +386,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
 
 echo 'Building Nginx image ...'
                                         
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/nginx/nginx-build.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/nginx/nginx-build.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -406,7 +407,7 @@ echo 'Provisioning Sinatra scripts ...'
 
 mkdir -p "${temporary_dir}"/sinatra
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/sinatra/dockerctx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/sinatra/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -415,10 +416,10 @@ ssh_run_remote_command "mkdir -p ${remote_script_dir}/sinatra/dockerctx" \
 ecr_get_repostory_uri "${SINATRA_DOCKER_IMG_NM}" "${registry_uri}"
 sinatra_docker_repository_uri="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}/sinatra")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/sinatra")/g" \
     -e "s/SEDimage_descSED/sinatra/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDdocker_ctxSED/$(escape "${remote_script_dir}"/sinatra/dockerctx)/g" \
+    -e "s/SEDdocker_ctxSED/$(escape "${remote_dir}"/sinatra/dockerctx)/g" \
     -e "s/SEDdocker_repository_uriSED/$(escape "${sinatra_docker_repository_uri}")/g" \
     -e "s/SEDdocker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
     -e "s/SEDdocker_img_tagSED/${SINATRA_DOCKER_IMG_TAG}/g" \
@@ -438,10 +439,10 @@ sed -e "s/SEDrepository_uriSED/$(escape "${ruby_docker_repository_uri}")/g" \
 
 echo 'Dockerfile ready.'
 
-scp_upload_file "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/sinatra/dockerctx \
+scp_upload_file "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/sinatra/dockerctx \
     "${temporary_dir}"/sinatra/Dockerfile 
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/sinatra \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/sinatra \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
@@ -450,7 +451,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
 echo 'Building Sinatra image ...'
             
 # build Sinatra images in the box and send it to ECR.                             
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/sinatra/sinatra-build.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/sinatra/sinatra-build.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -471,7 +472,7 @@ echo 'Provisioning Redis scripts ...'
 
 mkdir -p "${temporary_dir}"/redis
 
-ssh_run_remote_command "mkdir -p ${remote_script_dir}/redis/dockerctx" \
+ssh_run_remote_command "mkdir -p ${remote_dir}/redis/dockerctx" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -482,10 +483,10 @@ redis_docker_repository_uri="${__RESULT}"
 get_application_port 'redis'
 redis_port="${__RESULT}"
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_script_dir}"/redis)/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/redis)/g" \
     -e "s/SEDimage_descSED/redis/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDdocker_ctxSED/$(escape "${remote_script_dir}"/redis/dockerctx)/g" \
+    -e "s/SEDdocker_ctxSED/$(escape "${remote_dir}"/redis/dockerctx)/g" \
     -e "s/SEDdocker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
     -e "s/SEDdocker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
     -e "s/SEDdocker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
@@ -505,17 +506,17 @@ sed -e "s/SEDrepository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
 
 echo 'Dockerfile ready.'
    
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/redis/dockerctx \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/redis/dockerctx \
     "${temporary_dir}"/Dockerfile \
     "${CONTAINERS_DIR}"/redis/redis.conf
     
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_script_dir}"/redis \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/redis \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
     "${temporary_dir}"/redis-build.sh
 
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/redis \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/redis \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -525,7 +526,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir}"/redis \
 echo 'Building Redis image ...'
             
 # build Redis images in the box and send it to ECR.                             
-ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_script_dir}/redis/redis-build.sh" \
+ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/redis/redis-build.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -538,7 +539,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_script_dir} && ${remote_scr
    
 echo
                            
-ssh_run_remote_command "rm -rf ${remote_script_dir:?}" \
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \

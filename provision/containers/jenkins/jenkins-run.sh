@@ -12,7 +12,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_script_dir='SEDscripts_dirSED'
+remote_dir='SEDscripts_dirSED'
 REGION='SEDregionSED'
 JENKINS_DOCKER_REPOSITORY_URI='SEDjenkins_docker_repository_uriSED'
 JENKINS_DOCKER_IMG_NM='SEDjenkins_docker_img_nmSED'
@@ -22,9 +22,9 @@ JENKINS_HTTP_ADDRESS='SEDjenkins_http_addressSED'
 JENKINS_HTTP_PORT='SEDjenkins_http_portSED'
 JENKINS_HOST_VOLUME_DIR='SEDjenkins_host_volume_dirSED'
  
-source "${remote_script_dir}"/general_utils.sh
-source "${remote_script_dir}"/dockerlib.sh
-source "${remote_script_dir}"/ecr.sh
+source "${remote_dir}"/general_utils.sh
+source "${remote_dir}"/dockerlib.sh
+source "${remote_dir}"/ecr.sh
 
 yum update -y 
 

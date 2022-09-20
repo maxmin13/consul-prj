@@ -27,12 +27,12 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+remote_dir='SEDscripts_dirSED'
+
 # shellcheck disable=SC1091
-source "${remote_script_dir}"/dockerlib.sh
+source "${remote_dir}"/dockerlib.sh
 
 STEP() { echo ; echo ; echo "==\\" ; echo "===>" "$@" ; echo "==/" ; echo ; }
-
-remote_script_dir='SEDscripts_dirSED'
 
 # kernel version 3.10 or greater is needed.
 uname -r

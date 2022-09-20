@@ -11,13 +11,13 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_script_dir='SEDscripts_dirSED'
+remote_dir='SEDscripts_dirSED'
 NETWORK_NM='SEDnetwork__nmSED'
 NETWORK_CIDR='SEDnetwork_cidrSED'
 NETWORK_GATE='SEDnetwork__gateSED'
 
-source "${remote_script_dir}"/general_utils.sh
-source "${remote_script_dir}"/dockerlib.sh
+source "${remote_dir}"/general_utils.sh
+source "${remote_dir}"/dockerlib.sh
 
 yum update -y 
 
