@@ -179,7 +179,7 @@ ssh_run_remote_command_as_root "${remote_dir}/redis/redis-run.sh" \
     "${user_nm}" \
     "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis database successfully running.' ||
     {    
-       echo 'WARN: the role may not have been associated to the profile yet.'
+       echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
        echo 'Let''s wait a bit and check again (first time).' 
       
        wait 180  

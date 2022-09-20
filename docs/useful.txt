@@ -2,7 +2,7 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/SCRIPTS_DIR/remote_script_dir/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/the role may not have been associated to the profile yet/changes made to IAM entities can take noticeable time for the information to be reflected globally/g' {} \;
 
 
 

@@ -101,14 +101,13 @@ else
   echo 'WARN: permission policy already associated to the role.'
 fi   
 
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
-
-get_user_name
-user_nm="${__RESULT}"
-remote_dir=/home/"${user_nm}"/script
 
 # Prepare the scripts to run on the server.
 
@@ -165,7 +164,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenki
   "${user_nm}" \
   "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
   {
-    echo 'WARN: the role may not have been associated to the profile yet.'
+    echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
     echo 'Let''s wait a bit and check again (first time).' 
 
     wait 180  
