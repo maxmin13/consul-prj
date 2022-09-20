@@ -71,7 +71,6 @@ fi
 
 get_route_table_name
 route_table_nm="${__RESULT}"
-
 get_route_table_id "${route_table_nm}"
 route_table_id="${__RESULT}"
 							
@@ -86,9 +85,17 @@ else
    echo 'Created route table.'
 fi
 
-set_route "${route_table_id}" "${internet_gate_id}" '0.0.0.0/0' >> "${LOGS_DIR}"/datacenter.log
+check_has_route "${route_table_id}" "${internet_gate_id}" '0.0.0.0/0' >> "${LOGS_DIR}"/datacenter.log
+has_route="${__RESULT}"
 
-echo 'Created route that points all traffic to the internet gateway.'
+if [[ 'false' == "${has_route}" ]]
+then
+   set_route "${route_table_id}" "${internet_gate_id}" '0.0.0.0/0' >> "${LOGS_DIR}"/datacenter.log
+   
+   echo 'Created route that points all traffic to the internet gateway.'
+else
+   echo 'WARN: route already created.'
+fi
 
 #
 # Main subnet

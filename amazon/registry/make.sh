@@ -190,7 +190,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/cento
     "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Centos image successfully built.' ||
     {    
        echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
-       echo 'Let''s wait a bit and check again (first time).' 
+       echo 'Let''s wait a bit and check again.' 
       
        wait 180  
       

@@ -165,7 +165,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenki
   "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
   {
     echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
-    echo 'Let''s wait a bit and check again (first time).' 
+    echo 'Let''s wait a bit and check again.' 
 
     wait 180  
 

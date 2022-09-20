@@ -634,6 +634,51 @@ function set_route()
 }
 
 #===============================================================================
+# Checks if a route is present in a route table.
+#
+# Globals:
+#  None
+# Arguments:
+# +rtb_id           -- the route table identifier.
+# +target_id        -- the target identifier, for ex: an Internet Gateway.
+# +destination_cidr -- the CIDR address block used to match the destination
+#                      of the incoming traffic.
+# Returns:      
+#  none.
+#===============================================================================
+function check_has_route()
+{
+   if [[ $# -lt 3 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT='false'
+   local exit_code=0
+   local -r rtb_id="${1}"
+   local -r target_id="${2}"
+   local -r destination_cidr="${3}"
+   local -r state='active'
+   local route=''
+   
+   route="$(aws ec2 describe-route-tables  --route-table-ids "${rtb_id}" --query "RouteTables[].Routes[]" | \
+      jq --arg cidr "${destination_cidr}" --arg gate "${target_id}" --arg state "${state}"  -c '.[] |
+         select(.DestinationCidrBlock | contains($cidr)) | 
+         select(.GatewayId | contains($gate)) |
+         select(.State | contains($state))')"
+
+   if [[ -n "${rule}" ]]
+   then
+      __RESULT='true'
+   else
+      __RESULT='false'
+   fi
+ 
+   return "${exit_code}"
+}
+
+#===============================================================================
 # Returns the the security group identifyer.
 #
 # Globals:

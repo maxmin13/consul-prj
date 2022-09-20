@@ -26,7 +26,7 @@
 			},
 			{
 				"Name":"redis",
-				"InstanceName":"redis-box2",
+				"InstanceName":"redis-box",
 				"PrivateIP":"10.0.10.30",
 				"Hostname":"redis.maxmin.it",
 				"SgpName":"redis-sgp",
@@ -38,7 +38,7 @@
 			},
 			{
 				"Name":"sinatra",
-				"InstanceName":"sinatra-box2",
+				"InstanceName":"sinatra-box",
 				"PrivateIP":"10.0.10.31",
 				"Hostname":"sinatra.maxmin.it",
 				"SgpName":"sinatra-sgp",
@@ -50,7 +50,7 @@
 			},
 			{
 				"Name":"nginx",
-				"InstanceName":"nginx-box2",
+				"InstanceName":"nginx-box",
 				"PrivateIP":"10.0.10.32",
 				"Hostname":"nginx.maxmin.it",
 				"SgpName":"nginx-sgp",
@@ -62,7 +62,7 @@
 			},
 			{
 				"Name":"jenkins",
-				"InstanceName":"jenkins-box2",
+				"InstanceName":"jenkins-box",
 				"PrivateIP":"10.0.10.33",
 				"Hostname":"jenkins.maxmin.it",
 				"SgpName":"jenkins-sgp",
@@ -74,7 +74,7 @@
 			},
 			{
 				"Name":"admin",
-				"InstanceName":"admin-box2",
+				"InstanceName":"admin-box",
 				"PrivateIP":"10.0.10.34",
 				"Hostname":"admin.maxmin.it",
 				"SgpName":"admin-sgp",
