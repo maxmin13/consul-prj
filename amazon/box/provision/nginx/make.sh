@@ -118,13 +118,14 @@ fi
 echo "Provisioning ${instance_key} instance ..."
 # 
 
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/nginx" \
@@ -145,22 +146,33 @@ get_application_home 'nginx'
 nginx_home="${__RESULT}"
 get_application_port 'nginx'
 nginx_port="${__RESULT}"
+get_application_config_directory 'consul'
+consul_config_dir="${__RESULT}"
 
 sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/nginx)/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDnginx_docker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
-    -e "s/SEDnginx_docker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
-    -e "s/SEDnginx_docker_img_tagSED/${NGINX_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDnginx_docker_container_nmSED/${NGINX_DOCKER_CONTAINER_NM}/g" \
-    -e "s/SEDnginx_http_addressSED/${eip}/g" \
-    -e "s/SEDnginx_http_portSED/${nginx_port}/g" \
-    -e "s/SEDnginx_host_volume_dirSED/$(escape "${nginx_home}")/g" \
-    -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
+    -e "s/SEDdocker_repository_uriSED/$(escape "${nginx_docker_repository_uri}")/g" \
+    -e "s/SEDdocker_img_nmSED/$(escape "${NGINX_DOCKER_IMG_NM}")/g" \
+    -e "s/SEDdocker_img_tagSED/${NGINX_DOCKER_IMG_TAG}/g" \
+    -e "s/SEDdocker_container_nmSED/${NGINX_DOCKER_CONTAINER_NM}/g" \
+    -e "s/SEDhttp_addressSED/${eip}/g" \
+    -e "s/SEDhttp_portSED/${nginx_port}/g" \
+    -e "s/SEDhost_volume_dirSED/$(escape "${nginx_home}")/g" \
+    -e "s/SEDcontainer_volume_dirSED/$(escape "${NGINX_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
     -e "s/SEDwebsite_archiveSED/${WEBSITE_ARCHIVE}/g" \
     -e "s/SEDwebsite_nmSED/${WEBSITE_NM}/g" \
-       "${CONTAINERS_DIR}"/nginx/nginx-run.sh > "${temporary_dir}"/nginx-run.sh  
+    -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
+    -e "s/SEDconsul_service_file_nmSED/nginx.json/g" \
+       "${CONTAINERS_DIR}"/nginx/nginx-install.sh > "${temporary_dir}"/nginx-install.sh  
                         
-echo 'nginx-run.sh ready.'  
+echo 'nginx-install.sh ready.'  
+
+sed -e "s/SEDnameSED/nginx/g" \
+    -e "s/SEDtagsSED/nginx/g" \
+    -e "s/SEDportSED/${nginx_port}/g" \
+       "${PROVISION_DIR}"/consul/service.json > "${temporary_dir}"/nginx.json 
+       
+echo 'nginx.json ready.'  
 
 ## Website sources
 cd "${temporary_dir}" || exit
@@ -174,8 +186,10 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${temporary_dir}"/nginx-run.sh \
-    "${temporary_dir}"/"${WEBSITE_ARCHIVE}" 
+    "${temporary_dir}"/nginx-install.sh \
+    "${temporary_dir}"/"${WEBSITE_ARCHIVE}" \
+    "${temporary_dir}"/nginx.json \
+    "${LIBRARY_DIR}"/consul.sh 
 
 get_user_password
 user_pwd="${__RESULT}"
@@ -187,7 +201,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/nginx \
     "${user_nm}" \
     "${user_pwd}" 
     
-ssh_run_remote_command_as_root "${remote_dir}"/nginx/nginx-run.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/nginx/nginx-install.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -202,7 +216,7 @@ ssh_run_remote_command_as_root "${remote_dir}"/nginx/nginx-run.sh \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_dir}"/nginx/nginx-run.sh \
+       ssh_run_remote_command_as_root "${remote_dir}"/nginx/nginx-install.sh \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \

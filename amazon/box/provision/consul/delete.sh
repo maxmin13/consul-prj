@@ -221,13 +221,14 @@ fi
 
 echo "Provisioning ${instance_key} instance ..."
  
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}" 
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul" \
@@ -250,11 +251,15 @@ then
    consul_is_server='true'
 fi
 
+get_application_config_directory 'consul'
+consul_config_dir="${__RESULT}"
+
 sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}/consul")/g" \
     -e "s/SEDdtc_regionSED/${region_nm}/g" \
     -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
     -e "s/SEDconsul_secret_nmSED/${consul_key_nm}/g" \
     -e "s/SEDconsul_is_serverSED/${consul_is_server}/g" \
+    -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
     "${PROVISION_DIR}"/consul/consul-remove.sh > "${temporary_dir}"/consul-remove.sh  
 
 echo 'consul-remove.sh ready.' 

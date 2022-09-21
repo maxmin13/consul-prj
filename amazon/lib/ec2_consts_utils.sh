@@ -764,3 +764,26 @@ function get_application_security_key_name()
    
    return "${exit_code}"
 }
+
+function get_application_config_directory()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r application_key="${1}"
+   local dir=''
+   
+   dir=$(cat "${LIBRARY_DIR}"/constants/ec2_consts.json | 
+   	jq -r --arg key "${application_key}" -c '.Applications[] | select(.Name | index($key))' |
+   	   jq -r -c '.ConfigDir')
+  
+   # shellcheck disable=SC2034
+   __RESULT="${dir}"
+   
+   return "${exit_code}"
+}

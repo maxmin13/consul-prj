@@ -12,6 +12,7 @@ DTC_REGION='SEDdtc_regionSED'
 CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
 CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
 CONSUL_IS_SERVER='SEDconsul_is_serverSED'
+CONSUL_CONFIG_DIR="SEDconsul_config_dirSED"
 
 source "${remote_dir}"/general_utils.sh
 source "${remote_dir}"/secretsmanager.sh
@@ -46,9 +47,7 @@ fi
 
 yum -y remove consul jq 
 rm -f /etc/systemd/system/"${CONSUL_SERVICE_FILE_NM}"
-rm -rf /etc/consul.d/scripts
-rm -rf /var/consul
-rm -rf /opt/consul
+rm -rf "${CONSUL_CONFIG_DIR}"
 systemctl daemon-reload 
 
 echo 'Consul removed.'

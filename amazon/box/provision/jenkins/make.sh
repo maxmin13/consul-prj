@@ -118,13 +118,13 @@ fi
 echo "Provisioning ${instance_key} instance ..."
 # 
 
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/jenkins" \
@@ -145,25 +145,38 @@ get_application_home 'jenkins'
 jenkins_home="${__RESULT}"
 get_application_port 'jenkins'
 jenkins_port="${__RESULT}"
+get_application_config_directory 'consul'
+consul_config_dir="${__RESULT}"
 
 sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/jenkins)/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDjenkins_docker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
-    -e "s/SEDjenkins_docker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
-    -e "s/SEDjenkins_docker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDjenkins_docker_container_nmSED/${JENKINS_DOCKER_CONTAINER_NM}/g" \
-    -e "s/SEDjenkins_http_addressSED/${eip}/g" \
-    -e "s/SEDjenkins_http_portSED/${jenkins_port}/g" \
-    -e "s/SEDjenkins_host_volume_dirSED/$(escape "${jenkins_home}")/g" \
-       "${CONTAINERS_DIR}"/jenkins/jenkins-run.sh > "${temporary_dir}"/jenkins-run.sh       
+    -e "s/SEDdocker_repository_uriSED/$(escape "${jenkins_docker_repository_uri}")/g" \
+    -e "s/SEDdocker_img_nmSED/$(escape "${JENKINS_DOCKER_IMG_NM}")/g" \
+    -e "s/SEDdocker_img_tagSED/${JENKINS_DOCKER_IMG_TAG}/g" \
+    -e "s/SEDdocker_container_nmSED/${JENKINS_DOCKER_CONTAINER_NM}/g" \
+    -e "s/SEDhttp_addressSED/${eip}/g" \
+    -e "s/SEDhttp_portSED/${jenkins_port}/g" \
+    -e "s/SEDhost_volume_dirSED/$(escape "${jenkins_home}")/g" \
+    -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
+    -e "s/SEDconsul_service_file_nmSED/jenkins.json/g" \
+       "${CONTAINERS_DIR}"/jenkins/jenkins-install.sh > "${temporary_dir}"/jenkins-install.sh       
   
-echo 'jenkins-run.sh ready.'  
+echo 'jenkins-install.sh ready.'  
+
+sed -e "s/SEDnameSED/jenkins/g" \
+    -e "s/SEDtagsSED/jenkins/g" \
+    -e "s/SEDportSED/${jenkins_port}/g" \
+       "${PROVISION_DIR}"/consul/service.json > "${temporary_dir}"/jenkins.json 
+       
+echo 'jenkins.json ready.'  
      
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/jenkins \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${temporary_dir}"/jenkins-run.sh    
+    "${temporary_dir}"/jenkins-install.sh \
+    "${temporary_dir}"/jenkins.json \
+    "${LIBRARY_DIR}"/consul.sh     
 
 get_user_password
 user_pwd="${__RESULT}"
@@ -175,7 +188,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/jenkins \
     "${user_nm}" \
     "${user_pwd}" 
 
-ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-run.sh" \
+ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-install.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -190,7 +203,7 @@ ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-run.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-run.sh" \
+       ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-install.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \

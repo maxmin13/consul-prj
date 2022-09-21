@@ -118,13 +118,14 @@ fi
 echo "Provisioning ${instance_key} instance ..."
 # 
 
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/sinatra" \
@@ -145,22 +146,33 @@ get_application_home 'sinatra'
 sinatra_home="${__RESULT}"
 get_application_port 'sinatra'
 sinatra_port="${__RESULT}"
+get_application_config_directory 'consul'
+consul_config_dir="${__RESULT}"
 
 sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/sinatra)/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDsinatra_docker_repository_uriSED/$(escape "${sinatra_docker_repository_uri}")/g" \
-    -e "s/SEDsinatra_docker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
-    -e "s/SEDsinatra_docker_img_tagSED/${SINATRA_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDsinatra_docker_container_nmSED/${SINATRA_DOCKER_CONTAINER_NM}/g" \
-    -e "s/SEDsinatra_docker_container_volume_dirSED/$(escape "${SINATRA_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
-    -e "s/SEDsinatra_docker_host_volume_dirSED/$(escape "${sinatra_home}")/g" \
-    -e "s/SEDsinatra_docker_container_network_nmSED/${SINATRA_DOCKER_CONTAINER_NETWORK_NM}/g" \
-    -e "s/SEDsinatra_http_addressSED/${eip}/g" \
-    -e "s/SEDsinatra_http_portSED/${sinatra_port}/g" \
-    -e "s/SEDsinatra_archiveSED/${SINATRA_ARCHIVE}/g" \
-       "${CONTAINERS_DIR}"/sinatra/sinatra-run.sh > "${temporary_dir}"/sinatra-run.sh  
+    -e "s/SEDdocker_repository_uriSED/$(escape "${sinatra_docker_repository_uri}")/g" \
+    -e "s/SEDdocker_img_nmSED/$(escape "${SINATRA_DOCKER_IMG_NM}")/g" \
+    -e "s/SEDdocker_img_tagSED/${SINATRA_DOCKER_IMG_TAG}/g" \
+    -e "s/SEDdocker_container_nmSED/${SINATRA_DOCKER_CONTAINER_NM}/g" \
+    -e "s/SEDdocker_container_volume_dirSED/$(escape "${SINATRA_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
+    -e "s/SEDdocker_host_volume_dirSED/$(escape "${sinatra_home}")/g" \
+    -e "s/SEDdocker_container_network_nmSED/${SINATRA_DOCKER_CONTAINER_NETWORK_NM}/g" \
+    -e "s/SEDhttp_addressSED/${eip}/g" \
+    -e "s/SEDhttp_portSED/${sinatra_port}/g" \
+    -e "s/SEDarchiveSED/${SINATRA_ARCHIVE}/g" \
+    -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
+    -e "s/SEDconsul_service_file_nmSED/sinatra.json/g" \
+       "${CONTAINERS_DIR}"/sinatra/sinatra-install.sh > "${temporary_dir}"/sinatra-install.sh  
                         
-echo 'sinatra-run.sh ready.'  
+echo 'sinatra-install.sh ready.'
+
+sed -e "s/SEDnameSED/sinatra/g" \
+    -e "s/SEDtagsSED/sinatra/g" \
+    -e "s/SEDportSED/${sinatra_port}/g" \
+       "${PROVISION_DIR}"/consul/service.json > "${temporary_dir}"/sinatra.json 
+       
+echo 'sinatra.json ready.'   
 
 ## Sinatra webapp
 cd "${temporary_dir}" || exit
@@ -173,8 +185,10 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${temporary_dir}"/sinatra-run.sh \
-    "${temporary_dir}"/"${SINATRA_ARCHIVE}" 
+    "${temporary_dir}"/sinatra-install.sh \
+    "${temporary_dir}"/"${SINATRA_ARCHIVE}" \
+    "${temporary_dir}"/sinatra.json \
+    "${LIBRARY_DIR}"/consul.sh 
 
 get_user_password
 user_pwd="${__RESULT}"
@@ -186,7 +200,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/sinatra \
     "${user_nm}" \
     "${user_pwd}" 
     
-ssh_run_remote_command_as_root "${remote_dir}/sinatra/sinatra-run.sh" \
+ssh_run_remote_command_as_root "${remote_dir}/sinatra/sinatra-install.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -201,7 +215,7 @@ ssh_run_remote_command_as_root "${remote_dir}/sinatra/sinatra-run.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_dir}/sinatra/sinatra-run.sh" \
+       ssh_run_remote_command_as_root "${remote_dir}/sinatra/sinatra-install.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \

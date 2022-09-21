@@ -116,15 +116,14 @@ echo 'Provisioning the instance ...'
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
+get_user_name
+user_nm="${__RESULT}"
+remote_dir=/home/"${user_nm}"/script
 
 get_ssh_port "${private_key_file}" "${eip}" "${user_nm}" '22' "${ssh_port}" 
 current_ssh_port="${__RESULT}"
 
 echo "SSH port ${current_ssh_port}."
-
-get_user_name
-user_nm="${__RESULT}"
-remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/security \
     "${private_key_file}" \

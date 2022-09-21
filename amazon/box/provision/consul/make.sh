@@ -226,13 +226,14 @@ fi
 
 echo "Provisioning ${instance_key} instance ..."
 
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}" 
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/${instance_key}/consul" \
@@ -257,10 +258,14 @@ then
    consul_is_server='true'
 fi
 
+get_application_config_directory 'consul'
+consul_config_dir="${__RESULT}"
+echo
 sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/"${instance_key}"/consul)/g" \
     -e "s/SEDdtc_regionSED/${region_nm}/g" \
     -e "s/SEDinstance_eip_addressSED/${eip}/g" \
     -e "s/SEDinstance_private_addressSED/${private_ip}/g" \
+    -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
     -e "s/SEDconsul_config_file_nmSED/consul-config.json/g" \
     -e "s/SEDconsul_service_file_nmSED/consul.service/g" \
     -e "s/SEDconsul_http_portSED/${http_port}/g" \
@@ -291,12 +296,18 @@ else
    echo 'consul-client.json ready.'  
 fi  
 
+sed -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
+       "${PROVISION_DIR}"/consul/consul.service > "${temporary_dir}"/consul.service
+       
+echo 'consul.service ready.'       
+
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/"${instance_key}"/consul \
     "${temporary_dir}"/consul-install.sh \
     "${temporary_dir}"/consul-config.json \
-    "${PROVISION_DIR}"/consul/consul.service \
+    "${temporary_dir}"/consul.service \
     "${LIBRARY_DIR}"/general_utils.sh \
-    "${LIBRARY_DIR}"/secretsmanager.sh 
+    "${LIBRARY_DIR}"/secretsmanager.sh \
+    "${LIBRARY_DIR}"/consul.sh 
          
 echo 'Consul scripts provisioned.'
 

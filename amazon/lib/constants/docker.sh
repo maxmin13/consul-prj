@@ -30,7 +30,7 @@ JENKINS_DOCKER_IMG_TAG='v1'
 NGINX_DOCKER_CONTAINER_NM='nginx'
 NGINX_DOCKER_IMG_NM='maxmin13/nginx'
 NGINX_DOCKER_IMG_TAG='v1'
-NGINX_CONTAINER_VOLUME_DIR='/var/www/html'
+NGINX_DOCKER_CONTAINER_VOLUME_DIR='/var/www/html'
 
 ## ******************* ##
 ##   Redis database    ##
@@ -49,13 +49,7 @@ SINATRA_DOCKER_IMG_TAG='v1'
 SINATRA_DOCKER_CONTAINER_NM='sinatra'
 SINATRA_DOCKER_CONTAINER_VOLUME_DIR='/opt/sinatra'
 
-## ************************* ##
-##   Sinatra/Redis network   ##
-## ************************* ##
 
-SINA_REDIS_NETWORK_NM='sinatra-redis-net'
-SINA_REDIS_NETWORK_CIDR='192.168.1.0/24'
-SINA_REDIS_NETWORK_GATE='192.168.1.1'
 
 
 

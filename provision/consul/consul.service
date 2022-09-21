@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c 'consul agent -config-dir /etc/consul.d/'
+ExecStart=/bin/bash -c 'consul agent -config-dir SEDconsul_config_dirSED'
 TimeoutStartSec=0
 
 [Install]

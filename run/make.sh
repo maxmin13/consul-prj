@@ -24,6 +24,21 @@ source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
+
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin'
+exit
+. "${PROJECT_DIR}"/amazon/box/provision/redis/make.sh 'redis'
+
+. "${PROJECT_DIR}"/amazon/box/provision/sinatra/make.sh 'sinatra'
+
+. "${PROJECT_DIR}"/amazon/box/provision/jenkins/make.sh 'jenkins'
+
+. "${PROJECT_DIR}"/amazon/box/provision/nginx/make.sh 'nginx'
+
+
+exit
+exit
+
 ## Datacenter ##
 
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh  

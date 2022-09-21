@@ -1,8 +1,6 @@
 #!/usr/bin/bash
 
 set -o errexit
-## turn on -e in subshells
-## shopt -s inherit_errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
@@ -15,34 +13,55 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
-# Creates a virtual network interface, attaches an address to it and starts it.
+# Restart Consul service with systemd.
 #
 # Globals:
 #  None
 # Arguments:
-# +name       -- interface name.
-# +ip_address -- interface IP address.
-# +type       -- interface type.
+# +service_nm -- systemd service name.
 # Returns:      
 #  None 
 #===============================================================================
-function create_network_interface()
+function restart_consul_service()
 {
-   if [[ $# -lt 3 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-   
    local exit_code=0
-   local name="${1}"
-   local ip_address="${2}"
-   local type="${3}"
 
-   ip link add "${name}" type "${type}"
-   ip addr add "${ip_address}" dev "${name}" 
-   ip link set "${name}" up   
+   systemctl daemon-reload
+   systemctl restart 'consul' 
+   systemctl status 'consul' 
+   consul version
             
    return "${exit_code}"
 }
 
+#===============================================================================
+# Verifies if Consul is started, waits 60 seconds if not.
+#
+# Globals:
+#  None
+# Arguments:
+# +service_nm -- systemd service name.
+# Returns:      
+#  None 
+#===============================================================================
+function verify_consul_is_started_and_wait()
+{
+   local exit_code=0
+
+   # shellcheck disable=SC2015
+   consul members && echo "Consul successfully started." || 
+   {
+      echo "Waiting for Consul to start" 
+      
+      wait 60
+   
+      # shellcheck disable=SC2015
+      consul members && echo "Consul successfully started." || 
+      {
+         echo "ERROR: Consul not started after 1 minute."
+         exit 1
+      }
+   }
+            
+   return "${exit_code}"
+}

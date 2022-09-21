@@ -112,13 +112,13 @@ else
    echo 'WARN: permission policy already associated to the role.'
 fi   
 
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 admin_keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${admin_keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
     
 # Prepare the scripts to run on the server.
@@ -362,13 +362,13 @@ nginx_port="${__RESULT}"
 # The Nginx image is built from the base Centos image.
 sed -e "s/SEDrepository_uriSED/$(escape "${centos_docker_repository_uri}")/g" \
     -e "s/SEDimg_tagSED/${CENTOS_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
+    -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
     -e "s/SEDhttp_portSED/${nginx_port}/g" \
        "${CONTAINERS_DIR}"/nginx/Dockerfile > "${temporary_dir}"/nginx/Dockerfile
 
 echo 'Dockerfile ready.'
 
-sed -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_CONTAINER_VOLUME_DIR}")/g" \
+sed -e "s/SEDnginx_container_volume_dirSED/$(escape "${NGINX_DOCKER_CONTAINER_VOLUME_DIR}")/g" \
        "${CONTAINERS_DIR}"/nginx/global.conf > "${temporary_dir}"/nginx/global.conf
     
 echo 'global.conf ready.'  

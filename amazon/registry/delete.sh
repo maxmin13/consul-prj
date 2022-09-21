@@ -107,6 +107,7 @@ remote_dir=/home/"${user_nm}"/script
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
 # Prepare the scripts to run on the server.

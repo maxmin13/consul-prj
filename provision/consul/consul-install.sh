@@ -7,7 +7,7 @@
 # Consul agents exchange messages on the 'main-subnet' network.
 #
 #  8500: handles HTTP API requests from clients
-#  8300: handles requests from CLI
+#  8300: handles RPC requests from CLI
 #  8600: answers DNS queries
 #
 #   dig @0.0.0.0 -p 8600 node1.node.consul
@@ -30,9 +30,11 @@ CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
 CONSUL_HTTP_PORT='SEDconsul_http_portSED'
 CONSUL_DNS_PORT='SEDconsul_dns_portSED'
 CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
+CONSUL_CONFIG_DIR="SEDconsul_config_dirSED"
 
 source "${remote_dir}"/general_utils.sh
 source "${remote_dir}"/secretsmanager.sh
+source "${remote_dir}"/consul.sh
 
 yum update -y && yum install -y jq
 
@@ -43,8 +45,7 @@ echo 'Installing Consul ...'
 yum install -y yum-utils 
 yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo 
 yum -y install consul 
-mkdir -p /etc/consul.d/scripts
-mkdir -p /var/consul
+mkdir -p "${CONSUL_CONFIG_DIR}"
 
 set +e
 sm_check_secret_exists "${CONSUL_SECRET_NM}" "${DTC_REGION}"
@@ -86,31 +87,13 @@ sm_get_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}"
 secret="${__RESULT}"
 
 cd "${remote_dir}"
-jq --arg secret "${secret}" '.encrypt = $secret' "${CONSUL_CONFIG_FILE_NM}" > /etc/consul.d/"${CONSUL_CONFIG_FILE_NM}"
+jq --arg secret "${secret}" '.encrypt = $secret' "${CONSUL_CONFIG_FILE_NM}" > "${CONSUL_CONFIG_DIR}"/"${CONSUL_CONFIG_FILE_NM}"
 cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
 echo 'Consul installed.'
 
-systemctl daemon-reload
-systemctl restart consul 
-systemctl status consul 
-consul version
-
-# shellcheck disable=SC2015
-consul members && echo "Consul successfully started." || 
-{
-   echo "Waiting for Consul to start" 
-      
-   wait 60
-   
-   # shellcheck disable=SC2015
-   consul members && echo "Consul successfully started." || 
-   {
-      echo "ERROR: Consul not started after 1 minute."
-      exit 1
-   }
-}
-
+restart_consul_service
+verify_consul_is_started_and_wait
 yum remove -y jq
 
 node_name="$(consul members |awk -v address="${INSTANCE_PRIVATE_ADDRESS}" '$2 ~ address {print $1}')"

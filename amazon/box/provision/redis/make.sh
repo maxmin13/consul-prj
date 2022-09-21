@@ -117,13 +117,13 @@ fi
 echo "Provisioning ${instance_key} instance ..."
 # 
 
+get_user_name
+user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
-get_user_name
-user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/redis" \
@@ -142,25 +142,38 @@ ecr_get_repostory_uri "${REDIS_DOCKER_IMG_NM}" "${registry_uri}"
 redis_docker_repository_uri="${__RESULT}"
 get_application_port 'redis'
 redis_port="${__RESULT}"
+get_application_config_directory 'consul'
+consul_config_dir="${__RESULT}"
 
 sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/redis)/g" \
     -e "s/SEDregionSED/${region}/g" \
-    -e "s/SEDredis_docker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
-    -e "s/SEDredis_docker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
-    -e "s/SEDredis_docker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
-    -e "s/SEDredis_docker_container_nmSED/${REDIS_DOCKER_CONTAINER_NM}/g" \
-    -e "s/SEDredis_docker_container_network_nmSED/${REDIS_DOCKER_CONTAINER_NETWORK_NM}/g" \
-    -e "s/SEDredis_ip_addressSED/${eip}/g" \
-    -e "s/SEDredis_ip_portSED/${redis_port}/g" \
-       "${CONTAINERS_DIR}"/redis/redis-run.sh > "${temporary_dir}"/redis-run.sh  
+    -e "s/SEDdocker_repository_uriSED/$(escape "${redis_docker_repository_uri}")/g" \
+    -e "s/SEDdocker_img_nmSED/$(escape "${REDIS_DOCKER_IMG_NM}")/g" \
+    -e "s/SEDdocker_img_tagSED/${REDIS_DOCKER_IMG_TAG}/g" \
+    -e "s/SEDdocker_container_nmSED/${REDIS_DOCKER_CONTAINER_NM}/g" \
+    -e "s/SEDdocker_container_network_nmSED/${REDIS_DOCKER_CONTAINER_NETWORK_NM}/g" \
+    -e "s/SEDip_addressSED/${eip}/g" \
+    -e "s/SEDip_portSED/${redis_port}/g" \
+    -e "s/SEDconsul_config_dirSED/$(escape ${consul_config_dir})/g" \
+    -e "s/SEDconsul_service_file_nmSED/redis.json/g" \
+       "${CONTAINERS_DIR}"/redis/redis-install.sh > "${temporary_dir}"/redis-install.sh  
   
-echo 'redis-run.sh ready.'  
+echo 'redis-install.sh ready.'  
+
+sed -e "s/SEDnameSED/redis/g" \
+    -e "s/SEDtagsSED/redis/g" \
+    -e "s/SEDportSED/${redis_port}/g" \
+       "${PROVISION_DIR}"/consul/service.json > "${temporary_dir}"/redis.json 
+       
+echo 'redis.json ready.'       
   
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/redis \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/ecr.sh \
-    "${temporary_dir}"/redis-run.sh
+    "${temporary_dir}"/redis-install.sh \
+    "${temporary_dir}"/redis.json \
+    "${LIBRARY_DIR}"/consul.sh
 
 get_user_password
 user_pwd="${__RESULT}"
@@ -172,12 +185,12 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}"/redis \
     "${user_nm}" \
     "${user_pwd}" 
     
-ssh_run_remote_command_as_root "${remote_dir}/redis/redis-run.sh" \
+ssh_run_remote_command_as_root "${remote_dir}/redis/redis-install.sh" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis database successfully running.' ||
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis database successfully installed.' ||
     {    
        echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
        echo 'Let''s wait a bit and check again.' 
@@ -186,12 +199,12 @@ ssh_run_remote_command_as_root "${remote_dir}/redis/redis-run.sh" \
       
        echo 'Let''s try now.' 
     
-       ssh_run_remote_command_as_root "${remote_dir}/redis/redis-run.sh" \
+       ssh_run_remote_command_as_root "${remote_dir}/redis/redis-install.sh" \
           "${private_key_file}" \
           "${eip}" \
           "${ssh_port}" \
           "${user_nm}" \
-          "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis database successfully running.' ||
+          "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Redis database successfully installed.' ||
           {
               echo 'ERROR: the problem persists after 3 minutes.'
               exit 1          
