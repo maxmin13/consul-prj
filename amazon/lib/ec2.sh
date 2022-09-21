@@ -668,7 +668,7 @@ function check_has_route()
          select(.GatewayId | contains($gate)) |
          select(.State | contains($state))')"
 
-   if [[ -n "${rule}" ]]
+   if [[ -n "${route}" ]]
    then
       __RESULT='true'
    else
