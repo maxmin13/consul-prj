@@ -43,10 +43,7 @@ echo 'Running Nginx ...'
 # ECR repository
 #
 
-set +e
 ecr_check_repository_exists "${DOCKER_IMG_NM}" "${REGION}"
-set -e
-
 repo_exists="${__RESULT}"
 
 if [[ 'false' == "${repo_exists}" ]]

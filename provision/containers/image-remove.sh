@@ -28,10 +28,7 @@ echo "Removing ${DOCKER_IMG_NM} ..."
 # ECR repository
 #
 
-set +e
-ecr_check_repository_exists "${DOCKER_IMG_NM}" "${REGION}"
-set -e
-
+ecr_check_repository_exists "${DOCKER_IMG_NM}" "${REGION}" 
 repository_exists="${__RESULT}"
 
 if [[ 'true' == "${repository_exists}" ]]

@@ -40,10 +40,7 @@ echo 'Running Redis ...'
 # ECR repository
 #
 
-set +e
 ecr_check_repository_exists "${DOCKER_IMG_NM}" "${REGION}"
-set -e
-
 repository_exists="${__RESULT}"
 
 if [[ 'false' == "${repository_exists}" ]]

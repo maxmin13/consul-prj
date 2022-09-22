@@ -137,7 +137,6 @@ function sm_get_secret()
 
 #===============================================================================
 # Checks if a secret exists in the current account.
-# The command throws a 254 error if the secret isn't found.
 #
 # Globals:
 #  None
@@ -161,7 +160,6 @@ function sm_check_secret_exists()
    local -r region="${2}"
    local secret_desc=''
 
-   # error if the secret is not found.
    secret_desc="$(aws secretsmanager describe-secret --secret-id "${secret_nm}" \
       --region "${region}" --output text)"          
    

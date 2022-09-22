@@ -167,7 +167,7 @@ ssh_run_remote_command_as_root "${remote_dir}"/secure-linux.sh \
     "${eip}" \
     "${current_ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}"
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}"
                    
 exit_code=$?
 set -e

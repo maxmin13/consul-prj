@@ -1,15 +1,7 @@
 
-before externalizig box/make.sh:
-
-delete permissions/make.sh and delete.sh 
-
-create admin/box/permissions/make.sh and admin/box/permissions/delete.sh (and also for others ec2 instances)
-
-in admin/box/permissions/make.sh, create the role, profile, associate the role to the profile, profile to the instance
-
-
-
-do the same with provision/consul
+if the check returns error when not found:
+do the check  as:
+ecr_check_repository_exists ----->>>> catch the error thrown when not found and return 0 and set __RESULT=false
 
 
 

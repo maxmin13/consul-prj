@@ -205,7 +205,7 @@ ssh_run_remote_command_as_root "${remote_dir}/sinatra/sinatra-install.sh" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}">> "${LOGS_DIR}"/"${logfile_nm}"  && echo 'Sinatra web server successfully installed.' ||
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Sinatra web server successfully installed.' ||
     {
     
        echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'

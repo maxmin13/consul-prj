@@ -5,9 +5,10 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# ********************************
-# Script to make Linux more secure
-# ********************************
+# ****************************************************************
+# Script to make Linux more secure, 
+# requires yumupdate.sh.
+# ****************************************************************
 
 script_dir='SEDscript_dirSED'
 

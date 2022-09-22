@@ -14,16 +14,15 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
-# Checks if a repository exists.
-# The command throws a 254 error if the repository isn't found.
-#
+# Checks if an ECR repository exists.
+# 
 # Globals:
 #  None
 # Arguments:
 # +repository_nm -- the repository name.
 # +region_nm     -- the region name.
 # Returns:      
-#  true/false in the global __RESULT variable.  
+#  true/false in the __RESULT variable.  
 #===============================================================================
 function ecr_check_repository_exists()
 {
@@ -37,23 +36,36 @@ function ecr_check_repository_exists()
    local exit_code=0
    local -r repository_nm="${1}"
    local -r region_nm="${2}"
-   local repository_desc=''
-
-   # error if repository not found.
-   repository_desc="$(aws ecr describe-repositories \
-              --repository-names "${repository_nm}" \
-              --region "${region_nm}" \
-              --query repositories[0].repositoryArn \
-              --output text)"          
    
-   if [[ -n "${repository_desc}" ]]
+   set +e
+   
+   # the command throws 254 error if the repository is not found.
+   aws ecr describe-repositories \
+              --repository-names "${repository_nm}" \
+              --region "${region_nm}"
+              
+   exit_code=$?           
+   set -e
+
+   if [[ 0 -ne "${exit_code}" && 254 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: checking ECR repository.'
+      
+      return "${exit_code}"
+      
+   elif [[ 0 -eq "${exit_code}" ]] 
    then
       __RESULT='true'
-   else
+      
+   elif [[ 254 -eq "${exit_code}" ]] 
+   then
+      # catch not found error and return false.
       __RESULT='false'
-   fi 
-
-   return "${exit_code}"
+      
+      exit_code=0
+   fi
+          
+   return "${exit_code}"           
 }
 
 #===============================================================================
@@ -127,51 +139,6 @@ function ecr_delete_repository()
       echo 'ERROR: deleting repository.'
    fi     
             
-   return "${exit_code}"
-}
-
-#===============================================================================
-# Checks if an image exists in an ECR repository.
-# The command throws an error if the repository or the image not found.
-#
-# Globals:
-#  None
-# Arguments:
-# +repository_nm -- the ECR repository name that hosts the image.
-# +img_tag       -- the the tag associated with the image in the ECR repository.
-# +region_nm     -- the region name.
-# Returns:      
-#  true/false in the global __RESULT variable.  
-#===============================================================================
-function ecr_check_img_exists()
-{
-   if [[ $# -lt 2 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT=''
-   local exit_code=0
-   local -r repository_nm="${1}"
-   local -r img_tag="${2}"
-   local -r region_nm="${3}"
-   local image_desc=''
-
-   # the command throws an error if repository or image not found.
-   image_desc="$(aws ecr describe-images \
-              --repository-name "${repository_nm}" \
-              --region "${region_nm}" \
-              --image-ids imageTag="${img_tag}" \
-              --query text)"      
-   
-   if [[ -n "${image_desc}" ]]
-   then
-      __RESULT='true'
-   else
-      __RESULT='false'
-   fi 
-
    return "${exit_code}"
 }
 

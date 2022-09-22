@@ -159,30 +159,30 @@ get_user_password
 user_pwd="${__RESULT}"
                                  
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenkins/jenkins-remove.sh" \
-  "${private_key_file}" \
-  "${eip}" \
-  "${ssh_port}" \
-  "${user_nm}" \
-  "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
-  {
-    echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
-    echo 'Let''s wait a bit and check again.' 
-
-    wait 180  
-
-    echo 'Let''s try now.' 
-
-    ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-remove.sh" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image and ECR repository successfully deleted.' ||
-       {
-           echo 'ERROR: the problem persists after 3 minutes.'
-           exit 1          
-       }
-  } 
+    "${private_key_file}" \
+    "${eip}" \
+    "${ssh_port}" \
+    "${user_nm}" \
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image successfully removed.' ||
+    {    
+       echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
+       echo 'Let''s wait a bit and check again.' 
+      
+       wait 180  
+      
+       echo 'Let''s try now.' 
+    
+       ssh_run_remote_command_as_root "${remote_dir}/jenkins/jenkins-remove.sh" \
+          "${private_key_file}" \
+          "${eip}" \
+          "${ssh_port}" \
+          "${user_nm}" \
+          "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Jenkins image successfully removed.' ||
+          {
+              echo 'ERROR: the problem persists after 3 minutes.'
+              exit 1          
+          }
+    }
 
 echo   
 
