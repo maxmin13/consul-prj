@@ -41,8 +41,8 @@ function ecr_check_repository_exists()
    
    # the command throws 254 error if the repository is not found.
    aws ecr describe-repositories \
-              --repository-names "${repository_nm}" \
-              --region "${region_nm}"
+       --repository-names "${repository_nm}" \
+       --region "${region_nm}"
               
    exit_code=$?           
    set -e
