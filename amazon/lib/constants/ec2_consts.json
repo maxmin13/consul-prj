@@ -16,7 +16,7 @@
 		"Boxes": [ 	
 			{
 				"Name":"shared",
-				"InstanceName":"shared-box222",
+				"InstanceName":"shared-box",
 				"PrivateIP":"10.0.10.35",
 				"Hostname":"shared.maxmin.it",
 				"SgpName":"shared-sgp",
@@ -74,7 +74,7 @@
 			},
 			{
 				"Name":"admin",
-				"InstanceName":"admin-box222",
+				"InstanceName":"admin-box33",
 				"PrivateIP":"10.0.10.34",
 				"Hostname":"admin.maxmin.it",
 				"SgpName":"admin-sgp",

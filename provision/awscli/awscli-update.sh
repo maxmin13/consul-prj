@@ -12,7 +12,7 @@ set -o nounset
 set +o xtrace
 
 remote_dir='SEDscripts_dirSED'
-
+	
 echo 'Removing the installed version of awscli ...'
 
 # remove version 1
@@ -33,6 +33,10 @@ sudo ./awscli/aws/install
 
 rm -rf awscli
 
+echo 'Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin' > extend_sudoers
+mv extend_sudoers /etc/sudoers.d
+
+echo 'secure_path extended.'
 echo 'awscli installed.'
 
 /usr/local/bin/aws --version
