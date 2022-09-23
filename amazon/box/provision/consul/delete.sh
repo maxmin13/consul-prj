@@ -39,7 +39,12 @@ if [[ 'true' == "${is_running}" ]]
 then
    echo "* ${instance_key} box ready (${instance_st})."
 else
-   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   if [[ -n "${instance_st}" ]]
+   then
+      echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   else
+      echo "* WARN: ${instance_key} box is not ready."
+   fi   
       
    return 0
 fi

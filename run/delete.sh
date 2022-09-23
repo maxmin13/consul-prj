@@ -26,7 +26,7 @@ mkdir -p "${LOGS_DIR}"
 
 ## Docker base images ##
 
-. "${PROJECT_DIR}"/amazon/registry/delete.sh  ##  TODO TODO check jenkins repo not deleted
+. "${PROJECT_DIR}"/amazon/registry/delete.sh  
 
 ## AWS EC2 instances ##
 

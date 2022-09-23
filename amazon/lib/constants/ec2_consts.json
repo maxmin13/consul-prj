@@ -16,13 +16,13 @@
 		"Boxes": [ 	
 			{
 				"Name":"shared",
-				"InstanceName":"shared-box",
+				"InstanceName":"shared-box222",
 				"PrivateIP":"10.0.10.35",
 				"Hostname":"shared.maxmin.it",
 				"SgpName":"shared-sgp",
 				"KeypairName":"shared-key",
 				"ParentImageName":"amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
-				"TargetImageName":"shared-image"
+				"TargetImageName":"shared-image" 
 			},
 			{
 				"Name":"redis",
@@ -74,7 +74,7 @@
 			},
 			{
 				"Name":"admin",
-				"InstanceName":"admin-box",
+				"InstanceName":"admin-box222",
 				"PrivateIP":"10.0.10.34",
 				"Hostname":"admin.maxmin.it",
 				"SgpName":"admin-sgp",

@@ -1,4 +1,6 @@
 
+aws-cli/2.7.34
+
 Installs on AWS:
 
  Jenkins from the official jenkins/jenkins:lts Docker image.

@@ -35,8 +35,8 @@ mkdir -p "${LOGS_DIR}"
 ## AWS custom images ##
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'shared'   
-. "${PROJECT_DIR}"/amazon/box/provision/security/make.sh 'shared'  
-. "${PROJECT_DIR}"/amazon/box/provision/docker/make.sh 'shared'              
+. "${PROJECT_DIR}"/amazon/box/provision/security/make.sh 'shared'
+. "${PROJECT_DIR}"/amazon/box/provision/updates/make.sh 'shared'            
 . "${PROJECT_DIR}"/amazon/image/make.sh 'shared'              
 
    # Jumpbox.
@@ -52,16 +52,15 @@ mkdir -p "${LOGS_DIR}"
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'redis'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'redis'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'redis' 
+######################## . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'redis' 
 . "${PROJECT_DIR}"/amazon/box/provision/redis/make.sh 'redis'
-
-### TODO create consul.sh and register redis container with Consul agent.
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra'
+######################## . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra'
 . "${PROJECT_DIR}"/amazon/box/provision/sinatra/make.sh 'sinatra'
-
+exit
+exit
 . "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'jenkins'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins'

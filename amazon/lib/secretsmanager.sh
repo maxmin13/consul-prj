@@ -128,7 +128,9 @@ function sm_get_secret()
    local -r region="${2}"
    local secret;
    
-   secret="$(aws secretsmanager get-secret-value --region "${region}" --secret-id "${secret_nm}"| jq --raw-output '.SecretString' | jq -r .Value)"
+   secret="$(aws secretsmanager get-secret-value --region "${region}" --secret-id "${secret_nm}"| 
+      jq --raw-output '.SecretString' | 
+         jq -r .Value)"
          
    __RESULT="${secret}"
    
@@ -160,17 +162,33 @@ function sm_check_secret_exists()
    local -r region="${2}"
    local secret_desc=''
 
-   secret_desc="$(aws secretsmanager describe-secret --secret-id "${secret_nm}" \
-      --region "${region}" --output text)"          
+   set +e
    
-   # shellcheck disable=SC2034
-   if [[ -n "${secret_desc}" ]]
+   # the command throws 254 error if the repository is not found.
+   aws secretsmanager describe-secret --secret-id "${secret_nm}" \
+      --region "${region}"   
+                 
+   exit_code=$?           
+   set -e          
+   
+   if [[ 0 -ne "${exit_code}" && 254 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: checking secret.'
+      
+      return "${exit_code}"
+      
+   elif [[ 0 -eq "${exit_code}" ]] 
    then
       __RESULT='true'
-   else
+      
+   elif [[ 254 -eq "${exit_code}" ]] 
+   then
+      # catch not found error and return false.
       __RESULT='false'
-   fi 
-   
-   return "${exit_code}"
+      
+      exit_code=0
+   fi
+          
+   return "${exit_code}"   
 }
 

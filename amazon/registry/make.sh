@@ -36,9 +36,9 @@ instance_st="${__RESULT}"
 
 if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ${instance_key} box ready (${instance_st})."
+   echo "* ${instance_key} jumpbox ready (${instance_st})."
 else
-   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   echo "* WARN: ${instance_key} jumpbox is not ready (${instance_st})."
       
    return 0
 fi
@@ -48,23 +48,23 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* ERROR: admin jumpbox IP address not found.'
+   echo "* ERROR: ${instance_key} jumpbox IP address not found."
    exit 1
 else
-   echo "* admin jumpbox IP address: ${eip}."
+   echo "*  ${instance_key} jumpbox IP address: ${eip}."
 fi
 
 get_security_group_name "${instance_key}"
-admin_sgp_nm="${__RESULT}"
-get_security_group_id "${admin_sgp_nm}"
+sgp_nm="${__RESULT}"
+get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* ERROR: admin jumpbox security group not found.'
+   echo "* ERROR:  ${instance_key} jumpbox security group not found."
    exit 1
 else
-   echo "* admin jumpbox security group ID: ${sgp_id}."
+   echo "*  ${instance_key} jumpbox security group ID: ${sgp_id}."
 fi
 
 temporary_dir="${TMP_DIR}"/ecr
@@ -96,16 +96,16 @@ fi
 #
 
 get_role_name "${instance_key}"
-admin_role_nm="${__RESULT}"
+role_nm="${__RESULT}"
 
-check_role_has_permission_policy_attached "${admin_role_nm}" "${ECR_POLICY_NM}"
+check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
 if [[ 'false' == "${is_permission_policy_associated}" ]]
 then
    echo 'Attaching permission policy to the role ...'
 
-   attach_permission_policy_to_role "${admin_role_nm}" "${ECR_POLICY_NM}"
+   attach_permission_policy_to_role "${role_nm}" "${ECR_POLICY_NM}"
       
    echo 'Permission policy associated to the role.' 
 else
@@ -115,8 +115,9 @@ fi
 get_user_name
 user_nm="${__RESULT}"
 get_keypair_name "${instance_key}"
-admin_keypair_nm="${__RESULT}"
-private_key_file="${ACCESS_DIR}"/"${admin_keypair_nm}" 
+keypair_nm="${__RESULT}"
+private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
+
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 
 remote_dir=/home/"${user_nm}"/script
@@ -549,14 +550,14 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
 # Permissions.
 #
 
-check_role_has_permission_policy_attached "${admin_role_nm}" "${ECR_POLICY_NM}"
+check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
 if [[ 'true' == "${is_permission_policy_associated}" ]]
 then
    echo 'Detaching permission policy from role ...'
    
-   detach_permission_policy_from_role "${admin_role_nm}" "${ECR_POLICY_NM}"
+   detach_permission_policy_from_role "${role_nm}" "${ECR_POLICY_NM}"
       
    echo 'Permission policy detached.'
 else

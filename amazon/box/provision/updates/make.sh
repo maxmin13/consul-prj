@@ -3,7 +3,7 @@
 # shellcheck disable=SC2153
 
 ####################################################################################
-# Installs Docker.
+# Installs Docker, updates awscli to version 2.
 ####################################################################################
 
 set -o errexit
@@ -23,7 +23,7 @@ instance_key="${1}"
 logfile_nm="${instance_key}".log
 
 ####
-STEP "${instance_key} box provision Docker."
+STEP "${instance_key} box provision updates."
 ####
 
 get_instance_name "${instance_key}"
@@ -103,20 +103,26 @@ get_user_name
 user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/docker \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/updates \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}"                     
    
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}")/g" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/updates)/g" \
        "${PROVISION_DIR}"/docker/docker-install.sh > "${temporary_dir}"/docker-install.sh    
        
-echo 'docker-install.sh ready.'     
+echo 'docker-install.sh ready.'    
 
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}" \
+sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/updates)/g" \
+       "${PROVISION_DIR}"/awscli/awscli-update.sh > "${temporary_dir}"/awscli-update.sh    
+       
+echo 'awscli-update.sh ready.'   
+
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/updates \
     "${LIBRARY_DIR}"/dockerlib.sh \
-    "${temporary_dir}"/docker-install.sh       
+    "${temporary_dir}"/docker-install.sh \
+    "${temporary_dir}"/awscli-update.sh      
 
 get_user_password
 user_pwd="${__RESULT}"
@@ -129,26 +135,30 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
     "${user_pwd}" 
     
 echo 'Installing Docker ...'
-
-set +e                                
-ssh_run_remote_command_as_root "${remote_dir}"/docker-install.sh \
+                              
+ssh_run_remote_command_as_root "${remote_dir}"/updates/docker-install.sh \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}"  
-                            
-exit_code=$?
-set -e
-
-# shellcheck disable=SC2181
-if [[ 0 -eq "${exit_code}" ]]
-then
-   echo 'Docker successfully installed.'     
-else
-   echo 'ERROR: installing Docker.'
-   exit 1
-fi     
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Docker successfully installed.' ||
+    {
+       echo 'ERROR: installing Docker.'
+       exit 1    
+    }
+    
+echo 'Updating awscli ...'
+                              
+ssh_run_remote_command_as_root "${remote_dir}"/updates/awscli-update.sh \
+    "${private_key_file}" \
+    "${eip}" \
+    "${ssh_port}" \
+    "${user_nm}" \
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'awscli successfully updated.' ||
+    {
+       echo 'ERROR: updating awscli.'
+       exit 1    
+    }    
    
 # Clear remote directory.
 ssh_run_remote_command "rm -rf ${remote_dir:?}" \
@@ -176,6 +186,6 @@ fi
 # Removing old files
 rm -rf "${temporary_dir:?}"
 
-echo "${instance_key} box provisioned Docker."
+echo "${instance_key} box updated."
 echo
 

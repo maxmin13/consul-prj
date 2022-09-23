@@ -21,10 +21,7 @@ source "${remote_dir}"/secretsmanager.sh
 echo 'Removing Consul ...'
 ####
 
-set +e
 sm_check_secret_exists "${CONSUL_SECRET_NM}" "${DTC_REGION}"
-set -e
-
 secret_exists="${__RESULT}"
 
 if [[ 'true' == "${CONSUL_IS_SERVER}" ]]

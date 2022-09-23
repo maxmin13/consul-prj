@@ -160,36 +160,34 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
 
 echo 'Securing the box ...'
                 
-set +e
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
 ssh_run_remote_command_as_root "${remote_dir}"/secure-linux.sh \
     "${private_key_file}" \
     "${eip}" \
     "${current_ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}"
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Box successfully secured.' ||
+    {
+       exit_code=$?
+       
+       echo 'Box successfully secured, rebooting ...'
+        
+       if [ 194 -eq "${exit_code}" ]
+       then
+          set +e
+          ssh_run_remote_command_as_root "reboot" \
+             "${private_key_file}" \
+             "${eip}" \
+             "${current_ssh_port}" \
+             "${user_nm}" \
+             "${user_pwd}"
+          set -e    
+       else
+          echo 'ERROR: securing the box.'
+          exit 1      
+       fi
+    }
                    
-exit_code=$?
-set -e
-
-# shellcheck disable=SC2181
-if [ 194 -eq "${exit_code}" ]
-then
-   echo 'Box successfully secured, rebooting ...'
-
-   set +e
-   ssh_run_remote_command_as_root "reboot" \
-       "${private_key_file}" \
-       "${eip}" \
-       "${current_ssh_port}" \
-       "${user_nm}" \
-       "${user_pwd}"
-   set -e
-else
-   echo 'ERROR: securing the box.'
-   exit 1
-fi
-
 #
 # Firewall
 #

@@ -28,9 +28,9 @@ instance_st="${__RESULT}"
 
 if [[ 'true' == "${is_running}" ]]
 then
-   echo "* ${instance_key} box ready (${instance_st})."
+   echo "* ${instance_key} jumpbox ready (${instance_st})."
 else
-   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   echo "* WARN: ${instance_key} jumpbox is not ready (${instance_st})."
       
    return 0
 fi
@@ -40,9 +40,9 @@ eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
-   echo '* WARN: Admin IP address not found.'
+   echo "* WARN: ${instance_key} jumpbox IP address not found."
 else
-   echo "* admin IP address: ${eip}."
+   echo "*  ${instance_key} jumpbox IP address: ${eip}."
 fi
 
 get_security_group_name "${instance_key}"
@@ -52,9 +52,9 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: admin security group not found.' 
+   echo "* WARN:  ${instance_key} jumpbox security group not found."
 else
-   echo "* admin security group ID: ${sgp_id}."
+   echo "*  ${instance_key} jumpbox security group ID: ${sgp_id}."
 fi
 
 temporary_dir="${TMP_DIR}"/ecr
@@ -74,41 +74,42 @@ is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
-
+   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   
    echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already granted on ${ssh_port} tcp 0.0.0.0/0."
 fi
 
-#
 # Permissions.
 #
 
 get_role_name "${instance_key}"
 role_nm="${__RESULT}"
+
 check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
 if [[ 'false' == "${is_permission_policy_associated}" ]]
 then
-  echo 'Attaching permission policy to the role ...'
+   echo 'Attaching permission policy to the role ...'
 
-  attach_permission_policy_to_role "${role_nm}" "${ECR_POLICY_NM}"
-
-  echo 'Permission policy associated to the role.' 
+   attach_permission_policy_to_role "${role_nm}" "${ECR_POLICY_NM}"
+      
+   echo 'Permission policy associated to the role.' 
 else
-  echo 'WARN: permission policy already associated to the role.'
-fi   
+   echo 'WARN: permission policy already associated to the role.'
+fi
 
 get_user_name
 user_nm="${__RESULT}"
-remote_dir=/home/"${user_nm}"/script
 get_keypair_name "${instance_key}"
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
+
+remote_dir=/home/"${user_nm}"/script
 
 # Prepare the scripts to run on the server.
 
@@ -157,7 +158,8 @@ echo 'Deleting Jenkins image and ECR repository ...'
 
 get_user_password
 user_pwd="${__RESULT}"
-                                 
+
+# remove Jenkins image in the box and in ECR.                             
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenkins/jenkins-remove.sh" \
     "${private_key_file}" \
     "${eip}" \
@@ -183,7 +185,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenki
               exit 1          
           }
     }
-
+    
 echo   
 
 #
