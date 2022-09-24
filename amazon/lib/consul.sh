@@ -44,10 +44,11 @@ function restart_consul_service()
 # Returns:      
 #  None 
 #===============================================================================
-function verify_consul_is_started_and_wait()
+function verify_consul_and_wait()
 {
+   __RESULT='false'
    local exit_code=0
-
+   
    # shellcheck disable=SC2015
    consul members && echo "Consul successfully started." || 
    {
@@ -58,10 +59,16 @@ function verify_consul_is_started_and_wait()
       # shellcheck disable=SC2015
       consul members && echo "Consul successfully started." || 
       {
-         echo "ERROR: Consul not started after 1 minute."
-         exit 1
+         echo "WARN: Consul not ready after 1 minute."
+         
+         __RESULT='false'
+         
+         return 0
       }
    }
-            
+  
+   # shellcheck disable=SC2034 
+   __RESULT='true' 
+   
    return "${exit_code}"
 }

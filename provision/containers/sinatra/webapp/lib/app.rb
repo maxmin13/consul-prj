@@ -18,24 +18,24 @@ class App < Sinatra::Application
       # ip add show docker0
       # The docker0 interface is a virtual Ethernet bridge that connects our containers and the local host network.
       
-      # redis = Redis.new(:host => '172.18.0.2', :port => '6379') 
+      redis = Redis.new(:host => '10.0.10.30', :port => '6379') 
       #redis = Redis.new(:host => 'redisdb', :port => '6379') 
 
-      set :bind, '0.0.0.0'
+      set :bind, '0.0.0.0' ## app available on all interfaces.
 
       get '/info' do
         "<h1>DockerBook Test Redis-enabled Sinatra app</h1>"
       end
 
-      #get '/json' do
-      #  params = redis.get "params"
-      #  params.to_json
-     # end
+      get '/json' do
+        params = redis.get "params"
+        params.to_json
+      end
 
-     # post '/json/?' do
-     #   redis.set "params", [params].to_json
-        #params.to_json
-     # end
+      post '/json/?' do
+        redis.set "params", [params].to_json
+        params.to_json
+      end
 end
 
 

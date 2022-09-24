@@ -84,14 +84,23 @@ echo 'Jenkins container running.'
 docker_logout_ecr_registry "${registry_uri}" 
    
 echo 'Logged out of ECR registry.'     
-echo 'Registering Jenkins with Consul agent ...'
 
-cd "${remote_dir}"
-cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
+verify_consul_and_wait
+is_ready="${__RESULT}"
 
-restart_consul_service
+if [[ 'true' == "${is_ready}" ]]
+then
+   echo 'Registering Jenkins with Consul agent ...'
 
-echo 'Jenkins registered with Consul agent.'           
+   cd "${remote_dir}"
+   cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
+
+   restart_consul_service 
+
+   echo 'Jenkins registered with Consul agent.'
+else
+   echo 'WARN: Jenkins not registered with Consul.'
+fi        
 
 echo
 echo "http://${HTTP_ADDRESS}:${HTTP_PORT}/jenkins"

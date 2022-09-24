@@ -90,15 +90,7 @@ echo 'Container running.'
 
 docker_logout_ecr_registry "${registry_uri}" 
    
-echo 'Logged out of ECR registry.'     
-echo 'Registering Nginx with Consul agent ...'
-
-cd "${remote_dir}"
-cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
-
-restart_consul_service 
-
-echo 'Nginx registered with Consul agent.'                                             
+echo 'Logged out of ECR registry.'                                              
 echo 'Deploying the welcome website ...'
 
 unzip -o "${remote_dir}"/"${WEBSITE_ARCHIVE}" -d "${HOST_VOLUME_DIR}"/"${WEBSITE_NM}"
@@ -106,6 +98,23 @@ find "${HOST_VOLUME_DIR}" -type d -exec chmod 755 {} +
 find "${HOST_VOLUME_DIR}" -type f -exec chmod 744 {} +
 
 echo 'Welcome website deployed.'
+
+verify_consul_and_wait
+is_ready="${__RESULT}"
+
+if [[ 'true' == "${is_ready}" ]]
+then
+   echo 'Registering Nginx with Consul agent ...'
+
+   cd "${remote_dir}"
+   cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
+
+   restart_consul_service 
+
+   echo 'Nginx registered with Consul agent.'
+else
+   echo 'WARN: Nginx not registered with Consul.'
+fi
 
 echo
 echo "http://${HTTP_ADDRESS}:${HTTP_PORT}/${WEBSITE_NM}"

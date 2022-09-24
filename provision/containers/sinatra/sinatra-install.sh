@@ -96,15 +96,24 @@ docker_run_sinatra_container "${DOCKER_CONTAINER_NM}" \
                              
 docker_logout_ecr_registry "${registry_uri}" 
    
-echo 'Logged out of ECR registry.'     
-echo 'Registering Sinatra with Consul agent ...'
+echo 'Logged out of ECR registry.'    
+ 
+verify_consul_and_wait
+is_ready="${__RESULT}"
 
-cd "${remote_dir}"
-cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
+if [[ 'true' == "${is_ready}" ]]
+then
+   echo 'Registering Sinatra with Consul agent ...'
 
-restart_consul_service
+   cd "${remote_dir}"
+   cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
 
-echo 'Sinatra registered with Consul agent.'
+   restart_consul_service 
+
+   echo 'Sinatra registered with Consul agent.'
+else
+   echo 'WARN: Sinatra not registered with Consul.'
+fi
                                                                                            
 echo
 echo "http://${HTTP_ADDRESS}:${HTTP_PORT}/info"

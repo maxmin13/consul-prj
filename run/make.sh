@@ -59,8 +59,7 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
 ######################## . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra'
 . "${PROJECT_DIR}"/amazon/box/provision/sinatra/make.sh 'sinatra'
-exit
-exit
+
 . "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'jenkins'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins'

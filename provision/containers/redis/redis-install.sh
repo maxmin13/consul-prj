@@ -83,14 +83,23 @@ echo 'Redis container running.'
 docker_logout_ecr_registry "${registry_uri}" 
    
 echo 'Logged out of ECR registry.'  
-echo 'Registering Redis with Consul agent ...'
 
-cd "${remote_dir}"
-cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
+verify_consul_and_wait
+is_ready="${__RESULT}"
 
-restart_consul_service 
+if [[ 'true' == "${is_ready}" ]]
+then
+   echo 'Registering Redis with Consul agent ...'
 
-echo 'Redis registered with Consul agent.'
+   cd "${remote_dir}"
+   cp "${CONSUL_SERVICE_FILE_NM}" "${CONSUL_CONFIG_DIR}"
+
+   restart_consul_service 
+
+   echo 'Redis registered with Consul agent.'
+else
+   echo 'WARN: Redis not registered with Consul.'
+fi
 
 echo                                                  
 echo "redis-cli -h ${IP_ADDRESS} -p ${IP_PORT}"

@@ -87,10 +87,19 @@ cd "${remote_dir}"
 jq --arg secret "${secret}" '.encrypt = $secret' "${CONSUL_CONFIG_FILE_NM}" > "${CONSUL_CONFIG_DIR}"/"${CONSUL_CONFIG_FILE_NM}"
 cp "${CONSUL_SERVICE_FILE_NM}" /etc/systemd/system/
 
-echo 'Consul installed.'
-
 restart_consul_service
-verify_consul_is_started_and_wait
+verify_consul_and_wait
+is_ready="${__RESULT}"
+
+if [[ 'true' == "${is_ready}" ]]
+then
+   echo 'Consul successfully installed.'
+else
+   echo 'ERROR: installing Consul.'
+   
+   exit 1
+fi
+
 yum remove -y jq
 
 node_name="$(consul members |awk -v address="${INSTANCE_PRIVATE_ADDRESS}" '$2 ~ address {print $1}')"
