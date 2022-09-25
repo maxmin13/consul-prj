@@ -160,35 +160,59 @@ function sm_check_secret_exists()
    local exit_code=0
    local -r secret_nm="${1}"
    local -r region="${2}"
-   local secret_desc=''
+   
+   set +e
+   
+   # returns an error to the caller if for any reason SecretsManager is not accessible.
+   # this includes IAM access permissions not in place.
+   # the caller may want to try after a while.
+   __sm_check_access
+   
+   exit_code=$?
+   set -e
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: accessing SecretsManager.'
+   
+      return "${exit_code}"
+   fi
 
    set +e
    
-   # the command throws 254 error if the repository is not found.
+   # the command returns an error if the secret is not found.
    aws secretsmanager describe-secret --secret-id "${secret_nm}" \
       --region "${region}"   
                  
    exit_code=$?           
-   set -e          
+   set -e         
    
-   if [[ 0 -ne "${exit_code}" && 254 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: checking secret.'
-      
-      return "${exit_code}"
-      
-   elif [[ 0 -eq "${exit_code}" ]] 
+   if [[ 0 -eq "${exit_code}" ]]
    then
       __RESULT='true'
+   else
+      echo 'WARN: secret not found.'
       
-   elif [[ 254 -eq "${exit_code}" ]] 
-   then
-      # catch not found error and return false.
       __RESULT='false'
       
       exit_code=0
-   fi
-          
-   return "${exit_code}"   
+   fi      
+                 
+   return "${exit_code}"        
 }
 
+#===============================================================================
+# Returns an error if for any reason ECR is not accessible, for ex. because
+# IAM permissions are not fully propagated yet. 
+# 
+# Globals:
+#  None
+# Arguments:
+#  none
+# Returns:      
+#  none
+#===============================================================================
+function __sm_check_access()
+{
+   aws secretsmanager list-secrets > /dev/null
+}

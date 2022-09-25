@@ -42,7 +42,7 @@ if [[ -z "${eip}" ]]
 then
    echo "* WARN: ${instance_key} jumpbox IP address not found."
 else
-   echo "*  ${instance_key} jumpbox IP address: ${eip}."
+   echo "* ${instance_key} jumpbox IP address: ${eip}."
 fi
 
 get_security_group_name "${instance_key}"
@@ -52,9 +52,9 @@ sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo "* WARN:  ${instance_key} jumpbox security group not found."
+   echo "* WARN: ${instance_key} jumpbox security group not found."
 else
-   echo "*  ${instance_key} jumpbox security group ID: ${sgp_id}."
+   echo "* ${instance_key} jumpbox security group ID: ${sgp_id}."
 fi
 
 temporary_dir="${TMP_DIR}"/ecr
@@ -170,7 +170,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir} && ${remote_dir}/jenki
        echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
        echo 'Let''s wait a bit and check again.' 
       
-       wait 180  
+       wait 120  
       
        echo 'Let''s try now.' 
     

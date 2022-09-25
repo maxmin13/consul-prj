@@ -26,7 +26,7 @@ mkdir -p "${LOGS_DIR}"
 
 ## Docker base images ##
 
-. "${PROJECT_DIR}"/amazon/registry/delete.sh  
+. "${PROJECT_DIR}"/amazon/registry/delete.sh  ### TODO jenckins not deleted
 
 ## AWS EC2 instances ##
 

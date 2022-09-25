@@ -195,7 +195,7 @@ ssh_run_remote_command_as_root "${remote_dir}/redis/redis-install.sh" \
        echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
        echo 'Let''s wait a bit and check again.' 
       
-       wait 180  
+       wait 120  
       
        echo 'Let''s try now.' 
     

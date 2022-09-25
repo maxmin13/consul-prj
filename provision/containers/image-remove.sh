@@ -2,9 +2,11 @@
 
 # shellcheck disable=SC1091
 
-############################################################
+##############################################################################
 # Removes the Jenkins image and and its ECR repository.
-############################################################
+# The script returns an error if IAM access permissions to ECR are not ready.
+# It may be worth it to run it again after a while.
+##############################################################################
 
 set -o errexit
 set -o pipefail

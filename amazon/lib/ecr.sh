@@ -22,7 +22,7 @@ set +o xtrace
 # +repository_nm -- the repository name.
 # +region_nm     -- the region name.
 # Returns:      
-#  true/false in the __RESULT variable.  
+#  true/false in the global __RESULT variable.
 #===============================================================================
 function ecr_check_repository_exists()
 {
@@ -39,33 +39,59 @@ function ecr_check_repository_exists()
    
    set +e
    
-   # the command throws 254 error if the repository is not found.
+   # returns an error to the caller if for any reason ECR is not accessible.
+   # this includes IAM access permissions not in place.
+   # the caller may want to try after a while.
+   __ecr_check_access
+   
+   exit_code=$?
+   set -e
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: accessing ECR registry.'
+   
+      return "${exit_code}"
+   fi
+
+   set +e
+   
+   # the command returns an error if the repository is not found.
    aws ecr describe-repositories \
        --repository-names "${repository_nm}" \
-       --region "${region_nm}"
-              
+       --region "${region_nm}" 
+       
    exit_code=$?           
-   set -e
-
-   if [[ 0 -ne "${exit_code}" && 254 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: checking ECR repository.'
-      
-      return "${exit_code}"
-      
-   elif [[ 0 -eq "${exit_code}" ]] 
+   set -e          
+   
+   if [[ 0 -eq "${exit_code}" ]]
    then
       __RESULT='true'
+   else
+      echo 'WARN: repository not found.'
       
-   elif [[ 254 -eq "${exit_code}" ]] 
-   then
-      # catch not found error and return false.
       __RESULT='false'
       
       exit_code=0
-   fi
-          
-   return "${exit_code}"           
+   fi      
+                 
+   return "${exit_code}"        
+}
+
+#===============================================================================
+# Returns an error if for any reason ECR is not accessible, for ex. because
+# IAM permissions are not fully propagated yet. 
+# 
+# Globals:
+#  None
+# Arguments:
+#  none
+# Returns:      
+#  none
+#===============================================================================
+function __ecr_check_access()
+{
+   aws ecr describe-repositories > /dev/null
 }
 
 #===============================================================================
