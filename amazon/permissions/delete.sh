@@ -23,8 +23,10 @@ else
    get_permission_policy_arn "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/permissions.log
    secretsmanager_persmission_policy_arn="${__RESULT}"
 
-   echo "* SecretsManager permission policy ARN: ${secretsmanager_persmission_policy_arn}"
+   echo "* SM permission policy ARN: ${secretsmanager_persmission_policy_arn}"
 fi
+
+echo
 
 #
 # SecretsManager permission policy
