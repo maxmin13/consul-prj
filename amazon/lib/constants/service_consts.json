@@ -40,7 +40,7 @@
 					"Deploy": {
 						"Dir":"webapp",
 						"Url":"redis-cli -h <address> -p <port>"
-					},
+					}
 				}
 			},
 			{
@@ -81,7 +81,7 @@
 					"ConfigFiles": [ "global.conf", "nginx.conf" ]
 				},
 				"Container": {
-					"Port":{
+					"Port": {
 						"HostPort":"80",
 						"ContainerPort":"80"
 					},
