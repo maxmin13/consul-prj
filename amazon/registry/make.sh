@@ -120,6 +120,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${ssh_port}" \
     "${user_nm}"
 
+# get the keys of the services from service_consts.json file.
 get_service_keys
 # shellcheck disable=SC2206
 declare -a service_keys=(${__RESULT})
