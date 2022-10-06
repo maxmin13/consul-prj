@@ -55,6 +55,12 @@ function scp_upload_file()
    local -r remote_dir="${5}"
    local -r file="${6}"
    local file_name=''
+   
+   if [[ ! -f "${file}" ]]
+   then
+      echo "WARN: ${file} not found."
+      return 0
+   fi
 
    scp -q \
        -o StrictHostKeyChecking=no \
@@ -429,7 +435,7 @@ function wait_ssh_started()
 # Returns:      
 #  the SSH port number, in the global __RESULT variable.  
 #===============================================================================
-function get_ssh_port()
+function find_ssh_port()
 {
    if [[ $# -lt 4 ]]
    then

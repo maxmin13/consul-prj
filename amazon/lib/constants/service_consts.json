@@ -1,0 +1,125 @@
+{
+	"Docker": {
+		"Services": [ 	
+			{
+			        "Key":"centos-sk",
+			        "SourcesDirName":"centos",
+			        "Image": {
+					"BaseName":"centos",
+					"BaseTag":"8.4.2105",
+					"Name":"maxmin13/centos8",
+					"Tag":"v1"
+				}
+			},
+			{
+			        "Key":"ruby-sk",
+			        "SourcesDirName":"ruby",
+			        "Image": {
+					"BaseName":"maxmin13/centos8",
+					"BaseTag":"v1",
+					"Name":"maxmin13/ruby",
+					"Tag":"v1"
+				}
+			},
+			{
+				"Key":"redis-sk",
+				"SourcesDirName":"redis",
+				"Image": {
+					"BaseName":"maxmin13/centos8",
+					"BaseTag":"v1",
+					"Name":"maxmin13/redis",
+					"Tag":"v1",
+					"ConfigFiles": [ "redis.conf" ]
+				},
+				"Container": {
+					"Port":{
+						"HostPort":"6379",
+						"ContainerPort":"6379"
+					},
+					"Network": "bridge"
+				}
+			},
+			{
+				"Key":"sinatra-sk",
+				"SourcesDirName":"sinatra",
+				"Image": {
+					"BaseName":"maxmin13/ruby",
+					"BaseTag":"v1",
+					"Name":"maxmin13/sinatra",
+					"Tag":"v1"
+				},
+				"Container": {
+					"Port":{
+						"HostPort":"4567",
+						"ContainerPort":"4567"
+					},
+					"Volume": {
+						"HostDir": "/opt/sinatra",
+						"ContainerDir": "/opt/sinatra"
+					},
+					"Deploy": {
+						"Dir":"webapp",
+						"WebappUrl":"http://<address>:<port>/info"
+					},
+					"Network": "bridge",
+					"Cmd":"/opt/sinatra/<deploy_dir>/bin/run"
+				}
+			},
+			{
+				"Key":"nginx-sk",
+				"SourcesDirName":"nginx",
+				"Image": {
+					
+					"BaseName":"maxmin13/centos8",
+					"BaseTag":"v1",
+					"Name":"maxmin13/nginx",
+					"Tag":"v1",
+					"ConfigFiles": [ "global.conf", "nginx.conf" ]
+				},
+				"Container": {
+					"Port":{
+						"HostPort":"80",
+						"ContainerPort":"80"
+					},
+					"Volume": {
+						"HostDir": "/opt/nginx",
+						"ContainerDir": "/var/www/html"
+					},
+					"Deploy": {
+						"Dir": "welcome",
+						"WebappUrl": "http://<address>:<port>/welcome"
+					},
+					"Network": "bridge"
+				}
+			},
+			{
+				"Key":"jenkins-sk",
+				"SourcesDirName":"jenkins",
+			 	"Image": {
+					"BaseName":"jenkins/jenkins",
+					"BaseTag":"lts",
+					"Name":"maxmin13/jenkins",
+					"Tag":"v1",
+					"ConfigFiles": [ "plugins.txt" ]			 	
+			 	},
+			 	"Container": {
+					"Port":{
+						"HostPort":"80",
+						"ContainerPort":"8080"
+					},				
+					"Volume": {
+						"HostDir": "/opt/jenkins",
+						"ContainerDir": "/var/jenkins_home"
+					},
+					"Deploy": {
+						"WebappUrl": "http://<address>:<port>/jenkins"
+					},
+					"Network": "bridge"			 	
+			 	}
+			}
+		]
+	}
+}   
+
+
+

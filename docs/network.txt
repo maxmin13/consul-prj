@@ -11,5 +11,5 @@ ip link ls up   ## only show running interfaces
 docker network ls
 docker network inspect bridge
 
-
+	
 docker exec -it redis ip addr

@@ -6,10 +6,10 @@ set -o nounset
 set +o xtrace
 
 ###
-STEP 'Data center'
+STEP 'Data-center'
 ###
 
-get_datacenter_name
+get_datacenter 'Name' 
 dtc_nm="${__RESULT}"
 get_datacenter_id "${dtc_nm}"
 dtc_id="${__RESULT}"
@@ -21,42 +21,42 @@ else
    echo "* data center ID: ${dtc_id}"
 fi
 
-get_internet_gateway_name
+get_datacenter 'Gateway' 
 gateway_nm="${__RESULT}"
 get_internet_gateway_id "${gateway_nm}"
-internet_gate_id="${__RESULT}"
-internet_gate_attach_status=''
+gateway_id="${__RESULT}"
+gateway_status=''
 
-if [[ -z "${internet_gate_id}" ]]
+if [[ -z "${gateway_id}" ]]
 then
    echo '* WARN: internet gateway not found.'
 else
    get_internet_gateway_attachment_status "${gateway_nm}" "${dtc_id}"
-   internet_gate_attach_status="${__RESULT}"
+   gateway_status="${__RESULT}"
    
-   if [[ -n "${internet_gate_attach_status}" ]]
+   if [[ -n "${gateway_status}" ]]
    then
-      echo "* internet gateway ID: ${internet_gate_id} (${internet_gate_attach_status})."
+      echo "* internet gateway ID: ${gateway_id} (${gateway_status})."
    else
-      echo "* internet gateway ID: ${internet_gate_id}."
+      echo "* internet gateway ID: ${gateway_id}."
    fi
 fi
 
-get_subnet_name
+get_datacenter 'Subnet' 
 subnet_nm="${__RESULT}"
 get_subnet_id "${subnet_nm}"
-main_subnet_id="${__RESULT}"
+subnet_id="${__RESULT}"
 
-if [[ -z "${main_subnet_id}" ]]
+if [[ -z "${subnet_id}" ]]
 then
-   echo '* WARN: main subnet not found.'
+   echo '* WARN: subnet not found.'
 else
-   echo "* main subnet ID: ${main_subnet_id}."
+   echo "* subnet ID: ${subnet_id}."
 fi
 
-get_route_table_name
-route_table_nm="${__RESULT}"
-get_route_table_id "${route_table_nm}"
+get_datacenter 'RouteTable' 
+rtb_nm="${__RESULT}"
+get_route_table_id "${rtb_nm}"
 rtb_id="${__RESULT}"
 
 if [[ -z "${rtb_id}" ]]
@@ -72,32 +72,32 @@ echo
 # Internet Gateway
 #
 
-if [[ -n "${internet_gate_id}" ]]
+if [[ -n "${gateway_id}" ]]
 then
    if [ -n "${dtc_id}" ]
    then     
-      if [ -n "${internet_gate_attach_status}" ]
+      if [ -n "${gateway_status}" ]
       then
-         aws ec2 detach-internet-gateway --internet-gateway-id  "${internet_gate_id}" --vpc-id "${dtc_id}"
+         aws ec2 detach-internet-gateway --internet-gateway-id  "${gateway_id}" --vpc-id "${dtc_id}"
          
          echo 'Internet gateway detached from VPC.'
       fi
    fi
     
-   delete_internet_gateway "${internet_gate_id}"
+   delete_internet_gateway "${gateway_id}"
    
    echo 'Internet gateway deleted.'
 fi
 
 #
-# Main Subnet
+# Subnet
 #	
 
-if [[ -n "${main_subnet_id}" ]]
+if [[ -n "${subnet_id}" ]]
 then
-   delete_subnet "${main_subnet_id}"
+   delete_subnet "${subnet_id}"
    
-   echo 'Main subnet deleted.'
+   echo 'Subnet deleted.'
 fi
 
 #

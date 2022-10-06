@@ -26,7 +26,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box permissions"
 ####
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -42,21 +42,22 @@ else
    return 0
 fi
 
-get_instance_profile_name "${instance_key}"
-instance_profile_nm="${__RESULT}"
-check_instance_profile_exists "${instance_profile_nm}"
-instance_profile_exists="${__RESULT}"
-get_instance_profile_id "${instance_profile_nm}" 
-instance_profile_id="${__RESULT}"
+get_instance "${instance_key}" 'InstanceProfileName'
+profile_nm="${__RESULT}"
+check_instance_profile_exists "${profile_nm}"
+profile_exists="${__RESULT}"
 
-if [[ 'true' == "${instance_profile_exists}" ]]
+if [[ 'true' == "${profile_exists}" ]]
 then
-   echo "* ${instance_key} instance profile ID: ${instance_profile_id}"
+   get_instance_profile_id "${profile_nm}" 
+   profile_id="${__RESULT}"
+
+   echo "* instance profile ID: ${profile_id}"
 else
-   echo "* WARN: ${instance_key} instance profile not found."
+   echo '* WARN: instance profile not found.'
 fi
 
-get_role_name "${instance_key}"
+get_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}"
 check_role_exists "${role_nm}"
 role_exists="${__RESULT}"
@@ -84,56 +85,58 @@ echo
 # service and use them. 
 # see: aws sts get-caller-identity
 
-if [[ 'false' == "${instance_profile_exists}" ]]
+if [[ 'false' == "${profile_exists}" ]]
 then
-   echo "Creating ${instance_key} instance profile ..."
+   echo 'Creating instance profile ...'
 
-   create_instance_profile "${instance_profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   create_instance_profile "${profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   get_instance_profile_id "${profile_nm}" 
+   profile_id="${__RESULT}"
 
-   echo "${instance_key} instance profile created."
+   echo 'Instance profile created.'
 else
-   echo "WARN: ${instance_key} instance profile already created."
+   echo 'Instance profile already created.'
 fi
 
-check_instance_has_instance_profile_associated "${instance_nm}" "${instance_profile_id}"
+check_instance_has_instance_profile_associated "${instance_nm}" "${profile_id}"
 is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   echo "Associating instance profile to ${instance_key} instance ..."
+   echo 'Associating instance profile to the instance ...'
 
-   associate_instance_profile_to_instance_and_wait "${instance_nm}" "${instance_profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
+   associate_instance_profile_to_instance_and_wait "${instance_nm}" "${profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
    
-   echo "Instance profile associated to ${instance_key} instance."
+   echo 'Instance profile associated to the instance.'
 else
-   echo "WARN: instance profile already associated to ${instance_key} instance."
+   echo 'WARN: instance profile already associated to the instance.'
 fi
-
-# Create the trust relationship policy document that grants the EC2 instances the
-# permission to assume the role.
-build_assume_role_trust_policy_document_for_ec2_entities 
-trust_policy_document="${__RESULT}"
 
 check_role_exists "${role_nm}"
 role_exists="${__RESULT}"
 
 if [[ 'false' == "${role_exists}" ]]
 then
-   create_role "${role_nm}" "${instance_key} role" "${trust_policy_document}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   # Create the trust relationship policy document that grants the EC2 instances the
+   # permission to assume the role.
+   build_assume_role_trust_policy_document_for_ec2_entities 
+   policy_document="${__RESULT}"
+
+   create_role "${role_nm}" "${instance_key} role" "${policy_document}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "${instance_key} role created."
+   echo 'Role created.'
 else
-   echo "WARN: ${instance_key} role already created."
+   echo 'Role already created.'
 fi
 
-check_instance_profile_has_role_associated "${instance_profile_nm}" "${role_nm}" 
+check_instance_profile_has_role_associated "${profile_nm}" "${role_nm}" 
 is_role_associated="${__RESULT}"
 
 if [[ 'false' == "${is_role_associated}" ]]
 then
    echo 'Associating role to instance profile ...'
    
-   associate_role_to_instance_profile "${instance_profile_nm}" "${role_nm}"
+   associate_role_to_instance_profile "${profile_nm}" "${role_nm}"
 
    echo 'Role associated to the instance profile.'
 else

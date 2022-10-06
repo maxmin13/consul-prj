@@ -9,36 +9,38 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+logfile_nm='permissions.log'
+
 #
 STEP 'Permissions'
 #
 
-check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/permissions.log
-secretsmanager_persmission_policy_exists="${__RESULT}"
+check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
+policy_exists="${__RESULT}"
 
-if [[ 'false' == "${secretsmanager_persmission_policy_exists}" ]]
+if [[ 'false' == "${policy_exists}" ]]
 then
-   echo '* WARN: SecretsManager permission policy not found.'
+   echo "* WARN: ${SECRETSMANAGER_POLICY_NM} permission policy not found."
 else
-   get_permission_policy_arn "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/permissions.log
-   secretsmanager_persmission_policy_arn="${__RESULT}"
+   get_permission_policy_arn "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   policy_arn="${__RESULT}"
 
-   echo "* SM permission policy ARN: ${secretsmanager_persmission_policy_arn}"
+   echo "* permission policy ARN: ${policy_arn}"
 fi
 
 echo
 
 #
-# SecretsManager permission policy
+# Permission policy
 #
 
-if [[ 'true' == "${secretsmanager_persmission_policy_exists}" ]]
+if [[ 'true' == "${policy_exists}" ]]
 then
-   echo 'Deleting SecretsManager permission policy ...'
+   echo "Deleting ${SECRETSMANAGER_POLICY_NM} permission policy ..."
    
-   delete_permission_policy "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/permissions.log
+   delete_permission_policy "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo 'SecretsManager permission policy deleted.'
+   echo "${SECRETSMANAGER_POLICY_NM} permission policy deleted."
 fi
 
 echo

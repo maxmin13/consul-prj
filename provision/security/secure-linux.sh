@@ -10,9 +10,9 @@ set +o xtrace
 # requires yumupdate.sh.
 # ****************************************************************
 
-script_dir='SEDscript_dirSED'
+SCRIPT_DIR='SEDscript_dirSED'
 
-cd "${script_dir}"
+cd "${SCRIPT_DIR}"
 
 yum -y update 
 echo 'Programs installed.'

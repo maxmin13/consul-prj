@@ -11,7 +11,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_dir='SEDscripts_dirSED'
+remote_dir='SEDremote_dirSED'
 NETWORK_NM='SEDnetwork__nmSED'
 NETWORK_CIDR='SEDnetwork_cidrSED'
 NETWORK_GATE='SEDnetwork__gateSED'

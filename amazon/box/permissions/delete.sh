@@ -26,7 +26,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box permissions"
 ####
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -45,22 +45,22 @@ else
    fi
 fi
 
-get_instance_profile_name "${instance_key}"
-instance_profile_nm="${__RESULT}" 
-check_instance_profile_exists "${instance_profile_nm}"
-instance_profile_exists="${__RESULT}"
+get_instance "${instance_key}" 'InstanceProfileName'
+profile_nm="${__RESULT}"
+check_instance_profile_exists "${profile_nm}"
+profile_exists="${__RESULT}"
 
-if [[ 'true' == "${instance_profile_exists}" ]]
+if [[ 'true' == "${profile_exists}" ]]
 then
-   get_instance_profile_id "${instance_profile_nm}" 
-   instance_profile_id="${__RESULT}"
+   get_instance_profile_id "${profile_nm}" 
+   profile_id="${__RESULT}"
 
-   echo "* ${instance_key} instance profile ID: ${instance_profile_id}"
+   echo "* ${instance_key} instance profile ID: ${profile_id}"
 else
-   echo "* WARN: ${instance_key} instance profile not found."
+   echo '* WARN: instance profile not found.'
 fi
 
-get_role_name "${instance_key}"
+get_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}"
 check_role_exists "${role_nm}"
 role_exists="${__RESULT}"
@@ -83,24 +83,24 @@ echo
 
 if [[ 'true' == "${role_exists}" ]]
 then
-   echo "Deleting ${instance_key} role ..."
+   echo 'Deleting role ...'
    
    delete_role "${role_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "${instance_key} role deleted."
+   echo 'Role deleted.'
 else
-   echo "WARN: ${instance_key} role already deleted."
+   echo 'WARN: role already deleted.'
 fi
 
-if [[ 'true' == "${instance_profile_exists}" ]]
+if [[ 'true' == "${profile_exists}" ]]
 then
-   echo "${instance_key} deleting instance profile ..."
+   echo 'Deleting instance profile ...'
 
-   delete_instance_profile "${instance_profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   delete_instance_profile "${profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
 
-   echo "${instance_key} instance profile deleted."
+   echo 'Instance profile deleted.'
 else
-   echo "WARN: ${instance_key} instance profile already deleted."
+   echo 'WARN: instance profile already deleted.'
 fi
 
 echo  

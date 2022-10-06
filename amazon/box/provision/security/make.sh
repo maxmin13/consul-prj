@@ -29,7 +29,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box provision security."
 ####
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -57,7 +57,7 @@ else
    echo "* ${instance_key} IP address: ${eip}."
 fi
 
-get_security_group_name "${instance_key}"
+get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -93,7 +93,7 @@ else
    echo "WARN: access already granted on 22 tcp 0.0.0.0/0."
 fi
  
-get_application_port 'ssh'
+get_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
   
 check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
@@ -113,14 +113,14 @@ echo 'Provisioning the instance ...'
 # 
 
 # Verify it the SSH port is still 22 or it has changed.
-get_keypair_name "${instance_key}"
+get_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
-get_user_name
+get_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
-get_ssh_port "${private_key_file}" "${eip}" "${user_nm}" '22' "${ssh_port}" 
+find_ssh_port "${private_key_file}" "${eip}" "${user_nm}" '22' "${ssh_port}" 
 current_ssh_port="${__RESULT}"
 
 echo "SSH port ${current_ssh_port}."
@@ -148,7 +148,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${current_ssh_port}" "${user_nm
     "${PROVISION_DIR}"/yumupdate.sh \
     "${temporary_dir}"/sshd_config        
 
-get_user_password
+get_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
 
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
@@ -161,6 +161,7 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
 echo 'Securing the box ...'
                 
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
+# shellcheck disable=SC2015
 ssh_run_remote_command_as_root "${remote_dir}"/secure-linux.sh \
     "${private_key_file}" \
     "${eip}" \

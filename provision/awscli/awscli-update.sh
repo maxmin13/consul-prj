@@ -11,7 +11,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_dir='SEDscripts_dirSED'
+REMOTE_DIR='SEDremote_dirSED'
 	
 echo 'Removing the installed version of awscli ...'
 
@@ -24,7 +24,7 @@ rm -rf /usr/local/aws-cli/
 echo 'awscli removed.'
 echo 'Installing awscli version 2 ...'
 
-cd "${remote_dir}"
+cd "${REMOTE_DIR}"
 mkdir -p awscli 
 
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscli/awscliv2.zip

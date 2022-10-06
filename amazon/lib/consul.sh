@@ -50,16 +50,16 @@ function verify_consul_and_wait()
    local exit_code=0
    
    # shellcheck disable=SC2015
-   consul members && echo "Consul successfully started." || 
+   consul members && echo "Consul is running." || 
    {
-      echo "Waiting for Consul to start" 
+      echo "Waiting for Consul" 
       
       wait 60
    
       # shellcheck disable=SC2015
-      consul members && echo "Consul successfully started." || 
+      consul members && echo "Consul is running." || 
       {
-         echo "WARN: Consul not ready after 1 minute."
+         echo "WARN: Consul not answering after 1 minute."
          
          __RESULT='false'
          

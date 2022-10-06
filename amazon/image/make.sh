@@ -28,9 +28,9 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} image"
 ####
 
-get_target_image_name "${instance_key}"
-target_image_name="${__RESULT}" 
-get_image_id "${target_image_name}"
+get_instance "${instance_key}" 'TargetImageName'
+image_nm="${__RESULT}" 
+get_image_id "${image_nm}"
 image_id="${__RESULT}"
 
 if [[ -n "${image_id}" ]]
@@ -38,7 +38,7 @@ then
    # If the image is in 'terminated' state, it takes about an hour to disappear,
    # to create a new image you have to change the name.
    
-   get_image_state "${target_image_name}"
+   get_image_state "${image_nm}"
    image_st="${__RESULT}"
    
    if [[ -n "${image_st}" ]]
@@ -53,7 +53,7 @@ fi
 # Amazon EC2 powers down the instance before creating the AMI to ensure that everything on the 
 # instance is stopped and in a consistent state during the creation process.
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
@@ -72,7 +72,7 @@ fi
 echo
 
 ## 
-## EC2 instance.
+## Instance.
 ## 
 
 # Stop the instance before creating the image, to ensure data integrity.
@@ -84,12 +84,12 @@ stop_instance "${instance_id}" >> "${LOGS_DIR}"/"${logfile_nm}"
 echo "${instance_key} box stopped." 
 
 ## 
-## EC2 image.
+## Image.
 ## 
 
 echo "Creating ${instance_key} image ..."
 
-create_image "${instance_id}" "${target_image_name}" 'Linux secured Image' >> "${LOGS_DIR}"/"${logfile_nm}"	
+create_image "${instance_id}" "${image_nm}" "${image_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"	
 
 echo
 echo "${instance_key} image created."

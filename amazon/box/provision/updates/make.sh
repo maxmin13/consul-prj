@@ -1,7 +1,5 @@
 #!/usr/bin/bash
 
-# shellcheck disable=SC2153
-
 ####################################################################################
 # Installs Docker, updates awscli to version 2.
 ####################################################################################
@@ -14,7 +12,7 @@ set +o xtrace
 # Enforce parameter
 if [ "$#" -lt 1 ]; then
   echo "USAGE: instance_key"
-  echo "EXAMPLE: admin"
+  echo "EXAMPLE: admin-ik"
   echo "Only provided $# arguments"
   exit 1
 fi
@@ -26,7 +24,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box provision updates."
 ####
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -54,7 +52,7 @@ else
    echo "* ${instance_key} IP address: ${eip}."
 fi
 
-get_security_group_name "${instance_key}"
+get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -78,7 +76,7 @@ mkdir -p "${temporary_dir}"
 ## Firewall
 ##
  
- get_application_port 'ssh'
+get_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
 check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -96,10 +94,10 @@ fi
 echo 'Provisioning the instance ...'
 # 
 
-get_keypair_name "${instance_key}"
+get_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
-get_user_name
+get_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
@@ -109,12 +107,12 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/update
     "${ssh_port}" \
     "${user_nm}"                     
    
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/updates)/g" \
+sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/updates)/g" \
        "${PROVISION_DIR}"/docker/docker-install.sh > "${temporary_dir}"/docker-install.sh    
        
 echo 'docker-install.sh ready.'    
 
-sed -e "s/SEDscripts_dirSED/$(escape "${remote_dir}"/updates)/g" \
+sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/updates)/g" \
        "${PROVISION_DIR}"/awscli/awscli-update.sh > "${temporary_dir}"/awscli-update.sh    
        
 echo 'awscli-update.sh ready.'   
@@ -124,7 +122,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${temporary_dir}"/docker-install.sh \
     "${temporary_dir}"/awscli-update.sh      
 
-get_user_password
+get_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
 
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
@@ -135,7 +133,8 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
     "${user_pwd}" 
     
 echo 'Installing Docker ...'
-                              
+                  
+# shellcheck disable=SC2015                     
 ssh_run_remote_command_as_root "${remote_dir}"/updates/docker-install.sh \
     "${private_key_file}" \
     "${eip}" \
@@ -148,7 +147,8 @@ ssh_run_remote_command_as_root "${remote_dir}"/updates/docker-install.sh \
     }
     
 echo 'Updating awscli ...'
-                              
+   
+# shellcheck disable=SC2015                              
 ssh_run_remote_command_as_root "${remote_dir}"/updates/awscli-update.sh \
     "${private_key_file}" \
     "${eip}" \

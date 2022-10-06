@@ -2,7 +2,7 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/wait 180/wait 120/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/wait 69/wait 60/g' {} \;
 
 
 
@@ -24,4 +24,4 @@ find . -type f -name Dockerfile -exec chmod 644 -- {} +
       
       
       
-find . -type f -name "*.sh" -exec "shellcheck" "--format=gcc" {} \; > docs/schellcheck.txt
+

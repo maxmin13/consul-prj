@@ -21,14 +21,13 @@ if [ "$#" -lt 1 ]; then
 fi
 
 instance_key="${1}"
+logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} box"
 ####
 
-logfile_nm="${instance_key}".log
-
-get_datacenter_name
+get_datacenter 'Name'
 dtc_nm="${__RESULT}"
 get_datacenter_id "${dtc_nm}"
 dtc_id="${__RESULT}"
@@ -41,30 +40,30 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-get_subnet_name
+get_datacenter 'Subnet'
 subnet_nm="${__RESULT}"
 get_subnet_id "${subnet_nm}"
 subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo '* ERROR: main subnet not found.'
+   echo '* ERROR: subnet not found.'
    exit 1
 else
-   echo "* main subnet ID: ${subnet_id}."
+   echo "* subnet ID: ${subnet_id}."
 fi
 
-get_parent_image_name "${instance_key}"
-parent_image_nm="${__RESULT}"
-get_image_id "${parent_image_nm}"
-parent_image_id="${__RESULT}"
+get_instance "${instance_key}" 'ParentImageName'
+image_nm="${__RESULT}"
+get_image_id "${image_nm}"
+image_id="${__RESULT}"
 
-if [[ -z "${parent_image_id}" ]]
+if [[ -z "${image_id}" ]]
 then
-   echo "* ERROR: parent image not found."
+   echo "* ERROR: image not found."
    exit 1
 else
-   echo "* parent image ID: ${parent_image_id}."
+   echo "* image ID: ${image_id}."
 fi
 
 temporary_dir="${TMP_DIR}"/"${instance_key}"
@@ -77,7 +76,7 @@ echo
 # Firewall
 #
 
-get_security_group_name "${instance_key}"
+get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -97,7 +96,7 @@ fi
 # SSH key
 #
 
-get_keypair_name "${instance_key}"
+get_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 check_aws_public_key_exists "${keypair_nm}" 
 key_exists="${__RESULT}"
@@ -121,11 +120,11 @@ get_public_key "${keypair_nm}" "${ACCESS_DIR}"
 public_key="${__RESULT}"
 
 ## Removes the default user, creates the user 'awsadmin' and sets the instance's hostname. 
-get_hostname "${instance_key}"
+get_instance "${instance_key}" 'Hostname'
 hostname="${__RESULT}" 
-get_user_name
+get_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
-get_user_password
+get_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"    
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${user_pwd}")" 
@@ -138,7 +137,7 @@ awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${user_nm}" -v hostna
  
 echo 'cloud_init.yml ready.' 
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
@@ -158,9 +157,9 @@ fi
 
 echo "Creating ${instance_key} box ..."
    
-get_private_ip "${instance_key}"
+get_instance "${instance_key}" 'PrivateIP'
 private_ip="${__RESULT}" 
-get_availability_zone_name
+get_datacenter 'Az'
 az_nm="${__RESULT}"
 
 run_instance \
@@ -169,7 +168,7 @@ run_instance \
     "${sgp_id}" \
     "${subnet_id}" \
     "${private_ip}" \
-    "${parent_image_id}" \
+    "${image_id}" \
     "${temporary_dir}"/cloud_init.yml
        
 get_instance_id "${instance_nm}"
@@ -183,9 +182,9 @@ eip="${__RESULT}"
 
 if [[ -n "${eip}" ]]
 then
-   echo "${instance_key} box public address ${eip}."
+   echo "IP address ${eip}."
 else
-   echo "WARN: ${instance_key} box public address not found."
+   echo 'WARN: IP address not found.'
 fi
 
 # Removing old files

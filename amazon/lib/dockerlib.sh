@@ -92,13 +92,13 @@ if [[ $# -lt 1 ]]
 }
 
 #===============================================================================
-# Checks if a local image exists.
+# Checks if an image exists locally.
 #
 # Globals:
 #  None
 # Arguments:
-# +repository -- the image repository.
-# +tag        -- the image tag.
+# +repository_nm -- the image's repository.
+# +tag           -- the image's tag.
 # Returns:      
 #  true/false in the global __RESULT variable.
 #===============================================================================
@@ -112,11 +112,11 @@ function docker_check_img_exists()
 
    __RESULT='false'
    local exit_code=0
-   local -r repository="${1}"
+   local -r repository_nm="${1}"
    local -r tag="${2}"
    local image_id=''
    
-   image_id="$(docker images -q "${repository}":"${tag}")"
+   image_id="$(docker images -q "${repository_nm}":"${tag}")"
    
    if [[ -n "${image_id}" ]]
    then
@@ -134,11 +134,9 @@ function docker_check_img_exists()
 # Globals:
 #  None
 # Arguments:
-# +repository -- the image repository.
-# +tag        -- the image tag.
-# +docker_ctx -- the directory containing the Docker file.
-# +build_args -- optional, a sequence of var=value pairs separated by white 
-#                space, eg: home=/vagrant/home port=80 user=vagrant  
+# +repository_nm -- the image's repository.
+# +tag           -- the image's tag.
+# +docker_ctx    -- the directory containing the Docker file.
 # Returns:      
 #  None
 #===============================================================================
@@ -151,54 +149,18 @@ function docker_build_img()
    fi
 
    local exit_code=0
-   local cmd=''
+   local -r repository="${1}"
+   local -r tag="${2}"
+   local -r docker_ctx="${3}"
    
-   __get_docker_build_command "${@}"
+   docker build -t="${repository}":"${tag}" "${docker_ctx}"
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
-      echo 'ERROR: building Docker command.'
-      return "${exit_code}"
+      echo 'ERROR: building Docker image.'
    fi
-   
-   cmd="${__RESULT}"
-
-   eval "${cmd}" 
-   exit_code=$?     
             
-   return "${exit_code}"
-}
-
-function __get_docker_build_command()
-{
-   __RESULT=''
-   local exit_code=0
-   local -r repository="${1}"
-   local -r tag="${2}"
-   local -r docker_ctx="${3}"
-   local build_args=''
-   local cmd=''
-   
-   if [[ $# -eq 4 ]]
-   then
-      build_args="${4}"
-   fi
-      
-   cmd="docker build -t=${repository}:${tag} ${docker_ctx}"
-   
-   if [[ -n "${build_args}" ]]
-   then
-      IFS=' ' read -r -a array <<< "${build_args}"
-       
-      for element in "${array[@]}"
-      do
-         cmd+=" --build-arg ${element}"   
-      done       
-   fi
-   
-   __RESULT="${cmd}"
-   
    return "${exit_code}"
 }
 
@@ -244,10 +206,10 @@ function docker_delete_img()
 # Globals:
 #  None
 # Arguments:
-# +repository        -- the source image repository.
-# +tag               -- the source image tag.
-# +target_repository -- the target image repository.
-# +target_tag        -- the target image tag.
+# +repository_nm        -- the source image repository.
+# +tag                  -- the source image tag.
+# +target_repository_nm -- the target image repository.
+# +target_tag           -- the target image tag.
 # Returns:      
 #  none.  
 #===============================================================================
@@ -260,14 +222,14 @@ function docker_tag_image()
    fi
 
    local exit_code=0
-   local -r repository="${1}"
+   local -r repository_nm="${1}"
    local -r tag="${2}"
-   local -r target_repository="${3}"
+   local -r target_repository_nm="${3}"
    local -r target_tag="${4}"
      
    # To push an image to a private registry and not the central Docker registry 
    # you must tag it with the registry hostname and port (if needed).
-   docker tag "${repository}":"${tag}" "${target_repository}":"${target_tag}" 
+   docker tag "${repository_nm}":"${tag}" "${target_repository_nm}":"${target_tag}" 
        
    exit_code=$?    
   
@@ -286,8 +248,8 @@ function docker_tag_image()
 # Globals:
 #  None
 # Arguments:
-# +repository -- the image repository.
-# +tag        -- the image tag.
+# +repository_nm -- the image's repository.
+# +tag           -- the image's tag.
 # Returns:      
 #  none.  
 #===============================================================================
@@ -300,10 +262,10 @@ function docker_push_image()
    fi
 
    local exit_code=0
-   local -r repository="${1}"
+   local -r repository_nm="${1}"
    local -r tag="${2}"
 
-   docker push "${repository}":"${tag}"   
+   docker push "${repository_nm}":"${tag}"   
        
    exit_code=$?    
   
@@ -321,8 +283,8 @@ function docker_push_image()
 # Globals:
 #  None
 # Arguments:
-# +repository -- the image repository.
-# +tag        -- the image tag.
+# +repository_nm -- the image's repository.
+# +tag           -- the image's tag.
 # Returns:      
 #  none.  
 #===============================================================================
@@ -335,10 +297,10 @@ function docker_pull_image()
    fi
 
    local exit_code=0
-   local -r repository="${1}"
+   local -r repository_nm="${1}"
    local -r tag="${2}"
    
-   docker pull "${repository}":"${tag}"   
+   docker pull "${repository_nm}":"${tag}"   
        
    exit_code=$?    
   
@@ -349,6 +311,263 @@ function docker_pull_image()
             
    return "${exit_code}"
 }
+
+#===============================================================================
+# Checks if a contaner exists.
+#
+# Globals:
+#  None
+# Arguments:
+# +container_nm -- the container name.
+# Returns:      
+#  true/false in the __RESULT variable.
+#===============================================================================
+function docker_check_container_exists()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT='false'
+   local exit_code=0
+   local -r container_nm="${1}"
+   local container_id=''
+   
+   container_id="$(docker container ls -a --filter "name=${container_nm}" --format "{{.ID}}")"
+
+   if [[ -n "${container_id}" ]]
+   then
+      __RESULT='true'
+   else
+      __RESULT='false'
+   fi 
+
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Stops a container. 
+# 
+# Globals:
+#  None
+# Arguments:
+# +container_nm -- the container name.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_stop_container()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r container_nm="${1}"
+
+   docker stop "${container_nm}"       
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: stopping container.'
+   fi     
+            
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Deletes a container. 
+# 
+# Globals:
+#  None
+# Arguments:
+# +container_nm -- the container name.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_delete_container()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r container_nm="${1}"
+
+   docker rm "${container_nm}"     
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting container.'
+   fi     
+            
+   return "${exit_code}"
+}  
+
+#===============================================================================
+# Runs a container.
+# The function gets the values from the file service_consts.json.
+#
+# Globals:
+#  None
+# Arguments:
+# +service_key  -- key into the file service_consts.json.
+# +container_nm -- name assingned to the running container.
+# +deploy_dir   -- name of the directory where the container's application is 
+#                  deployed.
+# Returns:      
+#  None
+#===============================================================================
+function docker_run_container()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   local -r service_key="${1}"
+   local -r container_nm="${2}"
+   local cmd=''
+   
+   cmd="docker run -d --name ${container_nm}"
+   
+   # get the container network.
+   get_service_container "${service_key}" 'Network'
+   local network_nm="${__RESULT}"
+   
+   if [[ -n "${network_nm}" ]]
+   then
+      cmd+=" --net ${network_nm}"   
+   fi
+   
+   # get the container volume.
+   get_service_volume "${service_key}" 'HostDir'
+   local host_dir="${__RESULT}"
+   get_service_volume "${service_key}" 'ContainerDir'
+   local container_dir="${__RESULT}"  
+      
+   if [[ -n "${host_dir}" && -n "${container_dir}" ]]
+   then
+      cmd+=" -v ${host_dir}:${container_dir}:ro"  
+   fi
+   
+   # get the container port.
+   get_service_port "${service_key}" 'HostPort'
+   local host_port="${__RESULT}"
+   get_service_port "${service_key}" 'ContainerPort'
+   local container_port="${__RESULT}"
+   
+   if [[ -n "${host_port}" && -n "${container_port}" ]]
+   then
+      cmd+=" -p ${host_port}:${container_port}"
+   fi
+   
+   # get image name and tag
+   get_service_image "${service_key}" 'Name'
+   local image_nm="${__RESULT}"
+   get_datacenter 'Region'
+   region="${__RESULT}"
+   ecr_get_registry_uri "${region}"
+   registry_uri="${__RESULT}"  
+   ecr_get_repostory_uri "${image_nm}" "${registry_uri}"
+   repository_uri="${__RESULT}"
+   get_service_image "${service_key}" 'Tag'
+   local image_tag="${__RESULT}"
+   
+   cmd+=" ${repository_uri}:${image_tag}" 
+   
+   get_service_deploy "${service_key}" 'Dir'
+   deploy_dir="${__RESULT}"
+   
+   # get the command to run in the container when it starts.
+   get_service_command "${service_key}" "${deploy_dir}"
+   local command="${__RESULT}"
+   
+   if [[ -n "${command}" ]]
+   then
+      cmd+=" ${command}"   
+   fi
+   
+   echo "Running:"
+   echo "${cmd}"
+   
+   eval "${cmd}"
+            
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Runs hello world container.
+# 
+# Globals:
+#  none
+# Arguments:
+#  none
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_run_helloworld_container()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local -r container_nm="${1}"
+   
+   docker run --name "${container_nm}" -i -t hello-world
+}     
+
+#===============================================================================
+# Runs a command in a running container.
+# 
+# Globals:
+#  None
+# Arguments:
+#  +container_nm -- the container name.
+#  +command      -- the command to run in the container.
+#  +options      -- the command's options.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_exec()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local exit_code=0
+   local -r container_nm="${1}"
+   local -r command="${2}"
+   local options=''
+   
+   if [[ 3 -eq "${#}" ]]
+   then
+      options="${3}"
+   fi
+
+   docker exec "${container_nm}" "${command}" "${options}" 
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: running Docker command.'
+   fi     
+            
+   return "${exit_code}"
+} 
 
 #===============================================================================
 # Creates a Docker network and assign a network segment to it.  
@@ -472,360 +691,6 @@ function docker_network_exists()
             
    return "${exit_code}"
 }
-
-#===============================================================================
-# Checks if a contaner exists.
-#
-# Globals:
-#  None
-# Arguments:
-# +container_nm -- the container name.
-# Returns:      
-#  true/false in the __RESULT variable.
-#===============================================================================
-function docker_check_container_exists()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT='false'
-   local exit_code=0
-   local -r container_nm="${1}"
-   local container_id=''
-   
-   container_id="$(docker container ls -a --filter "name=${container_nm}" --format "{{.ID}}")"
-
-   if [[ -n "${container_id}" ]]
-   then
-      __RESULT='true'
-   else
-      __RESULT='false'
-   fi 
-
-   return "${exit_code}"
-}
-
-#===============================================================================
-# Stops a container. 
-# 
-# Globals:
-#  None
-# Arguments:
-# +container_nm -- the container name.
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_stop_container()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   local exit_code=0
-   local -r container_nm="${1}"
-
-   docker stop "${container_nm}"       
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: stopping container.'
-   fi     
-            
-   return "${exit_code}"
-}
-
-#===============================================================================
-# Deletes a container. 
-# 
-# Globals:
-#  None
-# Arguments:
-# +container_nm -- the container name.
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_delete_container()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   local exit_code=0
-   local -r container_nm="${1}"
-
-   docker rm "${container_nm}"     
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: deleting container.'
-   fi     
-            
-   return "${exit_code}"
-}  
-
-#===============================================================================
-# Runs a Jenkins container exposing port 80. The Jenkins status is persisted on 
-# host by mounting a volume in the container. 
-# docker.sock it’s the Unix socket the Docker daemon listens on by default and
-# it's mounted in the container.
-# 
-# Globals:
-#  None
-# Arguments:
-# +container_nm    -- the container name.
-# +img_repository  -- image name.
-# +img_tag         -- image tag.
-# +jenkins_port    -- website HTTP port.
-# +host_volume_dir -- Jenkins home volume mounted to the container.
-#
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_run_jenkins_container()
-{
-   if [[ $# -lt 5 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-  
-   local exit_code=0
-   local -r container_nm="${1}"
-   local -r img_repository="${2}"
-   local -r img_tag="${3}" 
-   local -r jenkins_port="${4}"  
-   local -r host_volume_dir="${5}"
-
-   docker run -d --name "${container_nm}" \
-              -v "${host_volume_dir}":/var/jenkins_home \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -p "${jenkins_port}":8080 \
-              -p 5000:5000 \
-              "${img_repository}":"${img_tag}"     
-               
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: running Jenkins container.'
-   fi     
-            
-   return "${exit_code}"
-}  
-  
-#===============================================================================
-# Runs a Nginx container exposing port 80. 
-# The website directory is a host volume mounted in the container.
-# 
-# Globals:
-#  None
-# Arguments:
-# +container_nm         -- the container name.
-# +img_repository       -- image name.
-# +img_tag              -- image tag.
-# +port                 -- website HTTP port.
-# +host_volume_dir      -- website volume mounted to the container.
-# +container_volume_dir -- website directory in the container.
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_run_nginx_container()
-{
-   if [[ $# -lt 6 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   local exit_code=0
-   local -r container_nm="${1}"
-   local -r img_repository="${2}"
-   local -r img_tag="${3}"   
-   local -r port="${4}"
-   local -r host_volume_dir="${5}"   
-   local -r container_volume_dir="${6}" 
-
-   docker run -d --name "${container_nm}" \
-              -v "${host_volume_dir}":"${container_volume_dir}":ro \
-              -p "${port}":"${port}" \
-              "${img_repository}":"${img_tag}"       
-              
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: running Nginx container.'
-   fi     
-            
-   return "${exit_code}"
-}    
-  
-#===============================================================================
-# Runs a Redis database container exposing port 6379. 
-# 
-# Globals:
-#  None
-# Arguments:
-# +container_nm   -- the container name.
-# +img_repository -- Nginx image name.
-# +img_tag        -- Nginx image tag.
-# +port           -- database port.
-# +network_nm     -- container network name.
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_run_redis_container()
-{
-   if [[ $# -lt 5 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   local exit_code=0
-   local -r container_nm="${1}"
-   local -r img_repository="${2}"
-   local -r img_tag="${3}"   
-   local -r port="${4}"
-   local -r network_nm="${5}"   
-
-   docker run -d --name "${container_nm}" \
-              -p "${port}":"${port}" \
-              --net "${network_nm}" \
-              "${img_repository}":"${img_tag}"  
-                   
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: running Redis container.'
-   fi     
-            
-   return "${exit_code}"
-}   
-  
-#===============================================================================
-# Runs a Sinatra container exposing port 4567. 
-# The Sinatra sources and website are in a host volume mounted in the container.
-# 
-# Globals:
-#  None
-# Arguments:
-# +container_nm         -- the container name.
-# +img_repository       -- image name.
-# +img_tag              -- image tag.
-# +port                 -- website HTTP port.
-# +host_volume_dir      -- Sinatra volume mounted in the container.
-# +container_volume_dir -- sinatra directory in the container.
-# +network_nm           -- container network name.
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_run_sinatra_container()
-{
-   if [[ $# -lt 7 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   local exit_code=0
-   local -r container_nm="${1}"
-   local -r img_repository="${2}"
-   local -r img_tag="${3}"   
-   local -r port="${4}"
-   local -r host_volume_dir="${5}"   
-   local -r container_volume_dir="${6}" 
-   local -r network_nm="${7}"   
- 
-   docker run -d --name "${container_nm}" \
-              -v "${host_volume_dir}":"${container_volume_dir}":ro \
-              -p "${port}":"${port}" \
-              "${img_repository}":"${img_tag}" \
-              --net "${network_nm}"                
-                  
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: running Sinatra container.'
-   fi     
-            
-   return "${exit_code}"
-} 
-
-#===============================================================================
-# Runs hello world container.
-# 
-# Globals:
-#  none
-# Arguments:
-#  none
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_run_helloworld_container()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-   
-   local -r container_nm="${1}"
-   
-   docker run --name "${container_nm}" -i -t hello-world
-}     
-
-#===============================================================================
-# Runs a command in a running container.
-# 
-# Globals:
-#  None
-# Arguments:
-#  +container_nm -- the container name.
-#  +command      -- the command to run in the container.
-#  +options      -- the command's options.
-# Returns:      
-#  none.  
-#===============================================================================
-function docker_exec()
-{
-   if [[ $# -lt 2 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-   
-   local exit_code=0
-   local -r container_nm="${1}"
-   local -r command="${2}"
-   local options=''
-   
-   if [[ 3 -eq "${#}" ]]
-   then
-      options="${3}"
-   fi
-
-   docker exec "${container_nm}" "${command}" "${options}" 
-   exit_code=$?    
-  
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: running Docker command.'
-   fi     
-            
-   return "${exit_code}"
-} 
 
 #===============================================================================
 # Returns 'active' if the Docker node is part of a swarm, 'inactive' if not.  

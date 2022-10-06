@@ -193,6 +193,7 @@ function sm_check_secret_exists()
    else
       echo 'WARN: secret not found.'
       
+      # shellcheck disable=SC2034
       __RESULT='false'
       
       exit_code=0

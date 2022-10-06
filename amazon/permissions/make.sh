@@ -12,23 +12,25 @@ set +o xtrace
 # they make calls to other AWS resources.
 #################################################################################
 
+logfile_nm='permissions.log'
+
 #
 STEP 'Permissions'
 #
 
-check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/permissions.log
-secretsmanager_persmission_policy_exists="${__RESULT}"
+check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
+policy_exists="${__RESULT}"
 
-if [[ 'false' == "${secretsmanager_persmission_policy_exists}" ]]
+if [[ 'false' == "${policy_exists}" ]]
 then
    # Create permission policy that allows entities to create, list, retrieve a secret from SecretsManager.
    build_secretsmanager_permission_policy_document 
-   secretsmanager_permission_policy_document="${__RESULT}"
+   policy_document="${__RESULT}"
 
-   create_permission_policy "${SECRETSMANAGER_POLICY_NM}" "${secretsmanager_permission_policy_document}" >> "${LOGS_DIR}"/permissions.log
+   create_permission_policy "${SECRETSMANAGER_POLICY_NM}" "${policy_document}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo 'SecretsManager permission policy created.'
+   echo "${SECRETSMANAGER_POLICY_NM} permission policy created."
 else
-   echo 'WARN: SecretsManager permission policy already created.'
+   echo "WARN: ${SECRETSMANAGER_POLICY_NM} permission policy already created."
 fi
 

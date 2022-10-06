@@ -1,7 +1,11 @@
 
-if the check returns error when not found:
-do the check  as:
-ecr_check_repository_exists ----->>>> catch the error thrown when not found and return 0 and set __RESULT=false
+
+
+2))))))) 
+
+CREATE the shared and admin jumpbox locally, the the other box run the script from the jumpbox
+
+
 
 
 

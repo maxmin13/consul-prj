@@ -7,24 +7,32 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-remote_dir='SEDscripts_dirSED'
-DTC_REGION='SEDdtc_regionSED'
-CONSUL_SERVICE_FILE_NM='SEDconsul_service_file_nmSED'
-CONSUL_SECRET_NM='SEDconsul_secret_nmSED'
-CONSUL_IS_SERVER='SEDconsul_is_serverSED'
-CONSUL_CONFIG_DIR="SEDconsul_config_dirSED"
+# shellcheck disable=SC2034
+LIBRARY_DIR='SEDlibrary_dirSED'	
+INSTANCE_KEY='SEDinstance_keySED'
 
-source "${remote_dir}"/general_utils.sh
-source "${remote_dir}"/secretsmanager.sh
+source "${LIBRARY_DIR}"/general_utils.sh
+source "${LIBRARY_DIR}"/service_consts_utils.sh
+source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
+source "${LIBRARY_DIR}"/secretsmanager.sh
+source "${LIBRARY_DIR}"/consul.sh
+
+yum install -y jq
 
 ####
 echo 'Removing Consul ...'
 ####
 
-sm_check_secret_exists "${CONSUL_SECRET_NM}" "${DTC_REGION}"
+get_datacenter 'Region'
+region="${__RESULT}"
+get_application "${INSTANCE_KEY}" 'consul' 'SecretName'
+secret_nm="${__RESULT}"
+sm_check_secret_exists "${secret_nm}" "${region}"
 secret_exists="${__RESULT}"
+get_application "${INSTANCE_KEY}" 'consul' 'Mode'
+consul_mode="${__RESULT}"
 
-if [[ 'true' == "${CONSUL_IS_SERVER}" ]]
+if [[ 'server' == "${consul_mode}" ]]
 then
    echo 'Server mode.' 
    
@@ -34,7 +42,7 @@ then
    else
       echo 'Removing Consul key ...'
    
-      sm_delete_secret "${CONSUL_SECRET_NM}" "${DTC_REGION}"
+      sm_delete_secret "${secret_nm}" "${region}"
       
       echo 'Consul key removed.'
    fi
@@ -43,9 +51,11 @@ else
 fi
 
 yum -y remove consul jq 
-rm -f /etc/systemd/system/"${CONSUL_SERVICE_FILE_NM}"
-rm -rf "${CONSUL_CONFIG_DIR}"
+rm -f /etc/systemd/system/consul.service
+rm -rf /etc/consul.d
+
 systemctl daemon-reload 
+yum remove -y jq
 
 echo 'Consul removed.'
 echo

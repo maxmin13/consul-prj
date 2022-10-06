@@ -26,7 +26,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box"
 ####
 
-get_instance_name "${instance_key}"
+get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
@@ -41,7 +41,7 @@ else
    echo "* ${instance_key} box ID: ${instance_id} (${instance_st})."
 fi
 
-get_security_group_name "${instance_key}"
+get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -92,11 +92,11 @@ fi
   
 if [[ -n "${sgp_id}" ]]
 then  
-   echo "Deleting ${instance_key} security group ..."
+   echo 'Deleting security group ...'
 
    delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
    
-   echo "${instance_key} security group deleted."
+   echo 'Security group deleted.'
 fi
 
 #
@@ -113,14 +113,14 @@ then
       release_public_ip_address "${allocation_id}"
    fi
    
-   echo "${instance_key} IP Address released from the account." 
+   echo 'IP Address released from the account.'
 fi
 
 #
 # SSH key
 #
 
-get_keypair_name "${instance_key}"
+get_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 check_aws_public_key_exists "${keypair_nm}" 
 key_exists="${__RESULT}"
@@ -129,7 +129,7 @@ if [[ 'true' == "${key_exists}" ]]
 then
    delete_aws_keypair "${keypair_nm}" "${ACCESS_DIR}"
    
-   echo "${instance_key} SSH key deleted."
+   echo 'SSH key deleted.'
 fi
 
 echo

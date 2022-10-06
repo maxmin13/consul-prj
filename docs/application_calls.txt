@@ -1,0 +1,23 @@
+
+Consul:
+
+http://52.212.247.125:8500/ui
+
+
+Ngix:
+
+http://34.244.25.72:4567/info
+
+
+Sinatra:
+
+curl -i -H 'Accept: application/json' http://34.244.25.72:4567/info
+
+curl -i -H 'Accept: application/json' -d 'name=Foo&status=Bar' http://34.244.25.72:4567/json
+
+curl -i -H 'Accept: application/json' http://34.244.25.72:4567/json
+
+
+Jenkins:
+
+
