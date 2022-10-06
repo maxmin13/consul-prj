@@ -3,7 +3,7 @@
 		"Services": [ 	
 			{
 			        "Key":"centos-sk",
-			        "SourcesDirName":"centos",
+			        "SourcesDir":"centos",
 			        "Image": {
 					"BaseName":"centos",
 					"BaseTag":"8.4.2105",
@@ -13,7 +13,7 @@
 			},
 			{
 			        "Key":"ruby-sk",
-			        "SourcesDirName":"ruby",
+			        "SourcesDir":"ruby",
 			        "Image": {
 					"BaseName":"maxmin13/centos8",
 					"BaseTag":"v1",
@@ -23,7 +23,7 @@
 			},
 			{
 				"Key":"redis-sk",
-				"SourcesDirName":"redis",
+				"SourcesDir":"redis",
 				"Image": {
 					"BaseName":"maxmin13/centos8",
 					"BaseTag":"v1",
@@ -36,12 +36,16 @@
 						"HostPort":"6379",
 						"ContainerPort":"6379"
 					},
-					"Network": "bridge"
+					"Network": "bridge",
+					"Deploy": {
+						"Dir":"webapp",
+						"Url":"redis-cli -h <address> -p <port>"
+					},
 				}
 			},
 			{
 				"Key":"sinatra-sk",
-				"SourcesDirName":"sinatra",
+				"SourcesDir":"sinatra",
 				"Image": {
 					"BaseName":"maxmin13/ruby",
 					"BaseTag":"v1",
@@ -59,7 +63,7 @@
 					},
 					"Deploy": {
 						"Dir":"webapp",
-						"WebappUrl":"http://<address>:<port>/info"
+						"Url":"http://<address>:<port>/info"
 					},
 					"Network": "bridge",
 					"Cmd":"/opt/sinatra/<deploy_dir>/bin/run"
@@ -67,7 +71,7 @@
 			},
 			{
 				"Key":"nginx-sk",
-				"SourcesDirName":"nginx",
+				"SourcesDir":"nginx",
 				"Image": {
 					
 					"BaseName":"maxmin13/centos8",
@@ -87,14 +91,14 @@
 					},
 					"Deploy": {
 						"Dir": "welcome",
-						"WebappUrl": "http://<address>:<port>/welcome"
+						"Url": "http://<address>:<port>/welcome"
 					},
 					"Network": "bridge"
 				}
 			},
 			{
 				"Key":"jenkins-sk",
-				"SourcesDirName":"jenkins",
+				"SourcesDir":"jenkins",
 			 	"Image": {
 					"BaseName":"jenkins/jenkins",
 					"BaseTag":"lts",
@@ -112,7 +116,7 @@
 						"ContainerDir": "/var/jenkins_home"
 					},
 					"Deploy": {
-						"WebappUrl": "http://<address>:<port>/jenkins"
+						"Url": "http://<address>:<port>/jenkins"
 					},
 					"Network": "bridge"			 	
 			 	}

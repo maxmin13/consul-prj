@@ -25,7 +25,7 @@ set +o xtrace
 # Returns:      
 #  the data center identifier in the global __RESULT variable.  
 #===============================================================================
-function get_datacenter_id()
+function ec2_get_datacenter_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -59,7 +59,7 @@ function get_datacenter_id()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_datacenter()
+function ec2_create_datacenter()
 {
    if [[ $# -lt 2 ]]
    then
@@ -107,7 +107,7 @@ function create_datacenter()
 # Returns:      
 #  None.  
 #===============================================================================
-function delete_datacenter()
+function ec2_delete_datacenter()
 {
    if [[ $# -lt 1 ]]
    then
@@ -149,7 +149,7 @@ function delete_datacenter()
 #  A JSON string containing the list of subnet identifiers in a data center in
 #  the global __RESULT variable.
 #===============================================================================
-function get_subnet_ids()
+function ec2_get_subnet_ids()
 {
    if [[ $# -lt 1 ]]
    then
@@ -181,7 +181,7 @@ function get_subnet_ids()
 # Returns:      
 #  the subnet identifier in the global __RESULT variable.
 #===============================================================================
-function get_subnet_id()
+function ec2_get_subnet_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -220,7 +220,7 @@ function get_subnet_id()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_subnet()
+function ec2_create_subnet()
 {
    if [[ $# -lt 5 ]]
    then
@@ -261,7 +261,7 @@ function create_subnet()
       return "${exit_code}"
    fi 
    
-   get_subnet_id "${subnet_nm}"
+   ec2_get_subnet_id "${subnet_nm}"
    subnet_id="${__RESULT}"
    
    exit_code=$?
@@ -295,7 +295,7 @@ function create_subnet()
 # Returns:      
 #  None.  
 #===============================================================================
-function delete_subnet()
+function ec2_delete_subnet()
 {
    if [[ $# -lt 1 ]]
    then
@@ -326,7 +326,7 @@ function delete_subnet()
 # Returns:      
 #  the internet gateway identifier in the __RESULT global variable.  
 #===============================================================================
-function get_internet_gateway_id()
+function ec2_get_internet_gateway_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -363,7 +363,7 @@ function get_internet_gateway_id()
 # Returns:      
 #  the attachment status in the __RESULT global variable.  
 #===============================================================================
-function get_internet_gateway_attachment_status()
+function ec2_get_internet_gateway_attachment_status()
 {
    if [[ $# -lt 2 ]]
    then
@@ -399,7 +399,7 @@ function get_internet_gateway_attachment_status()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_internet_gateway()
+function ec2_create_internet_gateway()
 {
    if [[ $# -lt 1 ]]
    then
@@ -433,7 +433,7 @@ function create_internet_gateway()
 # Returns:      
 #  None  
 #===============================================================================
-function delete_internet_gateway()
+function ec2_delete_internet_gateway()
 {
    if [[ $# -lt 1 ]]
    then
@@ -466,7 +466,7 @@ function delete_internet_gateway()
 # Returns:      
 #  none.
 #===============================================================================
-function attach_internet_gateway()
+function ec2_attach_internet_gateway()
 {
    if [[ $# -lt 2 ]]
    then
@@ -499,7 +499,7 @@ function attach_internet_gateway()
 # Returns:      
 #  the route table identifier in the __RESULT global variable.  
 #===============================================================================
-function get_route_table_id()
+function ec2_get_route_table_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -534,7 +534,7 @@ function get_route_table_id()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_route_table()
+function ec2_create_route_table()
 {
    if [[ $# -lt 2 ]]
    then
@@ -571,7 +571,7 @@ function create_route_table()
 # Returns:      
 #  none.  
 #===============================================================================
-function delete_route_table()
+function ec2_delete_route_table()
 {
    if [[ $# -lt 1 ]]
    then
@@ -606,7 +606,7 @@ function delete_route_table()
 # Returns:      
 #  none.
 #===============================================================================
-function set_route()
+function ec2_set_route()
 {
    if [[ $# -lt 3 ]]
    then
@@ -646,7 +646,7 @@ function set_route()
 # Returns:      
 #  none.
 #===============================================================================
-function check_has_route()
+function ec2_check_has_route()
 {
    if [[ $# -lt 3 ]]
    then
@@ -688,7 +688,7 @@ function check_has_route()
 # Returns:      
 #  the security group identifier int global __RESULT variable.  
 #===============================================================================
-function get_security_group_id()
+function ec2_get_security_group_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -729,7 +729,7 @@ function get_security_group_id()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_security_group()
+function ec2_create_security_group()
 {
    if [[ $# -lt 3 ]]
    then
@@ -768,7 +768,7 @@ function create_security_group()
 # Returns:      
 #  None    
 #===============================================================================
-function delete_security_group()
+function ec2_delete_security_group()
 {
    if [[ $# -lt 1 ]]
    then
@@ -800,7 +800,7 @@ function delete_security_group()
 # Returns:      
 #  None    
 #===============================================================================
-function delete_security_group_and_wait()
+function ec2_delete_security_group_and_wait()
 {
    if [[ $# -lt 1 ]]
    then
@@ -812,13 +812,13 @@ function delete_security_group_and_wait()
    local -r sgp_id="${1}"
       
    # shellcheck disable=SC2015
-   delete_security_group "${sgp_id}" || 
+   ec2_delete_security_group "${sgp_id}" || 
    {
       wait 60
-      delete_security_group "${sgp_id}" || 
+      ec2_delete_security_group "${sgp_id}" || 
       {
          wait 60
-         delete_security_group "${sgp_id}" || 
+         ec2_delete_security_group "${sgp_id}" || 
          {
             echo 'ERROR: deleting security group.'
             exit_code=1
@@ -842,7 +842,7 @@ function delete_security_group_and_wait()
 # Returns:      
 #  none.
 #===============================================================================
-function allow_access_from_cidr()
+function ec2_allow_access_from_cidr()
 {
    if [[ $# -lt 4 ]]
    then
@@ -887,7 +887,7 @@ function allow_access_from_cidr()
 # Returns:      
 #  None
 #===============================================================================
-function allow_access_from_security_group()
+function ec2_allow_access_from_security_group()
 {
    if [[ $# -lt 4 ]]
    then
@@ -931,7 +931,7 @@ function allow_access_from_security_group()
 # Returns:      
 #  true/false in the __RESULT variable.
 #===============================================================================
-function check_access_is_granted()
+function ec2_check_access_is_granted()
 {
    if [[ $# -lt 4 ]]
    then
@@ -1002,7 +1002,7 @@ function check_access_is_granted()
 # Returns:      
 #  none.
 #===============================================================================
-function revoke_access_from_security_group()
+function ec2_revoke_access_from_security_group()
 {
    if [[ $# -lt 4 ]]
    then
@@ -1045,7 +1045,7 @@ function revoke_access_from_security_group()
 # Returns:      
 #  none.
 #===============================================================================
-function revoke_access_from_cidr()
+function ec2_revoke_access_from_cidr()
 {
    if [[ $# -lt 4 ]]
    then
@@ -1085,7 +1085,7 @@ function revoke_access_from_cidr()
 # Returns:      
 #  the status of the instance in the global __RESULT variable.  
 #===============================================================================
-function get_instance_state()
+function ec2_get_instance_state()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1119,7 +1119,7 @@ function get_instance_state()
 # Returns:      
 #  true/false in the  __RESULT variable.  
 #===============================================================================
-function instance_is_running()
+function ec2_instance_is_running()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1132,7 +1132,7 @@ function instance_is_running()
    local -r instance_nm="${1}"
    local instance_st=''
   
-   get_instance_state "${instance_nm}"
+   ec2_get_instance_state "${instance_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1162,7 +1162,7 @@ function instance_is_running()
 # Returns:      
 #  the instance public address in the __RESULT global variable.
 #===============================================================================
-function get_public_ip_address_associated_with_instance()
+function ec2_get_public_ip_address_associated_with_instance()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1196,7 +1196,7 @@ function get_public_ip_address_associated_with_instance()
 # Returns:      
 #  the instance private address in the __RESULT global variable.
 #===============================================================================
-function get_private_ip_address_associated_with_instance()
+function ec2_get_private_ip_address_associated_with_instance()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1230,7 +1230,7 @@ function get_private_ip_address_associated_with_instance()
 # Returns:      
 #  the instance identifier in the global __RESULT variable. 
 #===============================================================================
-function get_instance_id()
+function ec2_get_instance_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1269,7 +1269,7 @@ function get_instance_id()
 # Returns:      
 #  none.   
 #===============================================================================
-function run_instance()
+function ec2_run_instance()
 {
    if [[ $# -lt 7 ]]
    then
@@ -1322,7 +1322,7 @@ function run_instance()
 # Returns:      
 #  None
 #===============================================================================
-function stop_instance()
+function ec2_stop_instance()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1369,7 +1369,7 @@ function stop_instance()
 # Returns:      
 #  None
 #===============================================================================
-function delete_instance()
+function ec2_delete_instance()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1421,7 +1421,7 @@ function delete_instance()
 # Returns:      
 #  none.  
 #===============================================================================
-function associate_instance_profile_to_instance()
+function ec2_associate_instance_profile_to_instance()
 {
    if [[ $# -lt 2 ]]
    then
@@ -1435,7 +1435,7 @@ function associate_instance_profile_to_instance()
    local -r profile_nm="${2}"
    local instance_id=''
    
-   get_instance_id "${instance_nm}"
+   ec2_get_instance_id "${instance_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1477,7 +1477,7 @@ function associate_instance_profile_to_instance()
 # Returns:      
 #  none.  
 #===============================================================================
-function associate_instance_profile_to_instance_and_wait()
+function ec2_associate_instance_profile_to_instance_and_wait()
 {
    if [[ $# -lt 2 ]]
    then
@@ -1490,10 +1490,10 @@ function associate_instance_profile_to_instance_and_wait()
    local -r instance_nm="${1}"
    local -r profile_nm="${2}"
    
-   associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
+   ec2_associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
    {
       wait 30
-      associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
+      ec2_associate_instance_profile_to_instance "${instance_nm}" "${profile_nm}" ||
       {
          echo 'ERROR: associating instance profile to the instance.'
          exit 1
@@ -1514,7 +1514,7 @@ function associate_instance_profile_to_instance_and_wait()
 # Returns:      
 #  none.  
 #===============================================================================
-function disassociate_instance_profile_from_instance()
+function ec2_disassociate_instance_profile_from_instance()
 {
    if [[ $# -lt 2 ]]
    then
@@ -1528,7 +1528,7 @@ function disassociate_instance_profile_from_instance()
    local -r profile_id="${2}"
    local association_id=''
    
-   __get_association_id "${instance_nm}" "${profile_id}"
+   __ec2_get_association_id "${instance_nm}" "${profile_id}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1569,7 +1569,7 @@ function disassociate_instance_profile_from_instance()
 # Returns:      
 #  the association ID in the __RESULT global variable.  
 #===============================================================================
-function __get_association_id()
+function __ec2_get_association_id()
 {
    if [[ $# -lt 2 ]]
    then
@@ -1584,7 +1584,7 @@ function __get_association_id()
    local instance_id=''
    local association_id=''
    
-   get_instance_id "${instance_nm}"
+   ec2_get_instance_id "${instance_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1622,7 +1622,7 @@ function __get_association_id()
 # Returns:      
 #  true/false value in the __RESULT global variable.  
 #===============================================================================
-function check_instance_has_instance_profile_associated()
+function ec2_check_instance_has_instance_profile_associated()
 {
    if [[ $# -lt 2 ]]
    then
@@ -1637,7 +1637,7 @@ function check_instance_has_instance_profile_associated()
    local instance_id=''
    local association_id=''
   
-   __get_association_id "${instance_nm}" "${profile_id}"
+   __ec2_get_association_id "${instance_nm}" "${profile_id}"
    exit_code=$?
 
    if [[ 0 -ne "${exit_code}" ]]
@@ -1670,7 +1670,7 @@ function check_instance_has_instance_profile_associated()
 # Returns:      
 #  none.    
 #===============================================================================
-function create_image()
+function ec2_create_image()
 {
    if [[ $# -lt 3 ]]
    then
@@ -1697,7 +1697,7 @@ function create_image()
       return "${exit_code}"
    fi
    
-   get_image_id "${img_nm}"
+   ec2_get_image_id "${img_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1728,7 +1728,7 @@ function create_image()
 # Returns:      
 #  the Image identifier int the global __RESULT variable.
 #===============================================================================
-function get_image_id()
+function ec2_get_image_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1760,7 +1760,7 @@ function get_image_id()
 # Returns:      
 #  the Image state in the global __RESULT variable.
 #===============================================================================
-function get_image_state()
+function ec2_get_image_state()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1794,7 +1794,7 @@ function get_image_state()
 # Returns:      
 #  the list of Image Snapshot identifiers in the global __RESULT variable.
 #===============================================================================
-function get_image_snapshot_ids()
+function ec2_get_image_snapshot_ids()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1830,7 +1830,7 @@ function get_image_snapshot_ids()
 # Returns:      
 #  None
 #========================================================
-function delete_image()
+function ec2_delete_image()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1863,7 +1863,7 @@ function delete_image()
 # Returns:      
 #  None
 #========================================================
-function delete_image_snapshot()
+function ec2_delete_image_snapshot()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1897,7 +1897,7 @@ function delete_image_snapshot()
 # Returns:      
 #  the allocation identifier in the global __RESULT variable.
 #===============================================================================
-function get_allocation_id()
+function ec2_get_allocation_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -1931,7 +1931,7 @@ function get_allocation_id()
 # Returns:      
 #  A list of allocation identifiers in the __RESULT global variable.
 #===============================================================================
-function get_all_allocation_ids()
+function ec2_get_all_allocation_ids()
 {
    __RESULT=''
    local exit_code=0
@@ -1957,7 +1957,7 @@ function get_all_allocation_ids()
 # Returns:      
 #  An unused public IP Address in your account in the global __RESULT variable.
 #===============================================================================
-function get_unused_public_ip_address()
+function ec2_get_unused_public_ip_address()
 {
    __RESULT=''
    local exit_code=0
@@ -1990,7 +1990,7 @@ function get_unused_public_ip_address()
 # Returns:      
 #  the IP address allocated to your account in the __RESULT global variable.  
 #===============================================================================
-function allocate_public_ip_address()
+function ec2_allocate_public_ip_address()
 {
    __RESULT=''
    local exit_code=0
@@ -2018,7 +2018,7 @@ function allocate_public_ip_address()
 # Returns:      
 #  None 
 #===============================================================================
-function release_public_ip_address()
+function ec2_release_public_ip_address()
 {
    if [[ $# -lt 1 ]]
    then
@@ -2053,7 +2053,7 @@ function release_public_ip_address()
 # Returns:      
 #  None 
 #===============================================================================
-function release_all_public_ip_addresses()
+function ec2_release_all_public_ip_addresses()
 {
    if [[ $# -lt 1 ]]
    then
@@ -2089,7 +2089,7 @@ function release_all_public_ip_addresses()
 # Returns:      
 #  true/false in the global __RESULT variable. 
 #===============================================================================
-function check_aws_public_key_exists()
+function ec2_check_aws_public_key_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -2129,7 +2129,7 @@ function check_aws_public_key_exists()
 # Returns:      
 #  none. 
 #===============================================================================
-function generate_aws_keypair()
+function ec2_generate_aws_keypair()
 {
    if [[ $# -lt 2 ]]
    then
@@ -2175,7 +2175,7 @@ function generate_aws_keypair()
 # Returns:      
 #  None
 #===============================================================================
-function delete_aws_keypair()
+function ec2_delete_aws_keypair()
 {
    if [[ $# -lt 2 ]]
    then
@@ -2224,7 +2224,7 @@ function delete_aws_keypair()
 # Returns:      
 #  None
 #===============================================================================
-function upload_public_key_to_ec2()
+function ec2_upload_public_key_to_ec2()
 {
    if [[ $# -lt 2 ]]
    then

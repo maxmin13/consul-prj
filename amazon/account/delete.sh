@@ -9,7 +9,7 @@ set +o xtrace
 STEP 'Account'
 #
 
-get_all_allocation_ids
+ec2_get_all_allocation_ids
 allocation_ids="${__RESULT}"
 if [[ -z "${allocation_ids}" ]]
 then
@@ -20,7 +20,7 @@ fi
 
 if [[ -n "${allocation_ids}" ]]
 then
-   release_all_public_ip_addresses "${allocation_ids}"
+   ec2_release_all_public_ip_addresses "${allocation_ids}"
    
    echo 'Released all allocated public IP addresses.'
 fi

@@ -28,14 +28,14 @@ STEP "${instance_key} box"
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
+ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then
    echo "* WARN: ${instance_key} box not found."
 else
-   get_instance_state "${instance_nm}"
+   ec2_get_instance_state "${instance_nm}"
    instance_st="${__RESULT}"
    
    echo "* ${instance_key} box ID: ${instance_id} (${instance_st})."
@@ -43,7 +43,7 @@ fi
 
 get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
-get_security_group_id "${sgp_nm}"
+ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
@@ -53,7 +53,7 @@ else
    echo "* ${instance_key} security group ID: ${sgp_id}."
 fi
 
-get_public_ip_address_associated_with_instance "${instance_nm}"
+ec2_get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
@@ -71,14 +71,14 @@ echo
 
 if [[ -n "${instance_id}" ]]
 then
-   get_instance_state "${instance_nm}"
+   ec2_get_instance_state "${instance_nm}"
    instance_st="${__RESULT}"
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
       echo "Deleting ${instance_key} box ..."
       
-      delete_instance "${instance_id}" 'and_wait' >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
+      ec2_delete_instance "${instance_id}" 'and_wait' >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
       
       echo "${instance_key} box deleted."
    else
@@ -94,7 +94,7 @@ if [[ -n "${sgp_id}" ]]
 then  
    echo 'Deleting security group ...'
 
-   delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
+   ec2_delete_security_group_and_wait "${sgp_id}" >> "${LOGS_DIR}"/"${logfile_nm}" 2>&1 
    
    echo 'Security group deleted.'
 fi
@@ -105,12 +105,12 @@ fi
 
 if [[ -n "${eip}" ]]
 then
-   get_allocation_id "${eip}"
+   ec2_get_allocation_id "${eip}"
    allocation_id="${__RESULT}" 
    
    if [[ -n "${allocation_id}" ]] 
    then
-      release_public_ip_address "${allocation_id}"
+      ec2_release_public_ip_address "${allocation_id}"
    fi
    
    echo 'IP Address released from the account.'
@@ -122,12 +122,12 @@ fi
 
 get_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
-check_aws_public_key_exists "${keypair_nm}" 
+ec2_check_aws_public_key_exists "${keypair_nm}" 
 key_exists="${__RESULT}"
 
 if [[ 'true' == "${key_exists}" ]]
 then
-   delete_aws_keypair "${keypair_nm}" "${ACCESS_DIR}"
+   ec2_delete_aws_keypair "${keypair_nm}" "${ACCESS_DIR}"
    
    echo 'SSH key deleted.'
 fi

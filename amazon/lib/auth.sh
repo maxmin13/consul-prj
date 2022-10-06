@@ -24,7 +24,7 @@ set +o xtrace
 # Returns:      
 #  The policy JSON document in the __RESULT global variable.  
 #===============================================================================
-function build_secretsmanager_permission_policy_document()
+function iam_build_secretsmanager_permission_policy_document()
 {
    __RESULT=''
    local policy_document=''
@@ -65,7 +65,7 @@ function build_secretsmanager_permission_policy_document()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_permission_policy()
+function iam_create_permission_policy()
 {
    if [[ $# -lt 2 ]]
    then
@@ -98,7 +98,7 @@ function create_permission_policy()
 # Returns:      
 #  none.  
 #===============================================================================
-function delete_permission_policy()
+function iam_delete_permission_policy()
 {
    if [[ $# -lt 1 ]]
    then
@@ -110,7 +110,7 @@ function delete_permission_policy()
    local -r policy_nm="${1}"
    local policy_arn;
    
-   get_permission_policy_arn "${policy_nm}"
+   iam_get_permission_policy_arn "${policy_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -148,7 +148,7 @@ function delete_permission_policy()
 # Returns:      
 #  the policy ARN, returns the value in the __RESULT global variable.  
 #===============================================================================
-function get_permission_policy_arn()
+function iam_get_permission_policy_arn()
 {
    if [[ $# -lt 1 ]]
    then
@@ -184,7 +184,7 @@ function get_permission_policy_arn()
 # Returns:      
 #  true or false value in the __RESULT global variable.  
 #===============================================================================
-function check_permission_policy_exists()
+function iam_check_permission_policy_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -197,7 +197,7 @@ function check_permission_policy_exists()
    local -r policy_nm="${1}"
    local policy_arn=''
 
-   get_permission_policy_arn "${policy_nm}"
+   iam_get_permission_policy_arn "${policy_nm}"
    
    exit_code=$?
       
@@ -230,7 +230,7 @@ function check_permission_policy_exists()
 # Returns:      
 #  none.  
 #===============================================================================
-function attach_permission_policy_to_role()
+function iam_attach_permission_policy_to_role()
 {
    if [[ $# -lt 2 ]]
    then
@@ -244,7 +244,7 @@ function attach_permission_policy_to_role()
    local -r policy_nm="${2}"
    local policy_exists='false'
 
-   check_permission_policy_exists "${policy_nm}"
+   iam_check_permission_policy_exists "${policy_nm}"
    
    exit_code=$?
    
@@ -262,7 +262,7 @@ function attach_permission_policy_to_role()
       return 1
    fi
     
-   get_permission_policy_arn "${policy_nm}"
+   iam_get_permission_policy_arn "${policy_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -295,7 +295,7 @@ function attach_permission_policy_to_role()
 # Returns:      
 #  true or false value in the __RESULT global variable.  
 #===============================================================================
-function check_role_has_permission_policy_attached()
+function iam_check_role_has_permission_policy_attached()
 {
    if [[ $# -lt 2 ]]
    then
@@ -311,7 +311,7 @@ function check_role_has_permission_policy_attached()
    local policy_exists='false'
    local policy_arn=''
    
-   check_role_exists "${role_nm}"
+   iam_check_role_exists "${role_nm}"
    
    exit_code=$?
    
@@ -329,7 +329,7 @@ function check_role_has_permission_policy_attached()
       return 1
    fi
    
-   check_permission_policy_exists "${policy_nm}"
+   iam_check_permission_policy_exists "${policy_nm}"
    
    exit_code=$?
 
@@ -371,7 +371,7 @@ function check_role_has_permission_policy_attached()
 # Returns:      
 #  none.  
 #=================$==============================================================
-function detach_permission_policy_from_role()
+function iam_detach_permission_policy_from_role()
 {
    if [[ $# -lt 2 ]]
    then
@@ -387,7 +387,7 @@ function detach_permission_policy_from_role()
    local role_exists='false'
    local policy_exists='false'
    
-   check_role_exists "${role_nm}"
+   iam_check_role_exists "${role_nm}"
    
    exit_code=$?
    
@@ -405,7 +405,7 @@ function detach_permission_policy_from_role()
       return 1
    fi
    
-   check_permission_policy_exists "${policy_nm}"
+   iam_check_permission_policy_exists "${policy_nm}"
    
    exit_code=$?
 
@@ -423,7 +423,7 @@ function detach_permission_policy_from_role()
       return 1
    fi
    
-   get_permission_policy_arn "${policy_nm}"
+   iam_get_permission_policy_arn "${policy_nm}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -457,7 +457,7 @@ function detach_permission_policy_from_role()
 # Returns:      
 #  The policy JSON document in the __RESULT global variable.  
 #===============================================================================
-function build_assume_role_trust_policy_document_for_ec2_entities()
+function iam_build_assume_role_trust_policy_document_for_ec2_entities()
 {
    __RESULT=''
    local policy_document=''
@@ -492,7 +492,7 @@ function build_assume_role_trust_policy_document_for_ec2_entities()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_role()
+function iam_create_role()
 {
    if [[ $# -lt 3 ]]
    then
@@ -530,7 +530,7 @@ function create_role()
 # Returns:      
 #  none.  
 #===============================================================================
-function delete_role()
+function iam_delete_role()
 {
    if [[ $# -lt 1 ]]
    then
@@ -543,7 +543,7 @@ function delete_role()
    local -r role_nm="${1}"
    local role_exists='false'
    
-   check_role_exists "${role_nm}"
+   iam_check_role_exists "${role_nm}"
    
    exit_code=$?
    
@@ -572,7 +572,7 @@ function delete_role()
    # Detach the role from the instance profiles.
    for profile_nm in ${instance_profiles}
    do
-      remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
+      iam_remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
       exit_code=$?
       
       if [[ 0 -ne "${exit_code}" ]]
@@ -587,7 +587,7 @@ function delete_role()
    # Detach the policies from role.
    for policy_nm in ${policies}
    do
-      detach_permission_policy_from_role "${role_nm}" "${policy_nm}" 
+      iam_detach_permission_policy_from_role "${role_nm}" "${policy_nm}" 
       exit_code=$?
       
       if [[ 0 -ne "${exit_code}" ]]
@@ -620,7 +620,7 @@ function delete_role()
 # Returns:      
 #  true or false value in the __RESULT global variable.  
 #===============================================================================
-function check_role_exists()
+function iam_check_role_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -633,7 +633,7 @@ function check_role_exists()
    local -r role_nm="${1}"
    local role_id=''
 
-   get_role_id "${role_nm}"
+   iam_get_role_id "${role_nm}"
    
    exit_code=$?
    
@@ -665,7 +665,7 @@ function check_role_exists()
 # Returns:      
 #  the role's ARN in the __RESULT global variable.  
 #===============================================================================
-function get_role_arn()
+function iam_get_role_arn()
 {
    if [[ $# -lt 1 ]]
    then
@@ -700,7 +700,7 @@ function get_role_arn()
 # Returns:      
 #  the role ID in the __RESULT global variable.  
 #===============================================================================
-function get_role_id()
+function iam_get_role_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -732,7 +732,7 @@ function get_role_id()
 # Returns:      
 #  none.  
 #===============================================================================
-function create_instance_profile()
+function iam_create_instance_profile()
 {
    if [[ $# -lt 1 ]]
    then
@@ -767,7 +767,7 @@ function create_instance_profile()
 # Returns:      
 #  none.  
 #===============================================================================
-function delete_instance_profile()
+function iam_ec2_delete_instance_profile()
 {
    if [[ $# -lt 1 ]]
    then
@@ -787,7 +787,7 @@ function delete_instance_profile()
    if [[ -n "${role_nm}" ]]
    then
       # Detach the role from the instance profile.
-      remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
+      iam_remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
       
       echo 'Role detached from the instance profile.'
    else
@@ -823,7 +823,7 @@ function delete_instance_profile()
 # Returns:      
 #  true or false value in the __RESULT global variable.  
 #===============================================================================
-function check_instance_profile_exists()
+function iam_check_instance_profile_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -836,7 +836,7 @@ function check_instance_profile_exists()
    local -r profile_nm="${1}"
    local profile_id=''
 
-   get_instance_profile_id "${profile_nm}"
+   iam_get_instance_profile_id "${profile_nm}"
    exit_code=$? 
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -867,7 +867,7 @@ function check_instance_profile_exists()
 # Returns:      
 #  the instance profile ID in the __RESULT global variable. 
 #===============================================================================
-function get_instance_profile_id()
+function iam_get_instance_profile_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -900,7 +900,7 @@ function get_instance_profile_id()
 # Returns:      
 #  true or false value in the __RESULT global variable.  
 #===============================================================================
-function check_instance_profile_has_role_associated()
+function iam_check_instance_profile_has_role_associated()
 {
    if [[ $# -lt 2 ]]
    then
@@ -916,7 +916,7 @@ function check_instance_profile_has_role_associated()
    local profile_exists=''
    local role_found=''
    
-   check_role_exists "${role_nm}"
+   iam_check_role_exists "${role_nm}"
    
    exit_code=$?
    
@@ -934,7 +934,7 @@ function check_instance_profile_has_role_associated()
       return 1
    fi
    
-   check_instance_profile_exists "${profile_nm}"
+   iam_check_instance_profile_exists "${profile_nm}"
    
    exit_code=$?
    
@@ -979,7 +979,7 @@ function check_instance_profile_has_role_associated()
 # Returns:      
 #  none.  
 #===============================================================================
-function associate_role_to_instance_profile()
+function iam_associate_role_to_instance_profile()
 {
    if [[ $# -lt 2 ]]
    then
@@ -1016,7 +1016,7 @@ function associate_role_to_instance_profile()
 # Returns:      
 #  none.  
 #===============================================================================
-function remove_role_from_instance_profile()
+function iam_remove_role_from_instance_profile()
 {
    if [[ $# -lt 2 ]]
    then

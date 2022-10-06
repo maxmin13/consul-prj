@@ -29,7 +29,7 @@ STEP "${instance_key} box"
 
 get_datacenter 'Name'
 dtc_nm="${__RESULT}"
-get_datacenter_id "${dtc_nm}"
+ec2_get_datacenter_id "${dtc_nm}"
 dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
@@ -42,7 +42,7 @@ fi
 
 get_datacenter 'Subnet'
 subnet_nm="${__RESULT}"
-get_subnet_id "${subnet_nm}"
+ec2_get_subnet_id "${subnet_nm}"
 subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
@@ -55,7 +55,7 @@ fi
 
 get_instance "${instance_key}" 'ParentImageName'
 image_nm="${__RESULT}"
-get_image_id "${image_nm}"
+ec2_get_image_id "${image_nm}"
 image_id="${__RESULT}"
 
 if [[ -z "${image_id}" ]]
@@ -78,13 +78,13 @@ echo
 
 get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
-get_security_group_id "${sgp_nm}"
+ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
-   create_security_group "${dtc_id}" "${sgp_nm}" "${sgp_nm}" >> "${LOGS_DIR}"/"${logfile_nm}" 
-   get_security_group_id "${sgp_nm}"
+   ec2_create_security_group "${dtc_id}" "${sgp_nm}" "${sgp_nm}" >> "${LOGS_DIR}"/"${logfile_nm}" 
+   ec2_get_security_group_id "${sgp_nm}"
    sgp_id="${__RESULT}"
    
    echo 'Security group created.'
@@ -98,14 +98,14 @@ fi
 
 get_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
-check_aws_public_key_exists "${keypair_nm}" 
+ec2_check_aws_public_key_exists "${keypair_nm}" 
 key_exists="${__RESULT}"
 
 if [[ 'false' == "${key_exists}" ]]
 then
    # Create a private key in the local 'access' directory.
    mkdir -p "${ACCESS_DIR}"
-   generate_aws_keypair "${keypair_nm}" "${ACCESS_DIR}" 
+   ec2_generate_aws_keypair "${keypair_nm}" "${ACCESS_DIR}" 
    
    echo 'SSH key created.'
 else
@@ -139,12 +139,12 @@ echo 'cloud_init.yml ready.'
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
+ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
 
 if [[ -n "${instance_id}" ]]
 then
-   get_instance_state "${instance_nm}"
+   ec2_get_instance_state "${instance_nm}"
    instance_st="${__RESULT}"
    
    if [[ -n "${instance_st}" ]]
@@ -162,7 +162,7 @@ private_ip="${__RESULT}"
 get_datacenter 'Az'
 az_nm="${__RESULT}"
 
-run_instance \
+ec2_run_instance \
     "${instance_nm}" \
     "${az_nm}" \
     "${sgp_id}" \
@@ -171,13 +171,13 @@ run_instance \
     "${image_id}" \
     "${temporary_dir}"/cloud_init.yml
        
-get_instance_id "${instance_nm}"
+ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"    
 
 echo "${instance_key} box created."
 
 # Get the public IP address assigned to the instance. 
-get_public_ip_address_associated_with_instance "${instance_nm}"
+ec2_get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
 if [[ -n "${eip}" ]]

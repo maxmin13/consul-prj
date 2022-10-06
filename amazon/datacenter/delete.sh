@@ -11,7 +11,7 @@ STEP 'Data-center'
 
 get_datacenter 'Name' 
 dtc_nm="${__RESULT}"
-get_datacenter_id "${dtc_nm}"
+ec2_get_datacenter_id "${dtc_nm}"
 dtc_id="${__RESULT}"
 
 if [[ -z "${dtc_id}" ]]
@@ -23,7 +23,7 @@ fi
 
 get_datacenter 'Gateway' 
 gateway_nm="${__RESULT}"
-get_internet_gateway_id "${gateway_nm}"
+ec2_get_internet_gateway_id "${gateway_nm}"
 gateway_id="${__RESULT}"
 gateway_status=''
 
@@ -31,7 +31,7 @@ if [[ -z "${gateway_id}" ]]
 then
    echo '* WARN: internet gateway not found.'
 else
-   get_internet_gateway_attachment_status "${gateway_nm}" "${dtc_id}"
+   ec2_get_internet_gateway_attachment_status "${gateway_nm}" "${dtc_id}"
    gateway_status="${__RESULT}"
    
    if [[ -n "${gateway_status}" ]]
@@ -44,7 +44,7 @@ fi
 
 get_datacenter 'Subnet' 
 subnet_nm="${__RESULT}"
-get_subnet_id "${subnet_nm}"
+ec2_get_subnet_id "${subnet_nm}"
 subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
@@ -56,7 +56,7 @@ fi
 
 get_datacenter 'RouteTable' 
 rtb_nm="${__RESULT}"
-get_route_table_id "${rtb_nm}"
+ec2_get_route_table_id "${rtb_nm}"
 rtb_id="${__RESULT}"
 
 if [[ -z "${rtb_id}" ]]
@@ -84,7 +84,7 @@ then
       fi
    fi
     
-   delete_internet_gateway "${gateway_id}"
+   ec2_delete_internet_gateway "${gateway_id}"
    
    echo 'Internet gateway deleted.'
 fi
@@ -95,7 +95,7 @@ fi
 
 if [[ -n "${subnet_id}" ]]
 then
-   delete_subnet "${subnet_id}"
+   ec2_delete_subnet "${subnet_id}"
    
    echo 'Subnet deleted.'
 fi
@@ -106,7 +106,7 @@ fi
 
 if [[ -n "${rtb_id}" ]]
 then
-   delete_route_table "${rtb_id}"
+   ec2_delete_route_table "${rtb_id}"
    
    echo 'Route table deleted.'
 fi
@@ -116,7 +116,7 @@ fi
                    
 if [[ -n "${dtc_id}" ]]
 then
-   delete_datacenter "${dtc_id}" 
+   ec2_delete_datacenter "${dtc_id}" 
    
    echo 'Data center deleted.'
 fi                     

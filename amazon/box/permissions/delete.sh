@@ -28,9 +28,9 @@ STEP "${instance_key} box permissions"
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-instance_is_running "${instance_nm}"
+ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
-get_instance_state "${instance_nm}"
+ec2_get_instance_state "${instance_nm}"
 instance_st="${__RESULT}"
 
 if [[ 'true' == "${is_running}" ]]
@@ -47,12 +47,12 @@ fi
 
 get_instance "${instance_key}" 'InstanceProfileName'
 profile_nm="${__RESULT}"
-check_instance_profile_exists "${profile_nm}"
+iam_check_instance_profile_exists "${profile_nm}"
 profile_exists="${__RESULT}"
 
 if [[ 'true' == "${profile_exists}" ]]
 then
-   get_instance_profile_id "${profile_nm}" 
+   iam_get_instance_profile_id "${profile_nm}" 
    profile_id="${__RESULT}"
 
    echo "* ${instance_key} instance profile ID: ${profile_id}"
@@ -62,12 +62,12 @@ fi
 
 get_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}"
-check_role_exists "${role_nm}"
+iam_check_role_exists "${role_nm}"
 role_exists="${__RESULT}"
 
 if [[ 'true' == "${role_exists}" ]]
 then
-   get_role_arn "${role_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   iam_get_role_arn "${role_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
    role_arn="${__RESULT}"
 
    echo "* ${instance_key} role ARN: ${role_arn}"
@@ -85,7 +85,7 @@ if [[ 'true' == "${role_exists}" ]]
 then
    echo 'Deleting role ...'
    
-   delete_role "${role_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   iam_delete_role "${role_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
    echo 'Role deleted.'
 else
@@ -96,7 +96,7 @@ if [[ 'true' == "${profile_exists}" ]]
 then
    echo 'Deleting instance profile ...'
 
-   delete_instance_profile "${profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   iam_ec2_delete_instance_profile "${profile_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo 'Instance profile deleted.'
 else

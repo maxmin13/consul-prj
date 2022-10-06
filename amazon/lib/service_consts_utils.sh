@@ -48,7 +48,7 @@ function get_service_sources_directory()
    
    property_val=$(cat "${LIBRARY_DIR}"/constants/service_consts.json | 
    	jq -r --arg key "${service_key}" -c '.Docker.Services[] | select(.Key | index($key))' |
-   	   jq -r -c '.SourcesDirName // empty')
+   	   jq -r -c '.SourcesDir // empty')
    	
    __RESULT="${property_val}"
    
@@ -283,7 +283,7 @@ function get_service_webapp_url()
       webapp_port="${3}"
    fi
 
-   get_service_deploy "${service_key}" "WebappUrl"
+   get_service_deploy "${service_key}" "Url"
    # shellcheck disable=SC2086
    url_val="${__RESULT}"
    url_val=$(sed -e "s|<address>|${webapp_address}|g" -e "s|<port>|${webapp_port}|g" <<< "${url_val}")

@@ -30,7 +30,7 @@ STEP "${instance_key} image"
 
 get_instance "${instance_key}" 'TargetImageName'
 image_nm="${__RESULT}" 
-get_image_id "${image_nm}"
+ec2_get_image_id "${image_nm}"
 image_id="${__RESULT}"
 
 if [[ -n "${image_id}" ]]
@@ -38,7 +38,7 @@ then
    # If the image is in 'terminated' state, it takes about an hour to disappear,
    # to create a new image you have to change the name.
    
-   get_image_state "${image_nm}"
+   ec2_get_image_state "${image_nm}"
    image_st="${__RESULT}"
    
    if [[ -n "${image_st}" ]]
@@ -55,7 +55,7 @@ fi
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-get_instance_id "${instance_nm}"
+ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
@@ -63,7 +63,7 @@ then
    echo "* ERROR: ${instance_key} box not found."
    exit 1
 else
-   get_instance_state "${instance_nm}"
+   ec2_get_instance_state "${instance_nm}"
    instance_st="${__RESULT}"
    
    echo "* ${instance_key} box ID: ${instance_id} (${instance_st})."
@@ -79,7 +79,7 @@ echo
 
 echo "Stopping ${instance_key} box ..."
 
-stop_instance "${instance_id}" >> "${LOGS_DIR}"/"${logfile_nm}" 
+ec2_stop_instance "${instance_id}" >> "${LOGS_DIR}"/"${logfile_nm}" 
 
 echo "${instance_key} box stopped." 
 
@@ -89,7 +89,7 @@ echo "${instance_key} box stopped."
 
 echo "Creating ${instance_key} image ..."
 
-create_image "${instance_id}" "${image_nm}" "${image_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"	
+ec2_create_image "${instance_id}" "${image_nm}" "${image_nm}" >> "${LOGS_DIR}"/"${logfile_nm}"	
 
 echo
 echo "${instance_key} image created."

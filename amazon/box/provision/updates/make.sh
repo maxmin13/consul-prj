@@ -26,9 +26,9 @@ STEP "${instance_key} box provision updates."
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-instance_is_running "${instance_nm}"
+ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
-get_instance_state "${instance_nm}"
+ec2_get_instance_state "${instance_nm}"
 instance_st="${__RESULT}"
 
 if [[ 'true' == "${is_running}" ]]
@@ -41,7 +41,7 @@ else
 fi
 
 # Get the public IP address assigned to the instance. 
-get_public_ip_address_associated_with_instance "${instance_nm}"
+ec2_get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
@@ -54,7 +54,7 @@ fi
 
 get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
-get_security_group_id "${sgp_nm}"
+ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
@@ -78,12 +78,12 @@ mkdir -p "${temporary_dir}"
  
 get_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"  
+   ec2_allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"  
    
     echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
 else
@@ -171,12 +171,12 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
 ## Firewall
 ## 
 
-check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"   
+   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"   
    
    echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
 else

@@ -18,16 +18,16 @@ logfile_nm='permissions.log'
 STEP 'Permissions'
 #
 
-check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
+iam_check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
 policy_exists="${__RESULT}"
 
 if [[ 'false' == "${policy_exists}" ]]
 then
    # Create permission policy that allows entities to create, list, retrieve a secret from SecretsManager.
-   build_secretsmanager_permission_policy_document 
+   iam_build_secretsmanager_permission_policy_document 
    policy_document="${__RESULT}"
 
-   create_permission_policy "${SECRETSMANAGER_POLICY_NM}" "${policy_document}" >> "${LOGS_DIR}"/"${logfile_nm}"
+   iam_create_permission_policy "${SECRETSMANAGER_POLICY_NM}" "${policy_document}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
    echo "${SECRETSMANAGER_POLICY_NM} permission policy created."
 else

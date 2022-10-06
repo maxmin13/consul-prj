@@ -21,9 +21,9 @@ STEP "ECR registry"
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-instance_is_running "${instance_nm}"
+ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
-get_instance_state "${instance_nm}"
+ec2_get_instance_state "${instance_nm}"
 instance_st="${__RESULT}"
 
 if [[ 'true' == "${is_running}" ]]
@@ -35,7 +35,7 @@ else
    return 0
 fi
 
-get_public_ip_address_associated_with_instance "${instance_nm}"
+ec2_get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
@@ -48,7 +48,7 @@ fi
 
 get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
-get_security_group_id "${sgp_nm}"
+ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
@@ -71,12 +71,12 @@ echo
 
 get_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
    echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
 else
@@ -90,14 +90,14 @@ fi
 get_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}"
 
-check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
+iam_check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
 is_permission_associated="${__RESULT}"
 
 if [[ 'false' == "${is_permission_associated}" ]]
 then
    echo 'Attaching permission policy to the role ...'
 
-   attach_permission_policy_to_role "${role_nm}" "${ECR_POLICY_NM}"
+   iam_attach_permission_policy_to_role "${role_nm}" "${ECR_POLICY_NM}"
       
    echo 'Permission policy associated to the role.' 
 else
@@ -260,14 +260,14 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
 # Permissions.
 #
 
-check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
+iam_check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
 if [[ 'true' == "${is_permission_policy_associated}" ]]
 then
    echo 'Detaching permission policy from role ...'
    
-   detach_permission_policy_from_role "${role_nm}" "${ECR_POLICY_NM}"
+   iam_detach_permission_policy_from_role "${role_nm}" "${ECR_POLICY_NM}"
       
    echo 'Permission policy detached.'
 else
@@ -278,12 +278,12 @@ fi
 ## Firewall.
 ##
 
-check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
+   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
    
    echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
 else

@@ -29,9 +29,9 @@ STEP "${instance_key} box Consul remove."
 
 get_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
-instance_is_running "${instance_nm}"
+ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
-get_instance_state "${instance_nm}"
+ec2_get_instance_state "${instance_nm}"
 instance_st="${__RESULT}"
 
 if [[ 'true' == "${is_running}" ]]
@@ -49,7 +49,7 @@ else
 fi
 
 # Get the public IP address assigned to the instance. 
-get_public_ip_address_associated_with_instance "${instance_nm}"
+ec2_get_public_ip_address_associated_with_instance "${instance_nm}"
 eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
@@ -61,7 +61,7 @@ fi
 
 get_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
-get_security_group_id "${sgp_nm}"
+ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
@@ -86,14 +86,14 @@ echo
 get_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}" 
 
-check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
+iam_check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
 if [[ 'false' == "${is_permission_policy_associated}" ]]
 then
    echo 'Associating permission policy to role ...'
 
-   attach_permission_policy_to_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
+   iam_attach_permission_policy_to_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
 
    echo 'Permission policy associated to the role.'
 else
@@ -106,12 +106,12 @@ fi
 
 get_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'false' == "${is_granted}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_allow_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
    echo "Access granted on ${ssh_port} tcp 0.0.0.0/0."
 else
@@ -120,24 +120,24 @@ fi
 
 get_application_port "${instance_key}" 'consul' 'SerfLanPort'
 serflan_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${serflan_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${serflan_port} tcp 0.0.0.0/0."
 fi
 
-check_access_is_granted "${sgp_id}" "${serflan_port}" 'udp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${serflan_port}" 'udp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${serflan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${serflan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
    echo "Access revoked on ${serflan_port} udp 0.0.0.0/0."
 else
@@ -146,24 +146,24 @@ fi
 
 get_application_port "${instance_key}" 'consul' 'SerfWanPort'
 serfwan_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${serfwan_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${serfwan_port} tcp 0.0.0.0/0."
 fi
 
-check_access_is_granted "${sgp_id}" "${serfwan_port}" 'udp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${serfwan_port}" 'udp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${serfwan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${serfwan_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${serfwan_port} udp 0.0.0.0/0."
 else
@@ -172,12 +172,12 @@ fi
 
 get_application_port "${instance_key}" 'consul' 'RpcPort'
 rpc_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${rpc_port} tcp 0.0.0.0/0."
 else
@@ -186,12 +186,12 @@ fi
 
 get_application_port "${instance_key}" 'consul' 'HttpPort'
 http_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${http_port} tcp 0.0.0.0/0."
 else
@@ -200,24 +200,24 @@ fi
 
 get_application_port "${instance_key}" 'consul' 'DnsPort'
 dns_port="${__RESULT}"
-check_access_is_granted "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${dns_port} tcp 0.0.0.0/0."
 else
    echo "WARN: access already revoked ${dns_port} tcp 0.0.0.0/0."
 fi
 
-check_access_is_granted "${sgp_id}" "${dns_port}" 'udp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${dns_port}" 'udp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${dns_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${dns_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${dns_port} udp 0.0.0.0/0."
 else
@@ -311,12 +311,12 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
 # Firewall.
 #
 
-check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-   revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
 
    echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
 else
@@ -327,14 +327,14 @@ fi
 # Permissions.
 #
 
-check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
+iam_check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
 is_permission_policy_associated="${__RESULT}"
 
 if [[ 'true' == "${is_permission_policy_associated}" ]]
 then
    echo 'Detaching permission policy from role ...'
 
-   detach_permission_policy_from_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
+   iam_detach_permission_policy_from_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
 
    echo 'Permission policy detached from role.'
 else
