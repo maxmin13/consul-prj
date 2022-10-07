@@ -24,11 +24,6 @@ source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
-. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'jenkins-ik' 'jenkins-sk'
-
-exit
-exit
-
 ## Datacenter ##
 
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh 
@@ -39,42 +34,42 @@ exit
 
 ## AWS custom images ##
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'shared-ik'   
-. "${PROJECT_DIR}"/amazon/box/provision/security/make.sh 'shared-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/updates/make.sh 'shared-ik'            
-. "${PROJECT_DIR}"/amazon/image/make.sh 'shared-ik'              
+. "${PROJECT_DIR}"/amazon/box/make.sh 'shared-instance'   
+. "${PROJECT_DIR}"/amazon/box/provision/security/make.sh 'shared-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/updates/make.sh 'shared-instance'            
+. "${PROJECT_DIR}"/amazon/image/make.sh 'shared-instance'              
 
    # Jumpbox.
-. "${PROJECT_DIR}"/amazon/box/make.sh 'admin-ik'	
-. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'admin-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin-ik' 
+. "${PROJECT_DIR}"/amazon/box/make.sh 'admin-instance'	
+. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'admin-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin-instance' 
 
 ## Docker base images ##
 . "${PROJECT_DIR}"/amazon/registry/make.sh 
 
 ## AWS EC2 instances ##
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'nginx-ik'
-. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'nginx-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'nginx-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'nginx-ik' 'nginx-sk'
-. "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'nginx-ik' 'nginx-sk' 
+. "${PROJECT_DIR}"/amazon/box/make.sh 'nginx-instance'
+. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'nginx-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'nginx-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'nginx-instance' 'nginx-service'
+. "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'nginx-instance' 'nginx-service' 
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'redis-ik'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'redis-instance'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'redis'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'redis-ik' 
-. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'redis-ik' 'redis-sk'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'redis-instance' 
+. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'redis-instance' 'redis-service'
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra-ik'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'sinatra-ik' 'sinatra-sk' 
-. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'sinatra-ik' 'sinatra-sk'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'sinatra-instance' 'sinatra-service' 
+. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'sinatra-instance' 'sinatra-service'
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins-ik'
-. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'jenkins-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins-ik'
-. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'jenkins-ik' 'jenkins-sk'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins-instance'
+. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'jenkins-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'jenkins-instance' 'jenkins-service'
 
 
 

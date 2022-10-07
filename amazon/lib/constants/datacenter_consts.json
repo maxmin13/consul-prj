@@ -11,7 +11,7 @@
         	"RouteTable":"consulroutetable",
         	"Instances": [ 	
 			{
-				"Key":"shared-ik",
+				"Key":"shared-instance",
 				"Name":"shared-box",
 				"UserName":"awsadmin",
 				"UserPassword":"awsadmin",
@@ -29,7 +29,7 @@
 				] 
 			},
 			{
-				"Key":"admin-ik",
+				"Key":"admin-instance",
 				"Name":"admin-box",
 				"UserName":"awsadmin",
 				"UserPassword":"awsadmin",
@@ -61,7 +61,7 @@
 				]
 			},
 			{
-				"Key":"redis-ik",
+				"Key":"redis-instance",
 				"Name":"redis-box",
 				"UserName":"awsadmin",
 				"UserPassword":"awsadmin",
@@ -93,7 +93,7 @@
 				]
 			},
 			{
-				"Key":"sinatra-ik",
+				"Key":"sinatra-instance",
 				"Name":"sinatra-box",
 				"UserName":"awsadmin",
 				"UserPassword":"awsadmin",
@@ -125,7 +125,7 @@
 				]
 			},
 			{
-				"Key":"nginx-ik",
+				"Key":"nginx-instance",
 				"Name":"nginx-box",
 				"UserName":"awsadmin",
 				"UserPassword":"awsadmin",
@@ -157,7 +157,7 @@
 				]
 			},
 			{
-				"Key":"jenkins-ik",
+				"Key":"jenkins-instance",
 				"Name":"jenkins-box",
 				"UserName":"awsadmin",
 				"UserPassword":"awsadmin",

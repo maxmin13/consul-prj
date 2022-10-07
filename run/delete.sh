@@ -30,28 +30,28 @@ mkdir -p "${LOGS_DIR}"
 
 ## AWS EC2 instances ##
 
-. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'jenkins-ik'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-ik'
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'jenkins-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-instance'
 
-. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'nginx-ik'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-ik'
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'nginx-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-instance'
 
-. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'sinatra-ik'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-ik'
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'sinatra-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-instance'
 
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis-ik' 
-. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'redis-ik'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis-ik'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis-instance' 
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'redis-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis-instance'
 
    # Jumpbox.
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin-ik'
-. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'admin-ik'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin-ik'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin-instance'
+. "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'admin-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin-instance'
 
 ## AWS custom images ##
 
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared-ik'          
-. "${PROJECT_DIR}"/amazon/image/delete.sh 'shared-ik'           
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared-instance'          
+. "${PROJECT_DIR}"/amazon/image/delete.sh 'shared-instance'           
 
 ## Permission policies ##
 
