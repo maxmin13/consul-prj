@@ -20,7 +20,7 @@ curl -i -H 'Accept: application/json' http://34.244.25.72:4567/json
 
 Jenkins:
 
-
+http://34.241.209.198:80/jenkins
 
 Redis:
 

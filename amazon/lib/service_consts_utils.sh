@@ -17,6 +17,7 @@ set +o xtrace
 #
 #===============================================================================
 
+# gets the keys of all the services.
 function get_service_keys()
 {
    __RESULT=''
@@ -95,7 +96,7 @@ function get_service_image_iterate()
    
    get_service_image "${service_key}" "${property_nm}"
    # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT  | jq -r -c '.[]') 
+   property_val=$(echo $__RESULT  | jq -r -c '.[] // empty') 
    	         
    # shellcheck disable=SC2034
    __RESULT="${property_val}"
@@ -127,32 +128,7 @@ function get_service_container()
    return "${exit_code}"
 }
 
-# used if the property is a list, to access the elements.
-function get_service_container_iterate()
-{
-   if [[ $# -lt 2 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT=''
-   local exit_code=0
-   local -r service_key="${1}"
-   local -r property_nm="${2}"
-   local property_val=''
-   
-   get_service_container "${service_key}" "${property_nm}"
-   # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT  | jq -r -c '.[]') 
-   	         
-   # shellcheck disable=SC2034
-   __RESULT="${property_val}"
-   
-   return "${exit_code}"
-}
-
-function get_service_volume()
+function get_service_application()
 {
    if [[ $# -lt 2 ]]
    then
@@ -166,9 +142,9 @@ function get_service_volume()
    local -r property_nm="${2}"
    local property_val=''
 
-   get_service_container "${service_key}" "Volume"
+   get_service_container "${service_key}" "Application"
    # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property]') 
+   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
 
    # shellcheck disable=SC2034
    __RESULT="${property_val}"
@@ -176,39 +152,7 @@ function get_service_volume()
    return "${exit_code}"
 }
 
-# command to run at container start-up.
-function get_service_command()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT=''
-   local exit_code=0
-   local -r service_key="${1}"
-   local deploy_dir=''
-   local property_val=''
-   
-   if [[ 2 -eq "${#}" ]]
-   then
-      deploy_dir="${2}"
-   fi
-   
-   get_service_container "${service_key}" "Cmd"
-   # shellcheck disable=SC2086
-   property_val="${__RESULT}"
-   # shellcheck disable=SC2001
-   property_val=$(sed "s|<deploy_dir>|${deploy_dir}|g" <<< "${property_val}")
-   
-   # shellcheck disable=SC2034
-   __RESULT="${property_val}"
-   
-   return "${exit_code}"
-}
-
-function get_service_port()
+function get_service_engine()
 {
    if [[ $# -lt 2 ]]
    then
@@ -222,33 +166,9 @@ function get_service_port()
    local -r property_nm="${2}"
    local property_val=''
 
-   get_service_container "${service_key}" "Port"
+   get_service_container "${service_key}" "Engine"
    # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property]') 
-
-   # shellcheck disable=SC2034
-   __RESULT="${property_val}"
-   
-   return "${exit_code}"
-}
-
-function get_service_deploy()
-{
-   if [[ $# -lt 2 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT=''
-   local exit_code=0
-   local -r service_key="${1}"
-   local -r property_nm="${2}"
-   local property_val=''
-
-   get_service_container "${service_key}" "Deploy"
-   # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property]') 
+   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
 
    # shellcheck disable=SC2034
    __RESULT="${property_val}"
@@ -282,8 +202,8 @@ function get_service_webapp_url()
       webapp_address="${2}"
       webapp_port="${3}"
    fi
-
-   get_service_deploy "${service_key}" "Url"
+   
+   get_service_application "${service_key}" "Url"
    # shellcheck disable=SC2086
    url_val="${__RESULT}"
    url_val=$(sed -e "s|<address>|${webapp_address}|g" -e "s|<port>|${webapp_port}|g" <<< "${url_val}")

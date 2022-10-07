@@ -24,6 +24,11 @@ source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
+. "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'jenkins-ik' 'jenkins-sk'
+
+exit
+exit
+
 ## Datacenter ##
 
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh 

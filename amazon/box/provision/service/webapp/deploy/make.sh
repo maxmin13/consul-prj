@@ -245,7 +245,7 @@ else
    echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
 fi
 
-get_service_port "${service_key}" 'HostPort'
+get_service_application "${service_key}" 'HostPort'
 application_port="${__RESULT}"
 
 ec2_check_access_is_granted "${sgp_id}" "${application_port}" 'tcp' '0.0.0.0/0'

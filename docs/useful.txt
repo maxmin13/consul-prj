@@ -2,7 +2,7 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/ec2_ec2_/ec2_/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/ContainerDir/ContainerVolume/g' {} \;
 
 
 

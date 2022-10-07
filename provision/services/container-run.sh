@@ -70,12 +70,17 @@ then
   echo 'Container removed.'
 fi
 
-get_service_volume "${SERVICE_KEY}" 'HostDir'
+get_service_application "${SERVICE_KEY}" 'HostVolume'
 volume_dir="${__RESULT}"
 
 if [[ -n "${volume_dir}" ]]
 then
    mkdir -p "${volume_dir}"
+   
+   get_service_application "${SERVICE_KEY}" 'ContainerUserId'
+   uid="${__RESULT}" 
+   
+   chown -R "${uid}":"${uid}" "${volume_dir}"  
 fi
 
 echo 'Running container ...'
@@ -92,7 +97,7 @@ if [[ 'true' == "${is_ready}" ]]
 then
    echo 'Registering container with Consul agent ...'
    
-   get_service_port "${SERVICE_KEY}" 'HostPort'
+   get_service_application "${SERVICE_KEY}" 'HostPort'
    application_port="${__RESULT}"
 
    cd "${REMOTE_DIR}"

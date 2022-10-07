@@ -450,24 +450,51 @@ function docker_run_container()
    fi
    
    # get the container volume.
-   get_service_volume "${service_key}" 'HostDir'
+   get_service_application "${service_key}" 'HostVolume'
    local host_dir="${__RESULT}"
-   get_service_volume "${service_key}" 'ContainerDir'
+   get_service_application "${service_key}" 'ContainerVolume'
    local container_dir="${__RESULT}"  
-      
+
    if [[ -n "${host_dir}" && -n "${container_dir}" ]]
-   then
-      cmd+=" -v ${host_dir}:${container_dir}:ro"  
+   then  
+      cmd+=" -v ${host_dir}:${container_dir}"  
    fi
    
+   get_service_application "${service_key}" 'MountMode'
+   local v_mount_mode="${__RESULT}"
+   
+   if [[ -n "${v_mount_mode}" ]]
+   then  
+      cmd+=":${v_mount_mode}"  
+   fi  
+   
+   # mount the Docker socket of the host in the container.
+   get_service_engine "${service_key}" 'HostSocket'
+   local host_socket="${__RESULT}"
+   get_service_engine "${service_key}" 'ContainerSocket'
+   local container_socket="${__RESULT}"  
+      
+   if [[ -n "${host_socket}" && -n "${container_socket}" ]]
+   then  
+      cmd+=" -v ${host_socket}:${container_socket}"  
+   fi
+   
+   get_service_engine "${service_key}" 'MountMode'
+   local s_mount_mode="${__RESULT}"
+   
+   if [[ -n "${s_mount_mode}" ]]
+   then  
+      cmd+=":${s_mount_mode}"  
+   fi 
+   
    # get the container port.
-   get_service_port "${service_key}" 'HostPort'
+   get_service_application "${service_key}" 'HostPort'
    local host_port="${__RESULT}"
-   get_service_port "${service_key}" 'ContainerPort'
+   get_service_application "${service_key}" 'ContainerPort'
    local container_port="${__RESULT}"
    
    if [[ -n "${host_port}" && -n "${container_port}" ]]
-   then
+   then  
       cmd+=" -p ${host_port}:${container_port}"
    fi
    
@@ -477,19 +504,16 @@ function docker_run_container()
    get_datacenter 'Region'
    region="${__RESULT}"
    ecr_get_registry_uri "${region}"
-   registry_uri="${__RESULT}"  
+   registry_uri="${__RESULT}"
    ecr_get_repostory_uri "${image_nm}" "${registry_uri}"
    repository_uri="${__RESULT}"
    get_service_image "${service_key}" 'Tag'
    local image_tag="${__RESULT}"
    
    cmd+=" ${repository_uri}:${image_tag}" 
-   
-   get_service_deploy "${service_key}" 'Dir'
-   deploy_dir="${__RESULT}"
-   
+
    # get the command to run in the container when it starts.
-   get_service_command "${service_key}" "${deploy_dir}"
+   get_service_container "${service_key}" "Cmd"
    local command="${__RESULT}"
    
    if [[ -n "${command}" ]]

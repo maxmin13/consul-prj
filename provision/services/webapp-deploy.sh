@@ -26,19 +26,18 @@ yum update -y && yum install -y jq
 echo 'Deploying webapp ...'
 ####
 
-get_service_volume "${SERVICE_KEY}" 'HostDir'
+get_service_application "${SERVICE_KEY}" 'HostVolume'
 volume_dir="${__RESULT}"
-get_service_deploy "${SERVICE_KEY}" 'Dir'
+get_service_application "${SERVICE_KEY}" 'DeployDir'
 deploy_dir="${__RESULT}"
+get_service_application "${SERVICE_KEY}" 'HostPort'
+application_port="${__RESULT}"
 
-rm -rf "${volume_dir:?}"/"${deploy_dir:?}"
+rm -rf "${deploy_dir:?}"
 mkdir -p "${volume_dir}"
-unzip -o "${REMOTE_DIR}"/"${WEBAPP_ARCHIVE_NM}" -d "${volume_dir}"/"${deploy_dir}"
+unzip -o "${REMOTE_DIR}"/"${WEBAPP_ARCHIVE_NM}" -d "${deploy_dir}"
 find "${volume_dir}" -type d -exec chmod 755 {} + 
 find "${volume_dir}" -type f -exec chmod 744 {} +
-
-get_service_port "${SERVICE_KEY}" 'HostPort'
-application_port="${__RESULT}"
 
 get_service_webapp_url "${SERVICE_KEY}" "${APPLICATION_ADDRESS}" "${application_port}"
 webapp_url="${__RESULT}"

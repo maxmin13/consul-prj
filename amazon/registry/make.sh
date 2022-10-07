@@ -147,9 +147,9 @@ do
    base_image_nm="${__RESULT}"
    get_service_image "${service_key}" 'BaseTag'
    base_image_tag="${__RESULT}"  
-   get_service_port "${service_key}" 'ContainerPort'
+   get_service_application "${service_key}" 'ContainerPort'
    container_port="${__RESULT}"
-   get_service_volume "${service_key}" 'ContainerDir'
+   get_service_application "${service_key}" 'ContainerVolume'
    container_volume_dir="${__RESULT}"
    
    # get the name of the directory containing Dockerfile

@@ -86,6 +86,8 @@ fi
 
 cd "${REMOTE_DIR}"
 
+rm -rf /etc/consul.d && mkdir /etc/consul.d
+
 #
 # Configuration consul.json
 #

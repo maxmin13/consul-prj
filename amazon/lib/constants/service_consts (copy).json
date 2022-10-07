@@ -2,7 +2,7 @@
 	"Docker": {
 		"Services": [ 	
 			{
-			        "Key":"centos-sk",
+			        "Key":"centos-service",
 			        "SourcesDir":"centos",
 			        "Image": {
 					"BaseName":"centos",
@@ -12,7 +12,7 @@
 				}
 			},
 			{
-			        "Key":"ruby-sk",
+			        "Key":"ruby-service",
 			        "SourcesDir":"ruby",
 			        "Image": {
 					"BaseName":"maxmin13/centos8",
@@ -22,7 +22,7 @@
 				}
 			},
 			{
-				"Key":"redis-sk",
+				"Key":"redis-service",
 				"SourcesDir":"redis",
 				"Image": {
 					"BaseName":"maxmin13/centos8",
@@ -41,7 +41,7 @@
 			 	}
 			},
 			{
-				"Key":"sinatra-sk",
+				"Key":"sinatra-service",
 				"SourcesDir":"sinatra",
 				"Image": {
 					"BaseName":"maxmin13/ruby",
@@ -53,10 +53,9 @@
 					"Network": "bridge",
 					"Application": {
 						"ContainerPort":"4567",
+						"ContainerDir": "/opt/sinatra",
 						"HostPort":"4567",
-						"ContainerVolume": "/opt/sinatra",
-						"HostVolume": "/opt/sinatra",
-						"MountMode":"ro",
+						"HostDir": "/opt/sinatra",
 						"DeployDir": "/opt/sinatra/webapp",
 						"Url": "http://<address>:<port>/info"	
 					},
@@ -64,7 +63,7 @@
 			 	}
 			},
 			{
-				"Key":"nginx-sk",
+				"Key":"nginx-service",
 				"SourcesDir":"nginx",
 				"Image": {
 					
@@ -78,17 +77,16 @@
 					"Network": "bridge",
 					"Application": {
 						"ContainerPort":"80",
+						"ContainerDir": "/var/www/html",
 						"HostPort":"80",
-						"ContainerVolume": "/var/www/html",
-						"HostVolume": "/opt/nginx",
-						"MountMode":"ro",
+						"HostDir": "/opt/nginx",
 						"DeployDir": "/opt/nginx/welcome",
 						"Url": "http://<address>:<port>/welcome"	
 					}	 	
 			 	}
 			},
 			{
-				"Key":"jenkins-sk",
+				"Key":"jenkins-service",
 				"SourcesDir":"jenkins",
 			 	"Image": {
 					"BaseName":"jenkins/jenkins",
@@ -105,10 +103,9 @@
 					},
 					"Application": {
 						"ContainerPort":"8080",
+						"ContainerDir": "/var/jenkins_home",
 						"HostPort":"80",
-						"ContainerVolume": "/var/jenkins_home",
-						"HostVolume": "/opt/jenkins",
-						"ContainerUserId":"1000",
+						"HostDir": "/opt/jenkins",
 						"Url": "http://<address>:<port>/jenkins"	
 					}	 	
 			 	}
