@@ -194,11 +194,11 @@ ssh_run_remote_command_as_root "${remote_dir}/service/${service_key}/container-r
           }
     }
         
-########################ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-  #  "${private_key_file}" \
-  #  "${eip}" \
- #   "${ssh_port}" \
- #   "${user_nm}" 
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
+    "${private_key_file}" \
+    "${eip}" \
+    "${ssh_port}" \
+    "${user_nm}" 
     
 #
 # Permissions.
@@ -211,7 +211,7 @@ if [[ 'true' == "${is_permission_associated}" ]]
 then
    echo 'Detatching permission policy from role ...'
    
-#############################   iam_detach_permission_policy_from_role "${role_nm}" "${ECR_POLICY_NM}"
+   iam_detach_permission_policy_from_role "${role_nm}" "${ECR_POLICY_NM}"
       
    echo 'Permission policy detached from role.'
 else
@@ -227,7 +227,7 @@ is_granted="${__RESULT}"
 
 if [[ 'true' == "${is_granted}" ]]
 then
-############################   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"  
+   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"  
    
    echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
 else
