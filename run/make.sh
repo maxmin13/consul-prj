@@ -62,7 +62,7 @@ mkdir -p "${LOGS_DIR}"
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
+#################. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'sinatra-instance' 'sinatra-service' 
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'sinatra-instance' 'sinatra-service'
 

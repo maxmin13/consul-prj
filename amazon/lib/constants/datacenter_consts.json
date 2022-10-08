@@ -1,189 +1,189 @@
 {
         "Datacenter": {
-        	"Name":"consuldatacenter",
-        	"Cidr":"10.0.0.0/16",
-        	"Gateway":"consulgateway",
-        	"Region":"eu-west-1",
-        	"Az":"eu-west-1a",
-        	"Subnet":"consulnetwork",
-        	"SubnetCidr":"10.0.10.0/24",
-        	"SubnetGateway":"10.0.10.1",
-        	"RouteTable":"consulroutetable",
+        	"Name": "consuldatacenter",
+        	"Cidr": "10.0.0.0/16",
+        	"Gateway": "consulgateway",
+        	"Region": "eu-west-1",
+        	"Az": "eu-west-1a",
+        	"Subnet": "consulnetwork",
+        	"SubnetCidr": "10.0.10.0/24",
+        	"SubnetGateway": "10.0.10.1",
+        	"RouteTable": "consulroutetable",
         	"Instances": [ 	
 			{
-				"Key":"shared-instance",
-				"Name":"shared-box",
-				"UserName":"awsadmin",
-				"UserPassword":"awsadmin",
-				"PrivateIP":"10.0.10.35",
-				"Hostname":"shared.maxmin.it",
-				"SgpName":"shared-sgp",
-				"KeypairName":"shared-key",
-				"ParentImageName":"amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
-				"TargetImageName":"shared-image",
+				"Key": "shared-instance",
+				"Name": "shared-box2",
+				"UserName": "awsadmin",
+				"UserPassword": "awsadmin",
+				"PrivateIP": "10.0.10.35",
+				"Hostname": "shared.maxmin.it",
+				"SgpName": "shared-sgp",
+				"KeypairName": "shared-key",
+				"ParentImageName": "amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
+				"TargetImageName": "shared-image",
 				"Applications": [
 					{
-						"Name":"ssh",
-						"Port":"38142"
+						"Name": "ssh",
+						"Port": "38142"
 					}
 				] 
 			},
 			{
-				"Key":"admin-instance",
-				"Name":"admin-box",
-				"UserName":"awsadmin",
-				"UserPassword":"awsadmin",
-				"PrivateIP":"10.0.10.34",
-				"Hostname":"admin.maxmin.it",
-				"SgpName":"admin-sgp",
-				"KeypairName":"admin-key",
-				"InstanceProfileName":"AdminInstanceProfile",
-				"RoleName":"AdminAWSrole",
-				"ParentImageName":"shared-image",
+				"Key": "admin-instance",
+				"Name": "admin-box2",
+				"UserName": "awsadmin",
+				"UserPassword": "awsadmin",
+				"PrivateIP": "10.0.10.34",
+				"Hostname": "admin.maxmin.it",
+				"SgpName": "admin-sgp",
+				"KeypairName": "admin-key",
+				"InstanceProfileName": "AdminInstanceProfile",
+				"RoleName": "AdminAWSrole",
+				"ParentImageName": "shared-image",
 				"Applications": [
 					{
-						"Name":"ssh",
-						"Port":"38142"
+						"Name": "ssh",
+						"Port": "38142"
 					},
 					{
-						"Name":"consul",
-						"Mode":"server",
-						"SecretName":"consulkey",
+						"Name": "consul",
+						"Mode": "server",
+						"SecretName": "consulkey",
 						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
 						"Port": {
-							"RpcPort":"8300",
-							"SerfLanPort":"8301",
-							"SerfWanPort":"8302",
-							"HttpPort":"8500",
-							"DnsPort":"8600"
+							"RpcPort": "8300",
+							"SerfLanPort": "8301",
+							"SerfWanPort": "8302",
+							"HttpPort": "8500",
+							"DnsPort": "8600"
 						}
 					}
 				]
 			},
 			{
-				"Key":"redis-instance",
-				"Name":"redis-box",
-				"UserName":"awsadmin",
-				"UserPassword":"awsadmin",
-				"PrivateIP":"10.0.10.30",
-				"Hostname":"redis.maxmin.it",
-				"SgpName":"redis-sgp",
-				"KeypairName":"redis-key",
-				"InstanceProfileName":"RedisInstanceProfile",
-				"RoleName":"RedisAWSrole",
-				"ParentImageName":"shared-image",
+				"Key": "redis-instance",
+				"Name": "redis-box2",
+				"UserName": "awsadmin",
+				"UserPassword": "awsadmin",
+				"PrivateIP": "10.0.10.30",
+				"Hostname": "redis.maxmin.it",
+				"SgpName": "redis-sgp",
+				"KeypairName": "redis-key",
+				"InstanceProfileName": "RedisInstanceProfile",
+				"RoleName": "RedisAWSrole",
+				"ParentImageName": "shared-image",
 				"Applications": [
 					{
-						"Name":"ssh",
-						"Port":"38142"
+						"Name": "ssh",
+						"Port": "38142"
 					},
 					{
-						"Name":"consul",
-						"Mode":"client",
-						"SecretName":"consulkey",
+						"Name": "consul",
+						"Mode": "client",
+						"SecretName": "consulkey",
 						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
 						"Port": {
-							"RpcPort":"8300",
-							"SerfLanPort":"8301",
-							"SerfWanPort":"8302",
-							"HttpPort":"8500",
-							"DnsPort":"8600"
+							"RpcPort": "8300",
+							"SerfLanPort": "8301",
+							"SerfWanPort": "8302",
+							"HttpPort": "8500",
+							"DnsPort": "8600"
 						}
 					}
 				]
 			},
 			{
-				"Key":"sinatra-instance",
-				"Name":"sinatra-box",
-				"UserName":"awsadmin",
-				"UserPassword":"awsadmin",
-				"PrivateIP":"10.0.10.31",
-				"Hostname":"sinatra.maxmin.it",
-				"SgpName":"sinatra-sgp",
-				"KeypairName":"sinatra-key",
-				"InstanceProfileName":"SinatraInstanceProfile",
-				"RoleName":"SinatraAWSrole",
-				"ParentImageName":"shared-image",
+				"Key": "sinatra-instance",
+				"Name": "sinatra-box2",
+				"UserName": "awsadmin",
+				"UserPassword": "awsadmin",
+				"PrivateIP": "10.0.10.31",
+				"Hostname": "sinatra.maxmin.it",
+				"SgpName": "sinatra-sgp",
+				"KeypairName": "sinatra-key",
+				"InstanceProfileName": "SinatraInstanceProfile",
+				"RoleName": "SinatraAWSrole",
+				"ParentImageName": "shared-image",
 				"Applications": [
 					{
-						"Name":"ssh",
-						"Port":"38142"
+						"Name": "ssh",
+						"Port": "38142"
 					},
 					{
-						"Name":"consul",
-						"Mode":"client",
-						"SecretName":"consulkey",
+						"Name": "consul",
+						"Mode": "client",
+						"SecretName": "consulkey",
 						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
 						"Port": {
-							"RpcPort":"8300",
-							"SerfLanPort":"8301",
-							"SerfWanPort":"8302",
-							"HttpPort":"8500",
-							"DnsPort":"8600"
+							"RpcPort": "8300",
+							"SerfLanPort": "8301",
+							"SerfWanPort": "8302",
+							"HttpPort": "8500",
+							"DnsPort": "8600"
 						}
 					}
 				]
 			},
 			{
-				"Key":"nginx-instance",
-				"Name":"nginx-box",
-				"UserName":"awsadmin",
-				"UserPassword":"awsadmin",
-				"PrivateIP":"10.0.10.32",
-				"Hostname":"nginx.maxmin.it",
-				"SgpName":"nginx-sgp",
-				"KeypairName":"nginx-key",
-				"InstanceProfileName":"NginxInstanceProfile",
-				"RoleName":"NginxAWSrole",
-				"ParentImageName":"shared-image",
+				"Key": "nginx-instance",
+				"Name": "nginx-box2",
+				"UserName": "awsadmin",
+				"UserPassword": "awsadmin",
+				"PrivateIP": "10.0.10.32",
+				"Hostname": "nginx.maxmin.it",
+				"SgpName": "nginx-sgp",
+				"KeypairName": "nginx-key",
+				"InstanceProfileName": "NginxInstanceProfile",
+				"RoleName": "NginxAWSrole",
+				"ParentImageName": "shared-image",
 				"Applications": [
 					{
-						"Name":"ssh",
-						"Port":"38142"
+						"Name": "ssh",
+						"Port": "38142"
 					},
 					{
-						"Name":"consul",
-						"Mode":"client",
-						"SecretName":"consulkey",
+						"Name": "consul",
+						"Mode": "client",
+						"SecretName": "consulkey",
 						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
 						"Port": {
-							"RpcPort":"8300",
-							"SerfLanPort":"8301",
-							"SerfWanPort":"8302",
-							"HttpPort":"8500",
-							"DnsPort":"8600"
+							"RpcPort": "8300",
+							"SerfLanPort": "8301",
+							"SerfWanPort": "8302",
+							"HttpPort": "8500",
+							"DnsPort": "8600"
 						}
 					}
 				]
 			},
 			{
-				"Key":"jenkins-instance",
-				"Name":"jenkins-box",
-				"UserName":"awsadmin",
-				"UserPassword":"awsadmin",
-				"PrivateIP":"10.0.10.33",
-				"Hostname":"jenkins.maxmin.it",
-				"SgpName":"jenkins-sgp",
-				"KeypairName":"jenkins-key",
-				"InstanceProfileName":"JenkinsInstanceProfile",
-				"RoleName":"JenkinsAWSrole",
-				"ParentImageName":"shared-image",
+				"Key": "jenkins-instance",
+				"Name": "jenkins-box2",
+				"UserName": "awsadmin",
+				"UserPassword": "awsadmin",
+				"PrivateIP": "10.0.10.33",
+				"Hostname": "jenkins.maxmin.it",
+				"SgpName": "jenkins-sgp",
+				"KeypairName": "jenkins-key",
+				"InstanceProfileName": "JenkinsInstanceProfile",
+				"RoleName": "JenkinsAWSrole",
+				"ParentImageName": "shared-image",
 				"Applications": [
 					{
-						"Name":"ssh",
-						"Port":"38142"
+						"Name": "ssh",
+						"Port": "38142"
 					},
 					{
-						"Name":"consul",
-						"Mode":"client",
-						"SecretName":"consulkey",
+						"Name": "consul",
+						"Mode": "client",
+						"SecretName": "consulkey",
 						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
 						"Port": {
-							"RpcPort":"8300",
-							"SerfLanPort":"8301",
-							"SerfWanPort":"8302",
-							"HttpPort":"8500",
-							"DnsPort":"8600"
+							"RpcPort": "8300",
+							"SerfLanPort": "8301",
+							"SerfWanPort": "8302",
+							"HttpPort": "8500",
+							"DnsPort": "8600"
 						}
 					}
 				]
