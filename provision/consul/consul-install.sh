@@ -12,7 +12,7 @@
 # configure /etc/resolv.conf on both the host and our containers to dispatch DNS queries to it;
 # dnsmask passes queries ending in .consul to the Consul agent; 
 #
-# Consul ui is exposed through nginx reverse proxy.
+# In the Admin instance, Consul ui is exposed through nginx reverse proxy.
 #
 ########################################################################################################################
 
@@ -194,7 +194,7 @@ get_datacenter_application_port "${INSTANCE_KEY}" 'consul' 'DnsPort'
 #node_name="$(consul members |awk -v address="${host_addr}" '$2 ~ address {print $1}')"
 
 #
-# nginx
+# nginx reverse proxy.
 #
 
 if [[ 'server' == "${consul_mode}" ]]
