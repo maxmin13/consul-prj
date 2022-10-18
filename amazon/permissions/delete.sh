@@ -16,11 +16,11 @@ STEP 'Permissions'
 #
 
 iam_check_permission_policy_exists  "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
-policy_exists="${__RESULT}"
+sm_policy_exists="${__RESULT}"
 
-if [[ 'false' == "${policy_exists}" ]]
+if [[ 'false' == "${sm_policy_exists}" ]]
 then
-   echo "* WARN: ${SECRETSMANAGER_POLICY_NM} permission policy not found."
+   echo '* WARN: secretsmanager permission policy not found.'
 else
    iam_get_permission_policy_arn "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
    policy_arn="${__RESULT}"
@@ -34,13 +34,13 @@ echo
 # Permission policy
 #
 
-if [[ 'true' == "${policy_exists}" ]]
+if [[ 'true' == "${sm_policy_exists}" ]]
 then
-   echo "Deleting ${SECRETSMANAGER_POLICY_NM} permission policy ..."
+   echo 'Deleting secretsmanager permission policy ...'
    
    iam_delete_permission_policy "${SECRETSMANAGER_POLICY_NM}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "${SECRETSMANAGER_POLICY_NM} permission policy deleted."
+   echo 'Secretsmanager permission policy delete.'
 fi
 
 echo

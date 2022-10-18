@@ -27,7 +27,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box provision service."
 ####
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -55,7 +55,7 @@ else
    echo "* ${instance_key} IP address: ${eip}."
 fi
 
-get_instance "${instance_key}" 'SgpName'
+get_datacenter_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -78,7 +78,7 @@ mkdir -p "${temporary_dir}"
 # Firewall
 #
 
-get_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
 
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
@@ -97,7 +97,7 @@ fi
 # Permissions.
 #
 
-get_instance "${instance_key}" 'RoleName'
+get_datacenter_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}"
 iam_check_role_has_permission_policy_attached "${role_nm}" "${ECR_POLICY_NM}"
 is_permission_associated="${__RESULT}"
@@ -117,9 +117,9 @@ fi
 echo "Provisioning the instance ..."
 # 
 
-get_instance "${instance_key}" 'UserName'
+get_datacenter_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
-get_instance "${instance_key}" 'KeypairName'
+get_datacenter_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
@@ -158,7 +158,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/constants/datacenter_consts.json \
     "${LIBRARY_DIR}"/constants/service_consts.json      
 
-get_instance "${instance_key}" 'UserPassword'
+get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
 
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/service/${service_key}" \

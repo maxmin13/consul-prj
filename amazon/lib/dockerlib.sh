@@ -412,16 +412,15 @@ function docker_delete_container()
 }  
 
 #===============================================================================
-# Runs a container.
+# Runs a container. The container is configured to use dnsmasq as DNS server.
 # The function gets the values from the file service_consts.json.
 #
 # Globals:
 #  None
 # Arguments:
-# +service_key  -- key into the file service_consts.json.
-# +container_nm -- name assingned to the running container.
-# +deploy_dir   -- name of the directory where the container's application is 
-#                  deployed.
+# +service_key  -- key into the file service_consts.json, indentifies the 
+#                  container.
+# +container_nm -- name assingned to the container.
 # Returns:      
 #  None
 #===============================================================================
@@ -436,18 +435,50 @@ function docker_run_container()
    local exit_code=0
    local -r service_key="${1}"
    local -r container_nm="${2}"
-   local cmd=''
    
-   cmd="docker run -d --name ${container_nm}"
+   local cmd='docker run'
+   cmd+=" --name ${container_nm}"
    
-   # get the container network.
-   get_service_container "${service_key}" 'Network'
-   local network_nm="${__RESULT}"
+   #
+   # Dns interface.
+   #
    
-   if [[ -n "${network_nm}" ]]
+   # Configure containers to use the dummy IP address as their DNS resolver and Consul server.
+   
+   get_service_dns_interface "${service_key}" 'Name'
+   local dns_interface_nm="${__RESULT}"
+   ip_check_network_interface_exists "${dns_interface_nm}"
+   local dns_interface_exists="${__RESULT}"
+
+   if [[ 'true' == "${dns_interface_exists}" ]]
    then
-      cmd+=" --net ${network_nm}"   
-   fi
+      get_service_dns_interface "${service_key}" 'Ip'
+      local dns_interface_addr="${__RESULT}"
+      cmd+=" --dns ${dns_interface_addr}"   
+   else
+      echo 'WARN: DNS network interface not found.'
+   fi 
+  
+   # TODO TODO
+   # export inside the container.
+   #-e CONSUL_HTTP_ADDR=169.254.1.1:8500 \
+    #          -e CONSUL_RPC_ADDR=169.254.1.1:8400 ...
+   
+   #
+   # Host network.
+   #
+   
+   get_service_host_interface "${service_key}" 'Name'
+   local host_interface_nm="${__RESULT}"
+   ip_check_network_interface_exists "${host_interface_nm}"
+   local host_interface_exits="${__RESULT}"
+
+   if [[ 'true' == "${host_interface_exits}" ]]
+   then
+      cmd+=" --net ${host_interface_exits}" 
+   else
+      echo 'WARN: host interface not found.'
+   fi 
    
    # get the container volume.
    get_service_application "${service_key}" 'HostVolume'

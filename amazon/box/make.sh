@@ -13,14 +13,15 @@ set -o nounset
 set +o xtrace
 
 # Enforce parameter
-if [ "$#" -lt 1 ]; then
-  echo "USAGE: instance_key"
-  echo "EXAMPLE: admin"
+if [ "$#" -lt 2 ]; then
+  echo "USAGE: instance_key network_key"
+  echo "EXAMPLE: admin net"
   echo "Only provided $# arguments"
   exit 1
 fi
 
 instance_key="${1}"
+network_key="${2}"
 logfile_nm="${instance_key}".log
 
 ####
@@ -40,7 +41,7 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-get_datacenter 'Subnet'
+get_datacenter_network "${network_key}" 'Name' 
 subnet_nm="${__RESULT}"
 ec2_get_subnet_id "${subnet_nm}"
 subnet_id="${__RESULT}"
@@ -53,7 +54,7 @@ else
    echo "* subnet ID: ${subnet_id}."
 fi
 
-get_instance "${instance_key}" 'ParentImageName'
+get_datacenter_instance "${instance_key}" 'ParentImageName'
 image_nm="${__RESULT}"
 ec2_get_image_id "${image_nm}"
 image_id="${__RESULT}"
@@ -76,7 +77,7 @@ echo
 # Firewall
 #
 
-get_instance "${instance_key}" 'SgpName'
+get_datacenter_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -96,7 +97,7 @@ fi
 # SSH key
 #
 
-get_instance "${instance_key}" 'KeypairName'
+get_datacenter_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 ec2_check_aws_public_key_exists "${keypair_nm}" 
 key_exists="${__RESULT}"
@@ -120,11 +121,11 @@ get_public_key "${keypair_nm}" "${ACCESS_DIR}"
 public_key="${__RESULT}"
 
 ## Removes the default user, creates the user 'awsadmin' and sets the instance's hostname. 
-get_instance "${instance_key}" 'Hostname'
+get_datacenter_instance "${instance_key}" 'Hostname'
 hostname="${__RESULT}" 
-get_instance "${instance_key}" 'UserName'
+get_datacenter_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
-get_instance "${instance_key}" 'UserPassword'
+get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"    
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${user_pwd}")" 
@@ -137,7 +138,7 @@ awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${user_nm}" -v hostna
  
 echo 'cloud_init.yml ready.' 
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
@@ -157,7 +158,7 @@ fi
 
 echo "Creating ${instance_key} box ..."
    
-get_instance "${instance_key}" 'PrivateIP'
+get_datacenter_instance "${instance_key}" 'PrivateIP'
 private_ip="${__RESULT}" 
 get_datacenter 'Az'
 az_nm="${__RESULT}"

@@ -1,6 +1,6 @@
 {
     "bootstrap_expect": SEDbootstrap_expectSED,
-    "client_addr": "0.0.0.0",
+    "client_addr": "SEDclient_addrSED",
     "bind_addr": "SEDbind_addressSED",
     "datacenter": "Dublin-Central",
     "data_dir": "/var/consul",
@@ -15,6 +15,5 @@
     "leave_on_terminate": true,
     "log_level": "INFO",
     "rejoin_after_leave": true,
-    "server": true,
-    "ui": true
+    "server": true
 }

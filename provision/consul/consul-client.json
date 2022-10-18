@@ -1,5 +1,5 @@
 {
-    "client_addr": "0.0.0.0",
+    "client_addr": "SEDclient_addrSED",
     "bind_addr": "SEDbind_addressSED",
     "server": false,
     "datacenter": "Dublin-Central",

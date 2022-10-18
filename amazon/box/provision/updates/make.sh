@@ -24,7 +24,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box provision updates."
 ####
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -52,7 +52,7 @@ else
    echo "* ${instance_key} IP address: ${eip}."
 fi
 
-get_instance "${instance_key}" 'SgpName'
+get_datacenter_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -76,7 +76,7 @@ mkdir -p "${temporary_dir}"
 ## Firewall
 ##
  
-get_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -94,10 +94,10 @@ fi
 echo 'Provisioning the instance ...'
 # 
 
-get_instance "${instance_key}" 'KeypairName'
+get_datacenter_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
-get_instance "${instance_key}" 'UserName'
+get_datacenter_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
@@ -122,7 +122,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${temporary_dir}"/docker-install.sh \
     "${temporary_dir}"/awscli-update.sh      
 
-get_instance "${instance_key}" 'UserPassword'
+get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
 
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \

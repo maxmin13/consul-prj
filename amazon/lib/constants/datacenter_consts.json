@@ -1,194 +1,321 @@
 {
-        "Datacenter": {
-        	"Name": "consuldatacenter",
-        	"Cidr": "10.0.0.0/16",
-        	"Gateway": "consulgateway",
-        	"Region": "eu-west-1",
-        	"Az": "eu-west-1a",
-        	"Subnet": "consulnetwork",
-        	"SubnetCidr": "10.0.10.0/24",
-        	"SubnetGateway": "10.0.10.1",
-        	"RouteTable": "consulroutetable",
-        	"Instances": [ 	
-			{
-				"Key": "shared-instance",
-				"Name": "shared-box2",
-				"UserName": "awsadmin",
-				"UserPassword": "awsadmin",
-				"PrivateIP": "10.0.10.35",
-				"Hostname": "shared.maxmin.it",
-				"SgpName": "shared-sgp",
-				"KeypairName": "shared-key",
-				"ParentImageName": "amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
-				"TargetImageName": "shared-image",
-				"Applications": [
-					{
-						"Name": "ssh",
-						"Port": "38142"
-					}
-				] 
-			},
-			{
-				"Key": "admin-instance",
-				"Name": "admin-box2",
-				"UserName": "awsadmin",
-				"UserPassword": "awsadmin",
-				"PrivateIP": "10.0.10.34",
-				"Hostname": "admin.maxmin.it",
-				"SgpName": "admin-sgp",
-				"KeypairName": "admin-key",
-				"InstanceProfileName": "AdminInstanceProfile",
-				"RoleName": "AdminAWSrole",
-				"ParentImageName": "shared-image",
-				"Applications": [
-					{
-						"Name": "ssh",
-						"Port": "38142"
-					},
-					{
-						"Name": "consul",
-						"Mode": "server",
-						"SecretName": "consulkey",
-						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
-						"Port": {
-							"RpcPort": "8300",
-							"SerfLanPort": "8301",
-							"SerfWanPort": "8302",
-							"HttpPort": "8500",
-							"DnsPort": "8600"
-						}
-					}
-				]
-			},
-			{
-				"Key": "redis-instance",
-				"Name": "redis-box2",
-				"UserName": "awsadmin",
-				"UserPassword": "awsadmin",
-				"PrivateIP": "10.0.10.30",
-				"Hostname": "redis.maxmin.it",
-				"SgpName": "redis-sgp",
-				"KeypairName": "redis-key",
-				"InstanceProfileName": "RedisInstanceProfile",
-				"RoleName": "RedisAWSrole",
-				"ParentImageName": "shared-image",
-				"Applications": [
-					{
-						"Name": "ssh",
-						"Port": "38142"
-					},
-					{
-						"Name": "consul",
-						"Mode": "client",
-						"SecretName": "consulkey",
-						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
-						"Port": {
-							"RpcPort": "8300",
-							"SerfLanPort": "8301",
-							"SerfWanPort": "8302",
-							"HttpPort": "8500",
-							"DnsPort": "8600"
-						}
-					}
-				]
-			},
-			{
-				"Key": "sinatra-instance",
-				"Name": "sinatra-box2",
-				"UserName": "awsadmin",
-				"UserPassword": "awsadmin",
-				"PrivateIP": "10.0.10.31",
-				"Hostname": "sinatra.maxmin.it",
-				"SgpName": "sinatra-sgp",
-				"KeypairName": "sinatra-key",
-				"InstanceProfileName": "SinatraInstanceProfile",
-				"RoleName": "SinatraAWSrole",
-				"ParentImageName": "shared-image",
-				"Applications": [
-					{
-						"Name": "ssh",
-						"Port": "38142"
-					},
-					{
-						"Name": "consul",
-						"Mode": "client",
-						"SecretName": "consulkey",
-						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
-						"Port": {
-							"RpcPort": "8300",
-							"SerfLanPort": "8301",
-							"SerfWanPort": "8302",
-							"HttpPort": "8500",
-							"DnsPort": "8600"
-						}
-					}
-				]
-			},
-			{
-				"Key": "nginx-instance",
-				"Name": "nginx-box2",
-				"UserName": "awsadmin",
-				"UserPassword": "awsadmin",
-				"PrivateIP": "10.0.10.32",
-				"Hostname": "nginx.maxmin.it",
-				"SgpName": "nginx-sgp",
-				"KeypairName": "nginx-key",
-				"InstanceProfileName": "NginxInstanceProfile",
-				"RoleName": "NginxAWSrole",
-				"ParentImageName": "shared-image",
-				"Applications": [
-					{
-						"Name": "ssh",
-						"Port": "38142"
-					},
-					{
-						"Name": "consul",
-						"Mode": "client",
-						"SecretName": "consulkey",
-						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
-						"Port": {
-							"RpcPort": "8300",
-							"SerfLanPort": "8301",
-							"SerfWanPort": "8302",
-							"HttpPort": "8500",
-							"DnsPort": "8600"
-						}
-					}
-				]
-			},
-			{
-				"Key": "jenkins-instance",
-				"Name": "jenkins-box2",
-				"UserName": "awsadmin",
-				"UserPassword": "awsadmin",
-				"PrivateIP": "10.0.10.33",
-				"Hostname": "jenkins.maxmin.it",
-				"SgpName": "jenkins-sgp",
-				"KeypairName": "jenkins-key",
-				"InstanceProfileName": "JenkinsInstanceProfile",
-				"RoleName": "JenkinsAWSrole",
-				"ParentImageName": "shared-image",
-				"Applications": [
-					{
-						"Name": "ssh",
-						"Port": "38142"
-					},
-					{
-						"Name": "consul",
-						"Mode": "client",
-						"SecretName": "consulkey",
-						"RepoUrl": "https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo",
-						"Port": {
-							"RpcPort": "8300",
-							"SerfLanPort": "8301",
-							"SerfWanPort": "8302",
-							"HttpPort": "8500",
-							"DnsPort": "8600"
-						}
-					}
-				]
-			}
-        	]
-        }
-}   
-
+   "Datacenter":{
+      "Name":"consuldatacenter",
+      "Cidr":"10.0.0.0/16",
+      "DnsAddress":"10.0.0.2",
+      "Gateway":"internetgateway",
+      "Region":"eu-west-1",
+      "Az":"eu-west-1a",
+      "RouteTable":"internettable",
+      "TODO TODO TODO TODO":"HOW CAN SUBNET AND NETWORK CARDS BE REPRESENTED",
+      "Networks":[
+         {
+            "Description":"Network shared by all the AWS instances.",
+            "Key":"hostsnet-network",
+            "Name":"hostsnet",
+            "Cidr":"10.0.10.0/24"
+         },
+         {
+            "Description":"dummy interface to which containers and Consul bind.",
+            "Key":"dummy0-network",
+            "Name":"dummy0",
+            "Cidr":"169.254.1.1/32",
+            "Address":"169.254.1.1",
+            "Mask":"255.255.255.255"
+         }
+      ],
+      "Instances":[
+         {
+            "Key":"shared-instance",
+            "Name":"shared-box",
+            "UserName":"awsadmin",
+            "UserPassword":"awsadmin",
+            "PrivateIP":"10.0.10.35",
+            "Hostname":"shared.maxmin.it",
+            "SgpName":"shared-sgp",
+            "KeypairName":"shared-key",
+            "ParentImageName":"amzn2-ami-hvm-2.0.20210701.0-x86_64-gp2",
+            "TargetImageName":"shared-image",
+            "Applications":[
+               {
+                  "Key":"ssh-application",
+                  "Name":"ssh",
+                  "Port":"38142"
+               }
+            ]
+         },
+         {
+            "Key":"admin-instance",
+            "Name":"admin-box",
+            "UserName":"awsadmin",
+            "UserPassword":"awsadmin",
+            "PrivateIP":"10.0.10.34",
+            "Hostname":"admin.maxmin.it",
+            "SgpName":"admin-sgp",
+            "KeypairName":"admin-key",
+            "InstanceProfileName":"AdminInstanceProfile",
+            "RoleName":"AdminAWSrole",
+            "ParentImageName":"shared-image",
+            "Applications":[
+               {
+                  "Key":"ssh-application",
+                  "Name":"ssh",
+                  "Port":"38142"
+               },
+               {
+                  "Key":"consul-application",
+                  "Description":"Consul agent for the instance.",
+                  "Name":"consul",
+                  "Mode":"server",
+                  "SecretName":"consulkey",
+                  "Port":{
+                     "RpcPort":"8300",
+                     "SerfLanPort":"8301",
+                     "SerfWanPort":"8302",
+                     "HttpPort":"8500",
+                     "DnsPort":"8600"
+                  },
+                  "ClientInterface":{
+                     "Description":"HTTP, RPC CLI, DNS interface",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  }
+               },
+               {
+                  "Key":"dnsmasq-application",
+                  "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
+                  "Name":"dnsmasq",
+                  "Port":{
+                     "DnsPort":"8600"
+                  },
+                  "DnsInterface":{
+                     "Description":"Interface where DNS queries are forwarded.",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  }
+               },
+               {
+                  "Key":"nginx-application",
+                  "Description":"Reverse proxy for Consul ui.",
+                  "Name":"nginx",
+                  "Port":{
+                     "ProxyPort":"80"
+                  }
+               }
+            ]
+         },
+         {
+            "Key":"redis-instance",
+            "Name":"redis-box",
+            "UserName":"awsadmin",
+            "UserPassword":"awsadmin",
+            "PrivateIP":"10.0.10.30",
+            "Hostname":"redis.maxmin.it",
+            "SgpName":"redis-sgp",
+            "KeypairName":"redis-key",
+            "InstanceProfileName":"RedisInstanceProfile",
+            "RoleName":"RedisAWSrole",
+            "ParentImageName":"shared-image",
+            "Applications":[
+               {
+                  "Key":"ssh-application",
+                  "Name":"ssh",
+                  "Port":"38142"
+               },
+               {
+                  "Key":"consul-application",
+                  "Description":"Consul agent for the instance.",
+                  "Name":"consul",
+                  "Mode":"client",
+                  "SecretName":"consulkey",
+                  "Port":{
+                     "RpcPort":"8300",
+                     "SerfLanPort":"8301",
+                     "SerfWanPort":"8302",
+                     "HttpPort":"8500",
+                     "DnsPort":"8600"
+                  },
+                  "ClientInterface":{
+                     "Description":"HTTP, RPC CLI, DNS interface",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  },
+                  "Url":"http://<address>:<port>/ui/consul"
+               },
+               {
+                  "Key":"dnsmasq-application",
+                  "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
+                  "Name":"dnsmasq",
+                  "Port":{
+                     "DnsPort":"8600"
+                  },
+                  "DnsInterface":{
+                     "Description":"Interface where DNS queries are forwarded.",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  }
+               }
+            ]
+         },
+         {
+            "Key":"sinatra-instance",
+            "Name":"sinatra-box",
+            "UserName":"awsadmin",
+            "UserPassword":"awsadmin",
+            "PrivateIP":"10.0.10.31",
+            "Hostname":"sinatra.maxmin.it",
+            "SgpName":"sinatra-sgp",
+            "KeypairName":"sinatra-key",
+            "InstanceProfileName":"SinatraInstanceProfile",
+            "RoleName":"SinatraAWSrole",
+            "ParentImageName":"shared-image",
+            "Applications":[
+               {
+                  "Key":"ssh-application",
+                  "Name":"ssh",
+                  "Port":"38142"
+               },
+               {
+                  "Key":"consul-application",
+                  "Description":"Consul agent for the instance.",
+                  "Name":"consul",
+                  "Mode":"client",
+                  "SecretName":"consulkey",
+                  "Port":{
+                     "RpcPort":"8300",
+                     "SerfLanPort":"8301",
+                     "SerfWanPort":"8302",
+                     "HttpPort":"8500",
+                     "DnsPort":"8600"
+                  },
+                  "ClientInterface":{
+                     "Description":"HTTP, RPC CLI, DNS interface",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  },
+                  "Url":"http://<address>:<port>/ui/consul"
+               },
+               {
+                  "Key":"dnsmasq-application",
+                  "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
+                  "Name":"dnsmasq",
+                  "Port":{
+                     "DnsPort":"8600"
+                  },
+                  "DnsInterface":{
+                     "Description":"Interface where DNS queries are forwarded.",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  }
+               }
+            ]
+         },
+         {
+            "Key":"nginx-instance",
+            "Name":"nginx-box",
+            "UserName":"awsadmin",
+            "UserPassword":"awsadmin",
+            "PrivateIP":"10.0.10.32",
+            "Hostname":"nginx.maxmin.it",
+            "SgpName":"nginx-sgp",
+            "KeypairName":"nginx-key",
+            "InstanceProfileName":"NginxInstanceProfile",
+            "RoleName":"NginxAWSrole",
+            "ParentImageName":"shared-image",
+            "Applications":[
+               {
+                  "Key":"ssh-application",
+                  "Name":"ssh",
+                  "Port":"38142"
+               },
+               {
+                  "Key":"consul-application",
+                  "Description":"Consul agent for the instance.",
+                  "Name":"consul",
+                  "Mode":"client",
+                  "SecretName":"consulkey",
+                  "Port":{
+                     "RpcPort":"8300",
+                     "SerfLanPort":"8301",
+                     "SerfWanPort":"8302",
+                     "HttpPort":"8500",
+                     "DnsPort":"8600"
+                  },
+                  "ClientInterface":{
+                     "Description":"HTTP, RPC CLI, DNS interface",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  },
+                  "Url":"http://<address>:<port>/ui/consul"
+               },
+               {
+                  "Key":"dnsmasq-application",
+                  "Description":"Instance DNS server.",
+                  "Name":"dnsmasq",
+                  "Port":{
+                     "DnsPort":"8600"
+                  },
+                  "DnsInterface":{
+                     "Description":"Interface where DNS queries are forwarded.",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  }
+               }
+            ]
+         },
+         {
+            "Key":"jenkins-instance",
+            "Name":"jenkins-box",
+            "UserName":"awsadmin",
+            "UserPassword":"awsadmin",
+            "PrivateIP":"10.0.10.33",
+            "Hostname":"jenkins.maxmin.it",
+            "SgpName":"jenkins-sgp",
+            "KeypairName":"jenkins-key",
+            "InstanceProfileName":"JenkinsInstanceProfile",
+            "RoleName":"JenkinsAWSrole",
+            "ParentImageName":"shared-image",
+            "Applications":[
+               {
+                  "Key":"ssh-application",
+                  "Name":"ssh",
+                  "Port":"38142"
+               },
+               {
+                  "Key":"consul-application",
+                  "Description":"Consul agent for the instance.",
+                  "Name":"consul",
+                  "Mode":"client",
+                  "SecretName":"consulkey",
+                  "Port":{
+                     "RpcPort":"8300",
+                     "SerfLanPort":"8301",
+                     "SerfWanPort":"8302",
+                     "HttpPort":"8500",
+                     "DnsPort":"8600"
+                  },
+                  "ClientInterface":{
+                     "Description":"HTTP, RPC CLI, DNS interface",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  },
+                  "Url":"http://<address>:<port>/ui/consul"
+               },
+               {
+                  "Key":"dnsmasq-application",
+                  "Description":"Instance DNS server.",
+                  "Name":"dnsmasq",
+                  "Port":{
+                     "DnsPort":"8600"
+                  },
+                  "DnsInterface":{
+                     "Description":"Interface where DNS queries are forwarded.",
+                     "Name":"dummy0",
+                     "Ip":"169.254.1.1"
+                  }
+               }
+            ]
+         }
+      ]
+   }
+}

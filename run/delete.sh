@@ -26,31 +26,31 @@ mkdir -p "${LOGS_DIR}"
 
 ## Docker base images ##
 
-. "${PROJECT_DIR}"/amazon/registry/delete.sh  
+. "${PROJECT_DIR}"/amazon/registry/delete.sh 'admin-instance'  
 
 ## AWS EC2 instances ##
 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'jenkins-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-instance' 'hostsnet-network'
 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'nginx-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-instance' 'hostsnet-network'
 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'sinatra-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-instance' 'hostsnet-network'
 
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'redis-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis-instance' 'hostsnet-network'
 
    # Jumpbox.
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin-instance'
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'admin-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin-instance'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin-instance' 'hostsnet-network'
 
 ## AWS custom images ##
 
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared-instance'          
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared-instance' 'hostsnet-network'      
 . "${PROJECT_DIR}"/amazon/image/delete.sh 'shared-instance'           
 
 ## Permission policies ##
@@ -59,6 +59,6 @@ mkdir -p "${LOGS_DIR}"
 
 ## Datacenter ##
 
-. "${PROJECT_DIR}"/amazon/datacenter/delete.sh  
+. "${PROJECT_DIR}"/amazon/datacenter/delete.sh 'hostsnet-network'     
 
 echo

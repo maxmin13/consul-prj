@@ -11,6 +11,15 @@ set +o xtrace
 ## Load Balancers and EC2 instances. 
 ##
 
+# Enforce parameter
+if [ "$#" -lt 1 ]; then
+  echo "USAGE: network_key"
+  echo "EXAMPLE: net"
+  echo "Only provided $# arguments"
+  exit 1
+fi
+
+network_key="${1}"
 logfile_nm='datacenter.log'
 
 ###
@@ -26,9 +35,9 @@ dtc_cidr="${__RESULT}"
 
 if [[ -n "${dtc_id}" ]]
 then
-   echo 'WARN: the data center has already been created.'
+   echo 'WARN: data center already created.'
 else
-   ## Make a new VPC with a master 10.0.10.0/16 subnet
+   ## Make a new VPC with a 10.0.10.0/16 subnet
    ec2_create_datacenter "${dtc_nm}" "${dtc_cidr}" >> "${LOGS_DIR}"/"${logfile_nm}"
    ec2_get_datacenter_id "${dtc_nm}"
    dtc_id="${__RESULT}"
@@ -47,7 +56,7 @@ gateway_id="${__RESULT}"
 
 if [[ -n "${gateway_id}" ]]
 then
-   echo 'WARN: the internet gateway has already been created.'
+   echo 'WARN: internet gateway already created.'
 else
    ec2_create_internet_gateway "${gateway_nm}" "${dtc_id}" >> "${LOGS_DIR}"/"${logfile_nm}"
    ec2_get_internet_gateway_id "${gateway_nm}"
@@ -64,7 +73,7 @@ if [[ 'available' != "${gateway_status}" ]]
 then
    ec2_attach_internet_gateway "${gateway_id}" "${dtc_id}"
    
-   echo 'The internet gateway has been attached to the Data Center.'	
+   echo 'Internet gateway attached to the data center.'	
 fi
 
 # 
@@ -78,13 +87,13 @@ rtb_id="${__RESULT}"
 							
 if [[ -n "${rtb_id}" ]]
 then
-   echo 'WARN: the route table has already been created.'
+   echo 'WARN: route table already created.'
 else
    ec2_create_route_table "${rtb_nm}" "${dtc_id}" >> "${LOGS_DIR}"/"${logfile_nm}"
    ec2_get_route_table_id "${rtb_nm}"
    rtb_id="${__RESULT}"
                    
-   echo 'Created route table.'
+   echo 'Route table created.'
 fi
 
 ec2_check_has_route "${rtb_id}" "${gateway_id}" '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
@@ -94,7 +103,8 @@ if [[ 'false' == "${has_route}" ]]
 then
    ec2_set_route "${rtb_id}" "${gateway_id}" '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo 'Created route that points all traffic to the internet gateway.'
+   # Create a route that points all traffic to the internet gateway.
+   echo 'Route created.'
 else
    echo 'WARN: route already created.'
 fi
@@ -103,28 +113,23 @@ fi
 # Subnet
 #
 
-get_datacenter 'Subnet' 
+get_datacenter_network "${network_key}" 'Name' 
 subnet_nm="${__RESULT}"
 ec2_get_subnet_id "${subnet_nm}"
 subnet_id="${__RESULT}"
 
 if [[ -n "${subnet_id}" ]]
 then
-   echo 'WARN: the subnet has already been created.'
+   echo 'WARN: subnet already created.'
 else
-
    get_datacenter 'Az'
    az_nm="${__RESULT}"
-   get_datacenter 'SubnetCidr' 
+   get_datacenter_network "${network_key}" 'Cidr'
    subnet_cidr="${__RESULT}"
+
+   ec2_create_subnet "${subnet_nm}" "${subnet_cidr}" "${az_nm}" "${dtc_id}" "${rtb_id}" >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   ec2_create_subnet "${subnet_nm}" \
-       "${subnet_cidr}" "${az_nm}" "${dtc_id}" "${rtb_id}" >> "${LOGS_DIR}"/"${logfile_nm}"
-       
-   ec2_get_subnet_id "${subnet_nm}"
-   subnet_id="${__RESULT}"
-   
-   echo "The subnet has been created in the ${az_nm} availability zone and associated to the route table."    
+   echo "Subnet created."    
 fi
 
 echo

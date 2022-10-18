@@ -29,7 +29,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box provision security."
 ####
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -57,7 +57,7 @@ else
    echo "* ${instance_key} IP address: ${eip}."
 fi
 
-get_instance "${instance_key}" 'SgpName'
+get_datacenter_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -93,7 +93,7 @@ else
    echo "WARN: access already granted on 22 tcp 0.0.0.0/0."
 fi
  
-get_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
   
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
@@ -113,10 +113,10 @@ echo 'Provisioning the instance ...'
 # 
 
 # Verify it the SSH port is still 22 or it has changed.
-get_instance "${instance_key}" 'KeypairName'
+get_datacenter_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
-get_instance "${instance_key}" 'UserName'
+get_datacenter_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
 remote_dir=/home/"${user_nm}"/script
 
@@ -148,7 +148,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${current_ssh_port}" "${user_nm
     "${PROVISION_DIR}"/yumupdate.sh \
     "${temporary_dir}"/sshd_config        
 
-get_instance "${instance_key}" 'UserPassword'
+get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
 
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \

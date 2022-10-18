@@ -5,6 +5,8 @@
 ############################################################
 # Runs a service in a Docker container.
 # Registers the container with the local Consul agent.
+# Registers the container with the dnsmasq DNS service i the
+# container.
 ############################################################
 
 set -o errexit

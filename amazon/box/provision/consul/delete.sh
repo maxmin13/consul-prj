@@ -27,7 +27,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box Consul remove."
 ####
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -59,7 +59,7 @@ else
    echo "* IP address: ${eip}."
 fi
 
-get_instance "${instance_key}" 'SgpName'
+get_datacenter_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -83,28 +83,28 @@ echo
 # Permissions.
 #
 
-get_instance "${instance_key}" 'RoleName'
+get_datacenter_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}" 
 
 iam_check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
-is_permission_policy_associated="${__RESULT}"
+is_sm_policy_associated="${__RESULT}"
 
-if [[ 'false' == "${is_permission_policy_associated}" ]]
+if [[ 'false' == "${is_sm_policy_associated}" ]]
 then
-   echo 'Associating permission policy to role ...'
+   echo 'Associating SM permission policy to role ...'
 
    iam_attach_permission_policy_to_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
 
-   echo 'Permission policy associated to the role.'
+   echo 'SM permission policy associated to role.'
 else
-   echo 'Permission policy already associated to the role.'
+   echo 'WARN: SM permission policy already associated to role.'
 fi 
 
 #
 # Firewall rules
 #
 
-get_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" 'ssh' 'Port'
 ssh_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -118,7 +118,7 @@ else
    echo "WARN: access already granted ${ssh_port} tcp 0.0.0.0/0."
 fi
 
-get_application_port "${instance_key}" 'consul' 'SerfLanPort'
+get_datacenter_application_port "${instance_key}" 'consul' 'SerfLanPort'
 serflan_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -144,7 +144,7 @@ else
    echo "WARN: access already revoked ${serflan_port} udp 0.0.0.0/0."
 fi
 
-get_application_port "${instance_key}" 'consul' 'SerfWanPort'
+get_datacenter_application_port "${instance_key}" 'consul' 'SerfWanPort'
 serfwan_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -170,7 +170,7 @@ else
    echo "WARN: access already revoked ${serfwan_port} udp 0.0.0.0/0."
 fi
 
-get_application_port "${instance_key}" 'consul' 'RpcPort'
+get_datacenter_application_port "${instance_key}" 'consul' 'RpcPort'
 rpc_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -184,7 +184,7 @@ else
    echo "WARN: access already revoked ${rpc_port} tcp 0.0.0.0/0."
 fi
 
-get_application_port "${instance_key}" 'consul' 'HttpPort'
+get_datacenter_application_port "${instance_key}" 'consul' 'HttpPort'
 http_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -198,7 +198,7 @@ else
    echo "WARN: access already revoked ${http_port} tcp 0.0.0.0/0."
 fi
 
-get_application_port "${instance_key}" 'consul' 'DnsPort'
+get_datacenter_application_port "${instance_key}" 'consul' 'DnsPort'
 dns_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -226,9 +226,9 @@ fi
 
 echo "Provisioning ${instance_key} instance ..."
  
-get_instance "${instance_key}" 'UserName'
+get_datacenter_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
-get_instance "${instance_key}" 'KeypairName'
+get_datacenter_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}" 
 private_key_file="${ACCESS_DIR}"/"${keypair_nm}" 
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
@@ -255,6 +255,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/service_consts_utils.sh \
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
     "${LIBRARY_DIR}"/consul.sh \
+    "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
     "${temporary_dir}"/consul-remove.sh 
     
@@ -264,7 +265,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
    
 echo 'Consul scripts provisioned.'
 
-get_instance "${instance_key}" "UserPassword"
+get_datacenter_instance "${instance_key}" "UserPassword"
 user_pwd="${__RESULT}"
 
 ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/consul" \
@@ -328,17 +329,17 @@ fi
 #
 
 iam_check_role_has_permission_policy_attached "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
-is_permission_policy_associated="${__RESULT}"
+is_sm_policy_associated="${__RESULT}"
 
-if [[ 'true' == "${is_permission_policy_associated}" ]]
+if [[ 'true' == "${is_sm_policy_associated}" ]]
 then
-   echo 'Detaching permission policy from role ...'
-
+   echo 'Detaching secretsmangers permission policy from role ...'
+ 
    iam_detach_permission_policy_from_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
-
-   echo 'Permission policy detached from role.'
+      
+   echo 'Secretsmangers permission policy detached from role.'
 else
-   echo 'WARN: permission policy already detached from role.'
+   echo 'WARN: secretsmangers permission policy already detached from role.'
 fi  
 
 ## Clearing

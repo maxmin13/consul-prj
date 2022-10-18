@@ -5,6 +5,16 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+# Enforce parameter
+if [ "$#" -lt 1 ]; then
+  echo "USAGE: network_key"
+  echo "EXAMPLE: net"
+  echo "Only provided $# arguments"
+  exit 1
+fi
+
+network_key="${1}"
+
 ###
 STEP 'Data-center'
 ###
@@ -42,7 +52,7 @@ else
    fi
 fi
 
-get_datacenter 'Subnet' 
+get_datacenter_network "${network_key}" 'Name' 
 subnet_nm="${__RESULT}"
 ec2_get_subnet_id "${subnet_nm}"
 subnet_id="${__RESULT}"
@@ -80,7 +90,7 @@ then
       then
          aws ec2 detach-internet-gateway --internet-gateway-id  "${gateway_id}" --vpc-id "${dtc_id}"
          
-         echo 'Internet gateway detached from VPC.'
+         echo 'Internet gateway detached.'
       fi
    fi
     
@@ -110,9 +120,6 @@ then
    
    echo 'Route table deleted.'
 fi
-
-## We can finally delete the VPC, all remaining assets are also deleted (eg route table, default security group..
-## Tags are deleted automatically when associated resource dies.
                    
 if [[ -n "${dtc_id}" ]]
 then

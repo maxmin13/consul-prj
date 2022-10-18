@@ -20,7 +20,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} image"
 ####
 
-get_instance "${instance_key}" 'TargetImageName'
+get_datacenter_instance "${instance_key}" 'TargetImageName'
 image_nm="${__RESULT}" 
 ec2_get_image_id "${image_nm}"
 image_id="${__RESULT}"

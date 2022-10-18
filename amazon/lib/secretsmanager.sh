@@ -21,10 +21,10 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +secret_nm  -- the name of the secret.
-# +region     -- the region of the secret.
-# +key        -- the secret's key. 
-# +value      -- the secret's value.
+# +secret_nm -- the name of the secret.
+# +region    -- the region of the secret.
+# +key       -- the secret's key. 
+# +value     -- the secret's value.
 
 # Returns:      
 #  none.  
@@ -61,7 +61,7 @@ function sm_create_secret()
   
    if [[ 0 -ne "${exit_code}" ]]
    then
-      echo 'ERROR: creating the secret.'
+      echo 'ERROR: creating secret.'
    fi 
    
    return "${exit_code}"

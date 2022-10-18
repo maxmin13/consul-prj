@@ -9,4 +9,3 @@
 ECR_POLICY_NM='AmazonEC2ContainerRegistryFullAccess'
 SECRETSMANAGER_POLICY_NM="AmazonSecretsManagerAccess"
 
-

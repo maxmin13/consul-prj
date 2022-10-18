@@ -26,7 +26,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} box permissions"
 ####
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_instance_is_running "${instance_nm}"
 is_running="${__RESULT}"
@@ -42,7 +42,7 @@ else
    return 0
 fi
 
-get_instance "${instance_key}" 'InstanceProfileName'
+get_datacenter_instance "${instance_key}" 'InstanceProfileName'
 profile_nm="${__RESULT}"
 iam_check_instance_profile_exists "${profile_nm}"
 profile_exists="${__RESULT}"
@@ -57,7 +57,7 @@ else
    echo '* WARN: instance profile not found.'
 fi
 
-get_instance "${instance_key}" 'RoleName'
+get_datacenter_instance "${instance_key}" 'RoleName'
 role_nm="${__RESULT}"
 iam_check_role_exists "${role_nm}"
 role_exists="${__RESULT}"

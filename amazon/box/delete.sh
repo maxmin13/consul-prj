@@ -12,21 +12,54 @@ set -o nounset
 set +o xtrace
 
 # Enforce parameter
-if [ "$#" -lt 1 ]; then
-  echo "USAGE: instance_nm"
-  echo "EXAMPLE: admin"
+if [ "$#" -lt 2 ]; then
+  echo "USAGE: instance_key network_key"
+  echo "EXAMPLE: admin net"
   echo "Only provided $# arguments"
   exit 1
 fi
 
 instance_key="${1}"
+network_key="${2}"
 logfile_nm="${instance_key}".log
 
 ####
 STEP "${instance_key} box"
 ####
 
-get_instance "${instance_key}" 'Name'
+get_datacenter 'Name'
+dtc_nm="${__RESULT}"
+ec2_get_datacenter_id "${dtc_nm}"
+dtc_id="${__RESULT}"
+  
+if [[ -z "${dtc_id}" ]]
+then
+   echo '* ERROR: data center not found.'
+   exit 1
+else
+   echo "* data center ID: ${dtc_id}."
+fi
+
+get_datacenter_network "${network_key}" 'Name' 
+subnet_nm="${__RESULT}"
+ec2_get_subnet_id "${subnet_nm}"
+subnet_id="${__RESULT}"
+
+if [[ -z "${subnet_id}" ]]
+then
+   echo '* ERROR: subnet not found.'
+   exit 1
+else
+   echo "* subnet ID: ${subnet_id}."
+fi
+
+temporary_dir="${TMP_DIR}"/"${instance_key}"
+rm -rf  "${temporary_dir:?}"
+mkdir -p "${temporary_dir}"
+
+echo
+
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"
@@ -41,7 +74,7 @@ else
    echo "* ${instance_key} box ID: ${instance_id} (${instance_st})."
 fi
 
-get_instance "${instance_key}" 'SgpName'
+get_datacenter_instance "${instance_key}" 'SgpName'
 sgp_nm="${__RESULT}"
 ec2_get_security_group_id "${sgp_nm}"
 sgp_id="${__RESULT}"
@@ -120,7 +153,7 @@ fi
 # SSH key
 #
 
-get_instance "${instance_key}" 'KeypairName'
+get_datacenter_instance "${instance_key}" 'KeypairName'
 keypair_nm="${__RESULT}"
 ec2_check_aws_public_key_exists "${keypair_nm}" 
 key_exists="${__RESULT}"

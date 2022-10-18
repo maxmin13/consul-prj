@@ -1,7 +1,9 @@
 
 Consul:
 
-http://52.212.247.125:8500/ui
+http://63.35.217.230:8500/consul/ui
+dig admin.maxmin.it.node.consul
+dig google.com
 
 
 Ngix:
@@ -25,4 +27,11 @@ http://34.241.209.198:80/jenkins
 Redis:
 
 redis-cli -h 127.0.0.1 -p 49161
+
+
+
+
+
+
+
 

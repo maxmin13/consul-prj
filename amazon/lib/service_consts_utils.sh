@@ -152,31 +152,6 @@ function get_service_application()
    return "${exit_code}"
 }
 
-function get_service_engine()
-{
-   if [[ $# -lt 2 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT=''
-   local exit_code=0
-   local -r service_key="${1}"
-   local -r property_nm="${2}"
-   local property_val=''
-
-   get_service_container "${service_key}" "Engine"
-   # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
-
-   # shellcheck disable=SC2034
-   __RESULT="${property_val}"
-   
-   return "${exit_code}"
-}
-
-# container application's url.
 function get_service_webapp_url()
 {
    if [[ $# -lt 1 ]]
@@ -214,3 +189,73 @@ function get_service_webapp_url()
    return "${exit_code}"
 }
 
+function get_service_engine()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r service_key="${1}"
+   local -r property_nm="${2}"
+   local property_val=''
+
+   get_service_container "${service_key}" "Engine"
+   # shellcheck disable=SC2086
+   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
+
+   # shellcheck disable=SC2034
+   __RESULT="${property_val}"
+   
+   return "${exit_code}"
+}
+
+function get_service_host_interface()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r service_key="${1}"
+   local property_val=''
+
+   get_service_container "${service_key}" "HostInterface"
+   # shellcheck disable=SC2086
+   property_val=$(echo $__RESULT | jq -r -c '.Name // empty') 
+
+   # shellcheck disable=SC2034
+   __RESULT="${property_val}"
+   
+   return "${exit_code}"
+}
+
+function get_service_dns_interface()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r service_key="${1}"
+   local -r property_nm="${2}"
+   local property_val=''
+
+   get_service_container "${service_key}" "DnsInterface"
+   # shellcheck disable=SC2086
+   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
+
+   # shellcheck disable=SC2034
+   __RESULT="${property_val}"
+   
+   return "${exit_code}"
+}

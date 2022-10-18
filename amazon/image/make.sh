@@ -28,7 +28,7 @@ logfile_nm="${instance_key}".log
 STEP "${instance_key} image"
 ####
 
-get_instance "${instance_key}" 'TargetImageName'
+get_datacenter_instance "${instance_key}" 'TargetImageName'
 image_nm="${__RESULT}" 
 ec2_get_image_id "${image_nm}"
 image_id="${__RESULT}"
@@ -53,7 +53,7 @@ fi
 # Amazon EC2 powers down the instance before creating the AMI to ensure that everything on the 
 # instance is stopped and in a consistent state during the creation process.
 
-get_instance "${instance_key}" 'Name'
+get_datacenter_instance "${instance_key}" 'Name'
 instance_nm="${__RESULT}"
 ec2_get_instance_id "${instance_nm}"
 instance_id="${__RESULT}"

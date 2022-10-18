@@ -1,0 +1,8 @@
+NAME=SEDdummy_nmSED
+DEVICE=SEDdummy_nmSED
+MACADDR=00:22:22:ff:ff:ff
+IPADDR=SEDdummy_addrSED
+NETMASK=SEDdummy_maskSED
+ONBOOT=yes
+TYPE=Ethernet
+NM_CONTROLLED=no
