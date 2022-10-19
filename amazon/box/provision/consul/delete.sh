@@ -20,6 +20,8 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
+ssh_key='ssh-application'
+consul_key='consul-application'
 instance_key="${1}"
 logfile_nm="${instance_key}".log
 
@@ -104,7 +106,7 @@ fi
 # Firewall rules
 #
 
-get_datacenter_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" "${ssh_key}" 'Port'
 ssh_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -118,7 +120,7 @@ else
    echo "WARN: access already granted ${ssh_port} tcp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'SerfLanPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'SerfLanPort'
 serflan_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -144,7 +146,7 @@ else
    echo "WARN: access already revoked ${serflan_port} udp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'SerfWanPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'SerfWanPort'
 serfwan_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -170,7 +172,7 @@ else
    echo "WARN: access already revoked ${serfwan_port} udp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'RpcPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'RpcPort'
 rpc_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -184,7 +186,7 @@ else
    echo "WARN: access already revoked ${rpc_port} tcp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'HttpPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'HttpPort'
 http_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -198,7 +200,7 @@ else
    echo "WARN: access already revoked ${http_port} tcp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'DnsPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'DnsPort'
 dns_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -246,6 +248,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul/
 
 sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
+    -e "s/SEDconsul_keySED/${consul_key}/g" \
     "${PROVISION_DIR}"/consul/consul-remove.sh > "${temporary_dir}"/consul-remove.sh  
 
 echo 'consul-remove.sh ready.' 
@@ -257,7 +260,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
-    "${temporary_dir}"/consul-remove.sh 
+    "${temporary_dir}"/consul-remove.sh
     
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/consul/constants \
     "${LIBRARY_DIR}"/constants/datacenter_consts.json \

@@ -17,6 +17,7 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
+ssh_key='ssh-application'
 instance_key="${1}"
 logfile_nm="${instance_key}".log
 
@@ -76,7 +77,7 @@ mkdir -p "${temporary_dir}"
 ## Firewall
 ##
  
-get_datacenter_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" "${ssh_key}" 'Port'
 ssh_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"

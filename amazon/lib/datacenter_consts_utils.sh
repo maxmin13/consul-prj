@@ -124,7 +124,7 @@ function get_datacenter_application()
    # shellcheck disable=SC2002
    property_val=$(cat "${LIBRARY_DIR}"/constants/datacenter_consts.json | 
    	jq -r --arg instancekey "${instance_key}" -c '.Datacenter.Instances[] | select(.Key | index($instancekey))' |
-   	   jq -r --arg name "${application_key}" -c '.Applications[] | select(.Name | index($name))' |
+   	   jq -r --arg applicationKey "${application_key}" -c '.Applications[] | select(.Key | index($applicationKey))' |
    	      jq -r --arg property "${property_nm}" -c '.[$property] // empty')
    
    # shellcheck disable=SC2034
@@ -231,12 +231,12 @@ function get_datacenter_application_url()
    if [[ 4 -eq "${#}" ]]
    then
       webapp_address="${3}"
-      webapp_port="${2}"
+      webapp_port="${4}"
    fi
 
-   get_datacenter_application "${instance_key}" "${application_key}" 'ClientInterface'
+   get_datacenter_application "${instance_key}" "${application_key}" 'Url'
    # shellcheck disable=SC2086
-   url_val=$(echo $__RESULT | jq -r -c '.Url // empty') 
+   url_val="${__RESULT}"
    url_val=$(sed -e "s|<address>|${webapp_address}|g" -e "s|<port>|${webapp_port}|g" <<< "${url_val}")
    
    # shellcheck disable=SC2034

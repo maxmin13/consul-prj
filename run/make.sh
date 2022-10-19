@@ -24,6 +24,13 @@ source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
+
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin-instance'
+
+exit
+exit
+exit
+
 ## Datacenter ##
 
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh 'hostsnet-network'

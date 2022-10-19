@@ -79,7 +79,8 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
-                  }
+                  },
+                  "Url":"http://<address>:<port>/ui/consul"
                },
                {
                   "Key":"dnsmasq-application",
@@ -139,8 +140,7 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
-                  },
-                  "Url":"http://<address>:<port>/ui/consul"
+                  }
                },
                {
                   "Key":"dnsmasq-application",
@@ -192,8 +192,7 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
-                  },
-                  "Url":"http://<address>:<port>/ui/consul"
+                  }
                },
                {
                   "Key":"dnsmasq-application",
@@ -245,8 +244,7 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
-                  },
-                  "Url":"http://<address>:<port>/ui/consul"
+                  }
                },
                {
                   "Key":"dnsmasq-application",
@@ -298,8 +296,7 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
-                  },
-                  "Url":"http://<address>:<port>/ui/consul"
+                  }
                },
                {
                   "Key":"dnsmasq-application",

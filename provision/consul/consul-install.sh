@@ -26,8 +26,10 @@ REMOTE_DIR='SEDremote_dirSED'
 LIBRARY_DIR='SEDlibrary_dirSED'	
 INSTANCE_KEY='SEDinstance_keySED'
 NGINX_KEY='SEDnginx_keySED'
+CONSUL_KEY='SEDconsul_keySED'
+DNSMASQ_KEY='SEDdnsmasq_keySED'
 DUMMY_KEY='SEDdummy_keySED'
-ADMIN_KEY='SEDadmin_keySED'						
+ADMIN_INSTANCE_KEY='SEDadmin_instance_keySED'						
 ADMIN_EIP='SEDadmin_eipSED'									
 
 source "${LIBRARY_DIR}"/general_utils.sh
@@ -37,9 +39,11 @@ source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh
 source "${LIBRARY_DIR}"/consul.sh
 
+exit
+
 yum update -y && yum install -y yum-utils jq
 
-get_datacenter_application "${INSTANCE_KEY}" 'consul' 'Mode'
+get_datacenter_application "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Mode'
 consul_mode="${__RESULT}"
 
 ####
@@ -80,7 +84,7 @@ sed -e "s/SEDdummy_nmSED/${dummy_nm}/g" \
 
 get_datacenter 'Region'
 region="${__RESULT}"
-get_datacenter_application "${INSTANCE_KEY}" 'consul' 'SecretName'
+get_datacenter_application "${INSTANCE_KEY}" "${CONSUL_KEY}" 'SecretName'
 consul_secret_nm="${__RESULT}"
 
 sm_check_secret_exists "${consul_secret_nm}" "${region}"
@@ -131,7 +135,7 @@ get_datacenter_instance "${INSTANCE_KEY}" 'PrivateIP'
 host_addr="${__RESULT}"
 get_datacenter_instance_admin 'PrivateIP'
 consul_start_bind_addr="${__RESULT}"
-get_datacenter_application_client_interface "${INSTANCE_KEY}" 'consul' 'Ip'
+get_datacenter_application_client_interface "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Ip'
 consul_client_interface_addr="${__RESULT}"
 
 sed -i \
@@ -162,9 +166,9 @@ rm -rf /etc/dnsmasq.d && mkdir /etc/dnsmasq.d
 yum install -y dnsmasq
 systemctl enable dnsmasq
 
-get_datacenter_application_port "${INSTANCE_KEY}" 'dnsmasq' 'DnsPort'
+get_datacenter_application_port "${INSTANCE_KEY}" "${DNSMASQ_KEY}" 'DnsPort'
 dnsmaq_dns_port="${__RESULT}"
-get_datacenter_application_dns_interface "${INSTANCE_KEY}" 'dnsmasq' 'Ip'
+get_datacenter_application_dns_interface "${INSTANCE_KEY}" "${DNSMASQ_KEY}" 'Ip'
 dnsmasq_dns_interface_addr="${__RESULT}"
 
 # AWS default DNS address, the IP address of the AWS DNS server is always the base of the VPC network range plus two (10.0.0.2: Reserved by AWS).
@@ -187,12 +191,6 @@ echo "dnsmask configured with client address ${dnsmasq_dns_interface_addr} and d
 
 echo 'Instance DNS server configured.'      
 
-get_datacenter_application_port "${INSTANCE_KEY}" 'consul' 'HttpPort'
-consul_http_port="${__RESULT}"
-get_datacenter_application_port "${INSTANCE_KEY}" 'consul' 'DnsPort'
-#consul_dns_port="${__RESULT}"
-#node_name="$(consul members |awk -v address="${host_addr}" '$2 ~ address {print $1}')"
-
 #
 # nginx reverse proxy.
 #
@@ -211,9 +209,9 @@ then
       nginx-reverse-proxy.conf > /etc/nginx/default.d/nginx-reverse-proxy.conf
 fi
 
-get_datacenter_application_port "${ADMIN_KEY}" "${NGINX_KEY}" 'Port'
-nginx_port="${__RESULT}"
-get_datacenter_application_url "${ADMIN_KEY}" "${NGINX_KEY}" "${ADMIN_EIP}" "${nginx_port}"
+get_datacenter_application_port "${ADMIN_INSTANCE_KEY}" "${NGINX_KEY}" 'ProxyPort'
+proxy_port="${__RESULT}"
+get_datacenter_application_url "${ADMIN_INSTANCE_KEY}" "${CONSUL_KEY}" "${ADMIN_EIP}" "${proxy_port}"
 application_url="${__RESULT}"  
 
 yum remove -y jq

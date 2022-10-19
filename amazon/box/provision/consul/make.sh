@@ -25,9 +25,12 @@ fi
 
 instance_key="${1}"
 dummy_key='dummy0-network'
-admin_key='admin-instance'
+ssh_key='ssh-application'
+admin_instance_key='admin-instance'
 consul_key='consul-application'
 nginx_key='nginx-application'
+consul_key='consul-application'
+dnsmasq_key='dnsmasq-application'
 logfile_nm="${instance_key}".log
 
 ####
@@ -107,7 +110,7 @@ fi
 # Firewall rules
 #
 
-get_datacenter_application "${instance_key}" 'ssh' 'Port'
+get_datacenter_application "${instance_key}" "${ssh_key}" 'Port'
 ssh_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -151,14 +154,17 @@ admin_eip="${__RESULT}"
 sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
+    -e "s/SEDnginx_keySED/${nginx_key}/g" \
+    -e "s/SEDconsul_keySED/${consul_key}/g" \
+    -e "s/SEDdnsmasq_keySED/${dnsmasq_key}/g" \
     -e "s/SEDdummy_keySED/${dummy_key}/g" \
     -e "s/SEDadmin_eipSED/${admin_eip}/g" \
-    -e "s/SEDadmin_keySED/${admin_key}/g" \
+    -e "s/SEDadmin_instance_keySED/${admin_instance_key}/g" \
        "${PROVISION_DIR}"/consul/consul-install.sh > "${temporary_dir}"/consul-install.sh  
        
 echo 'consul-install.sh ready.'
 
-get_datacenter_application "${instance_key}" 'consul' 'Mode'
+get_datacenter_application "${instance_key}" "${consul_key}" 'Mode'
 consul_mode="${__RESULT}"  
 
 if [[ 'server' == "${consul_mode}" ]]
@@ -201,8 +207,8 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/consul" \
     "${eip}" \
     "${ssh_port}" \
     "${user_nm}" \
-    "${user_pwd}"    
-   
+    "${user_pwd}"   
+
 i=0
 
 set +e
@@ -238,7 +244,7 @@ do
                 "${user_pwd}"
                 
              break 
-                      
+                  
           else
              echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
              echo 'Let''s wait a bit and check again.'
@@ -285,7 +291,7 @@ else
    echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
 fi 
 
-get_datacenter_application_port "${instance_key}" 'consul' 'SerfLanPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'SerfLanPort'
 serflan_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${serflan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -311,7 +317,7 @@ else
    echo "WARN: access already granted ${serflan_port} udp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'SerfWanPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'SerfWanPort'
 serfwan_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${serfwan_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -337,7 +343,7 @@ else
    echo "WARN: access already granted ${serfwan_port} udp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'RpcPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'RpcPort'
 rpc_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${rpc_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -351,7 +357,7 @@ else
    echo "WARN: access already granted ${rpc_port} tcp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'HttpPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'HttpPort'
 http_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${http_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -365,7 +371,7 @@ else
    echo "WARN: access already granted ${http_port} tcp 0.0.0.0/0."
 fi
 
-get_datacenter_application_port "${instance_key}" 'consul' 'DnsPort'
+get_datacenter_application_port "${instance_key}" "${consul_key}" 'DnsPort'
 dns_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${dns_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -392,7 +398,7 @@ else
 fi
  
 # Consul ui is exposed through Nginx reverse proxy.
-get_datacenter_application_port "${instance_key}" 'nginx' 'ProxyPort'
+get_datacenter_application_port "${instance_key}" "${nginx_key}" 'ProxyPort'
 nginx_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${nginx_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
@@ -410,9 +416,9 @@ fi
 # shellcheck disable=SC2115
 rm -rf  "${temporary_dir:?}"
 
-get_datacenter_application_port "${admin_key}" "${NGINX_KEY}" 'Port'
-nginx_port="${__RESULT}"
-get_datacenter_application_url "${admin_key}" "${NGINX_KEY}" "${ADMIN_EIP}" "${nginx_port}"
+get_datacenter_application_port "${admin_instance_key}" "${nginx_key}" 'ProxyPort'
+proxy_port="${__RESULT}"
+get_datacenter_application_url "${admin_instance_key}" "${consul_key}" "${admin_eip}" "${proxy_port}"
 application_url="${__RESULT}"  
     
 echo "${application_url}" 
