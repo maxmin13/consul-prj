@@ -210,9 +210,8 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/consul" \
     "${user_pwd}"   
 
 i=0
-
 set +e
-while [[ $i -lt 3 ]]
+for i in {1,2}
 do
    ssh_run_remote_command_as_root "${remote_dir}"/consul/consul-install.sh \
        "${private_key_file}" \
@@ -242,17 +241,19 @@ do
                 "${ssh_port}" \
                 "${user_nm}" \
                 "${user_pwd}"
-                
-             break 
-                  
+                   
+             break 2 ## exit the loop
           else
-             echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
-             echo 'Let''s wait a bit and check again.'
-                      
-             wait 30
+             if [[ 1 -eq "${i}" ]]
+             then
+                echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
+                echo 'Let''s wait a bit and check again.'             
+             
+                wait 30
+             else
+                break 2
+             fi
           fi
-          
-          ((i++))
        }
 done  
 set -e   
@@ -397,30 +398,33 @@ else
    echo "WARN: access already granted ${dns_port} udp 0.0.0.0/0."
 fi
  
-# Consul ui is exposed through Nginx reverse proxy.
-get_datacenter_application_port "${instance_key}" "${nginx_key}" 'ProxyPort'
-nginx_port="${__RESULT}"
-ec2_check_access_is_granted "${sgp_id}" "${nginx_port}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'false' == "${is_granted}" ]]
+if [[ 'server' == "${consul_mode}" ]]
 then
-   ec2_allow_access_from_cidr "${sgp_id}" "${nginx_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
-   
-   echo "Access granted on ${nginx_port} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already granted ${nginx_port} tcp 0.0.0.0/0."
-fi 
+   # Consul ui is exposed through Nginx reverse proxy.
+   get_datacenter_application_port "${instance_key}" "${nginx_key}" 'ProxyPort'
+   nginx_port="${__RESULT}"
+   ec2_check_access_is_granted "${sgp_id}" "${nginx_port}" 'tcp' '0.0.0.0/0'
+   is_granted="${__RESULT}"
 
+   if [[ 'false' == "${is_granted}" ]]
+   then
+      ec2_allow_access_from_cidr "${sgp_id}" "${nginx_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   
+      echo "Access granted on ${nginx_port} tcp 0.0.0.0/0."
+   else
+      echo "WARN: access already granted ${nginx_port} tcp 0.0.0.0/0."
+   fi 
+fi 
+ 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${temporary_dir:?}"
+rm -rf  "${temporary_dir:?}" 
 
 get_datacenter_application_port "${admin_instance_key}" "${nginx_key}" 'ProxyPort'
 proxy_port="${__RESULT}"
 get_datacenter_application_url "${admin_instance_key}" "${consul_key}" "${admin_eip}" "${proxy_port}"
-application_url="${__RESULT}"  
-    
+application_url="${__RESULT}" 
+
 echo "${application_url}" 
 echo  
 

@@ -39,8 +39,6 @@ source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh
 source "${LIBRARY_DIR}"/consul.sh
 
-exit
-
 yum update -y && yum install -y yum-utils jq
 
 get_datacenter_application "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Mode'
