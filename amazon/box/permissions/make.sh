@@ -95,7 +95,7 @@ then
 
    echo 'Instance profile created.'
 else
-   echo 'Instance profile already created.'
+   echo 'WARN: instance profile already created.'
 fi
 
 ec2_check_instance_has_instance_profile_associated "${instance_nm}" "${profile_id}"

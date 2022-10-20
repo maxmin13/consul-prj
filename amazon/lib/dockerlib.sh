@@ -426,7 +426,7 @@ function docker_delete_container()
 #===============================================================================
 function docker_run_container()
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -435,8 +435,10 @@ function docker_run_container()
    local exit_code=0
    local -r service_key="${1}"
    local -r container_nm="${2}"
+   local -r instance_key="${2}"
+   local -r consul_key="${2}"
    
-   local cmd='docker run'
+   local cmd='docker run -d'
    cmd+=" --name ${container_nm}"
    
    #
@@ -458,11 +460,16 @@ function docker_run_container()
    else
       echo 'WARN: DNS network interface not found.'
    fi 
-  
-   # TODO TODO
-   # export inside the container.
-   #-e CONSUL_HTTP_ADDR=169.254.1.1:8500 \
-    #          -e CONSUL_RPC_ADDR=169.254.1.1:8400 ...
+    
+   get_datacenter_application_client_interface "${instance_key}" "${consul_key}" 'Ip'
+   consul_client_interface_addr="${__RESULT}"    
+   get_datacenter_application_port "${instance_key}" "${consul_key}" 'HttpPort'
+   http_port="${__RESULT}"
+   get_datacenter_application_port "${instance_key}" "${consul_key}" 'RpcPort'
+   rpc_port="${__RESULT}"  
+   
+   cmd+=" -e CONSUL_HTTP_ADDR=${consul_client_interface_addr}:${http_port}"  
+   cmd+=" -e CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}"  
    
    #
    # Host network.
@@ -470,12 +477,12 @@ function docker_run_container()
    
    get_service_host_interface "${service_key}" 'Name'
    local host_interface_nm="${__RESULT}"
-   ip_check_network_interface_exists "${host_interface_nm}"
+   docker_check_network_interface_exists "${host_interface_nm}"
    local host_interface_exits="${__RESULT}"
 
    if [[ 'true' == "${host_interface_exits}" ]]
    then
-      cmd+=" --net ${host_interface_exits}" 
+      cmd+=" --net ${host_interface_nm}" 
    else
       echo 'WARN: host interface not found.'
    fi 
@@ -552,7 +559,7 @@ function docker_run_container()
       cmd+=" ${command}"   
    fi
    
-   echo "Running:"
+   echo "Docker command:"
    echo "${cmd}"
    
    eval "${cmd}"
@@ -721,7 +728,7 @@ function docker_network_remove()
 # Returns:      
 #  true/false in the __RESULT variable.
 #===============================================================================
-function docker_network_exists()
+function docker_check_network_interface_exists()
 {
    if [[ $# -lt 1 ]]
    then

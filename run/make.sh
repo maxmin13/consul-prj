@@ -18,6 +18,7 @@ source "${LIBRARY_DIR}"/ssh_utils.sh
 source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/datacenter.sh
 source "${LIBRARY_DIR}"/registry.sh
+source "${LIBRARY_DIR}"/network.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/auth.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh

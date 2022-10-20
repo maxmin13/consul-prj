@@ -22,7 +22,7 @@ set +o xtrace
 # Returns:      
 #  None 
 #===============================================================================
-function restart_consul_service()
+function consul_restart_service()
 {
    local exit_code=0
 
@@ -44,7 +44,7 @@ function restart_consul_service()
 # Returns:      
 #  None 
 #===============================================================================
-function verify_consul_and_wait()
+function consul_verify_and_wait()
 {
    __RESULT='false'
    local exit_code=0
@@ -54,12 +54,12 @@ function verify_consul_and_wait()
    {
       echo "Waiting for Consul" 
       
-      wait 60
+      wait 30
    
       # shellcheck disable=SC2015
       consul members && echo "Consul is running." || 
       {
-         echo "WARN: Consul not answering after 1 minute."
+         echo "WARN: Consul not answering after 30 sec."
          
          __RESULT='false'
          

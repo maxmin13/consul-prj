@@ -18,11 +18,13 @@ REMOTE_DIR='SEDremote_dirSED'
 LIBRARY_DIR='SEDlibrary_dirSED' 
 INSTANCE_KEY='SEDinstance_keySED'
 SERVICE_KEY='SEDservice_keySED'
+CONSUL_KEY='SEDconsul_keySED'
 CONTAINER_NM='SEDcontainer_nmSED'
 
 source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
+source "${LIBRARY_DIR}"/network.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/registry.sh
 source "${LIBRARY_DIR}"/consul.sh
@@ -61,6 +63,10 @@ docker_login_ecr_registry "${registry_uri}" "${login_pwd}"
 
 echo 'Logged into ECR registry.'
 
+#
+# Container run
+#
+
 docker_check_container_exists "${CONTAINER_NM}"
 container_exists="${__RESULT}"
 
@@ -87,12 +93,41 @@ fi
 
 echo 'Running container ...'
 
-docker_run_container "${SERVICE_KEY}" "${CONTAINER_NM}"
+docker_run_container "${SERVICE_KEY}" "${CONTAINER_NM}" "${INSTANCE_KEY}" "${CONSUL_KEY}"
 docker_logout_ecr_registry "${registry_uri}" 
    
-echo 'Logged out of ECR registry.'  
+echo 'Logged out of ECR registry.' 
 
-verify_consul_and_wait
+#
+# Environment variables
+#
+
+get_datacenter_application_client_interface "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Ip'
+consul_client_interface_addr="${__RESULT}"    
+get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'HttpPort'
+http_port="${__RESULT}"
+get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'RpcPort'
+rpc_port="${__RESULT}"
+
+if [[ ! -v CONSUL_HTTP_ADDR && ! -v CONSUL_RPC_ADDR ]]
+then
+   # available from next login.
+   echo "CONSUL_HTTP_ADDR=${consul_client_interface_addr}:${http_port}" >> /etc/environment
+   echo "CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}" >> /etc/environment
+   # make them available in current session without logout/login.
+   export CONSUL_HTTP_ADDR="${consul_client_interface_addr}":"${http_port}"
+   export CONSUL_RPC_ADDR="${consul_client_interface_addr}":"${rpc_port}"
+   
+   echo "Environment variables updated."
+else
+   echo "WARN: environment variable already updated."
+fi
+
+#
+# Consul registration
+#  
+
+consul_verify_and_wait
 is_ready="${__RESULT}"
 
 if [[ 'true' == "${is_ready}" ]]
@@ -104,12 +139,12 @@ then
 
    cd "${REMOTE_DIR}"
    
-   sed -e "s/SEDnameSED/${INSTANCE_KEY}/g" \
-       -e "s/SEDtagsSED/${INSTANCE_KEY}/g" \
+   sed -e "s/SEDnameSED/${SERVICE_KEY}/g" \
+       -e "s/SEDtagsSED/${SERVICE_KEY}/g" \
        -e "s/SEDportSED/${application_port}/g" \
           consul-register.json > /etc/consul.d/"${SERVICE_KEY}".json
 
-   restart_consul_service 
+   consul_restart_service 
 
    echo 'Container registered with Consul agent.'
 else

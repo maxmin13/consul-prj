@@ -19,9 +19,10 @@ if [ "$#" -lt 2 ]; then
   exit 1
 fi
 
-ssh_key='ssh-application'
 instance_key="${1}"
 service_key="${2}"
+ssh_key='ssh-application'
+consul_key='consul-application'
 logfile_nm="${instance_key}".log
 
 ####
@@ -140,6 +141,7 @@ sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g"
     -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDservice_keySED/${service_key}/g" \
+    -e "s/SEDconsul_keySED/${consul_key}/g" \
     -e "s/SEDcontainer_nmSED/${service_key}/g" \
        "${SERVICES_DIR}"/container-run.sh > "${temporary_dir}"/container-run.sh  
   
@@ -152,6 +154,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/registry.sh \
     "${LIBRARY_DIR}"/consul.sh \
+    "${LIBRARY_DIR}"/network.sh \
     "${temporary_dir}"/container-run.sh \
     "${PROVISION_DIR}"/consul/consul-register.json 
     
