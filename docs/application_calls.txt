@@ -13,6 +13,8 @@ http://34.244.25.72:4567/info
 
 Sinatra:
 
+http://52.211.122.3:4567/info
+
 curl -i -H 'Accept: application/json' http://34.244.25.72:4567/info
 
 curl -i -H 'Accept: application/json' -d 'name=Foo&status=Bar' http://34.244.25.72:4567/json
