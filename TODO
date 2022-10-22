@@ -1,34 +1,6 @@
 
 
 
-2))))))) 
-
-CREATE the shared and admin jumpbox locally, the the other box run the script from the jumpbox
-
-
-3)
-
-add a key to each list in the json constants files.  : datacenter applications consul and ssh are the only list remaining to fix
-revise all get properties methods
-
-move the get name by key inside for ex: run_instance()
-
-
-############################################################################
-
-http://34.240.73.218:8500/ui/consul
-
-
-curl 169.254.1.1:8500/v1/catalog/nodes?pretty
-export CONSUL_HTTP_ADDR=169.254.1.1:8500
-
-
-
-curl $CONSUL_HTTP_ADDR/v1/catalog/nodes?pretty  
-dig  admin.maxmin.it.node.consul
-
-
-
 
 
 

@@ -114,6 +114,7 @@ then
    # available from next login.
    echo "CONSUL_HTTP_ADDR=${consul_client_interface_addr}:${http_port}" >> /etc/environment
    echo "CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}" >> /etc/environment
+   
    # make them available in current session without logout/login.
    export CONSUL_HTTP_ADDR="${consul_client_interface_addr}":"${http_port}"
    export CONSUL_RPC_ADDR="${consul_client_interface_addr}":"${rpc_port}"

@@ -342,7 +342,7 @@ function ssh_run_remote_command_as_root()
       exit_code=$?   
    else 
       ## sudo with password.
-      ## Create a temporary authomated script in temp directory that handles the password without
+      ## Create a temporary automated script in temp directory that handles the password without
       ## prompting for it.
       local expect_script="${TMP_DIR}"/ssh_run_remote_command.exp
       
@@ -355,7 +355,7 @@ function ssh_run_remote_command_as_root()
          printf '%s\n' "#!/usr/bin/expect -f" 
          printf '%s\n' "set timeout -1" 
          printf '%s\n' "log_user 0"
-         printf '%s\n' "spawn ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i ${key_pair_file} -p ${ssh_port} -t ${user}@${server_ip} sudo bash -c '${cmd}'"  
+         printf '%s\n' "spawn -noecho ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i ${key_pair_file} -p ${ssh_port} -t ${user}@${server_ip} sudo bash -c '${cmd}'"  
          printf '%s\n' "match_max 100000"
          printf '%s\n' "expect -exact \"\: \""
          printf '%s\n' "send -- \"${password}\r\""

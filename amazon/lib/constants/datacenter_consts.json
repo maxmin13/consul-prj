@@ -7,7 +7,6 @@
       "Region":"eu-west-1",
       "Az":"eu-west-1a",
       "RouteTable":"internettable",
-      "TODO TODO TODO TODO":"HOW CAN SUBNET AND NETWORK CARDS BE REPRESENTED",
       "Networks":[
          {
             "Description":"Network shared by all the AWS instances.",
