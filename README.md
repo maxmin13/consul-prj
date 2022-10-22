@@ -10,7 +10,7 @@ Installs on AWS:
 
 ## Create the AWS datacenter
 
-![alt text](https://github.com/maxmin13/consul-prj/blob/master/vpc.png)
+![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/vpc.png)
 
 ```
 cd aws-datacenter
