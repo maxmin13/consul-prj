@@ -10,6 +10,8 @@ Installs on AWS:
 
 ## Create the AWS datacenter
 
+![alt text](https://github.com/maxmin13/consul-prj/blob/master/vpc.png)
+
 ```
 cd aws-datacenter
 amazon/run/make.sh
@@ -23,3 +25,4 @@ cd aws-datacenter
 amazon/run/delete.sh
 
 ```
+
