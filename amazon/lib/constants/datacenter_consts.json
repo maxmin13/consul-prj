@@ -1,17 +1,17 @@
 {
    "Datacenter":{
-      "Name":"consuldatacenter",
+      "Name":"consul-datacenter",
       "Cidr":"10.0.0.0/16",
       "DnsAddress":"10.0.0.2",
-      "Gateway":"internetgateway",
+      "Gateway":"consul-gateway",
       "Region":"eu-west-1",
       "Az":"eu-west-1a",
-      "RouteTable":"internettable",
+      "RouteTable":"consul-routetable",
       "Networks":[
          {
             "Description":"Network shared by all the AWS instances.",
-            "Key":"hostsnet-network",
-            "Name":"hostsnet",
+            "Key":"consul-network",
+            "Name":"consul-subnet",
             "Cidr":"10.0.10.0/24"
          },
          {

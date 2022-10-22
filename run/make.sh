@@ -27,7 +27,7 @@ mkdir -p "${LOGS_DIR}"
 
 ## Datacenter ##
 
-. "${PROJECT_DIR}"/amazon/datacenter/make.sh 'hostsnet-network'
+. "${PROJECT_DIR}"/amazon/datacenter/make.sh 'consul-network'
 
 ## Permission policies ##
 
@@ -35,13 +35,13 @@ mkdir -p "${LOGS_DIR}"
 
 ## AWS custom images ##
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'shared-instance' 'hostsnet-network'   
+. "${PROJECT_DIR}"/amazon/box/make.sh 'shared-instance' 'consul-network'   
 . "${PROJECT_DIR}"/amazon/box/provision/security/make.sh 'shared-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/updates/make.sh 'shared-instance'            
 . "${PROJECT_DIR}"/amazon/image/make.sh 'shared-instance'              
 
    # Jumpbox.
-. "${PROJECT_DIR}"/amazon/box/make.sh 'admin-instance' 'hostsnet-network'	
+. "${PROJECT_DIR}"/amazon/box/make.sh 'admin-instance' 'consul-network'	
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'admin-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin-instance' 
 
@@ -51,24 +51,24 @@ mkdir -p "${LOGS_DIR}"
 
 ## AWS EC2 instances ##
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'nginx-instance' 'hostsnet-network'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'nginx-instance' 'consul-network'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'nginx-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'nginx-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'nginx-instance' 'nginx-service'
 . "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'nginx-instance' 'nginx-service' 
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'redis-instance' 'hostsnet-network'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'redis-instance' 'consul-network'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'redis'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'redis-instance' 
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'redis-instance' 'redis-service'
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra-instance' 'hostsnet-network'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra-instance' 'consul-network'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'sinatra-instance' 'sinatra-service' 
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'sinatra-instance' 'sinatra-service'
 
-. "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins-instance' 'hostsnet-network'
+. "${PROJECT_DIR}"/amazon/box/make.sh 'jenkins-instance' 'consul-network'
 . "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'jenkins-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'jenkins-instance' 'jenkins-service'

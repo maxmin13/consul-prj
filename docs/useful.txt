@@ -2,7 +2,7 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/verify_consul_and_wait/consul_verify_and_wait/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/hostsnet-network/consul-network/g' {} \;
 
 
 
