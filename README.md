@@ -8,6 +8,9 @@
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/ecr.png)
 
+
+![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
+
 ```
 
 aws-cli/2.7.34

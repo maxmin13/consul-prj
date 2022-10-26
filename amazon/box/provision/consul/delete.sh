@@ -20,9 +20,10 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
+instance_key="${1}"
 ssh_key='ssh-application'
 consul_key='consul-application'
-instance_key="${1}"
+dummy_key='dummy0-network'
 logfile_nm="${instance_key}".log
 
 ####
@@ -249,6 +250,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul/
 sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDconsul_keySED/${consul_key}/g" \
+    -e "s/SEDdummy_keySED/${dummy_key}/g" \
     "${PROVISION_DIR}"/consul/consul-remove.sh > "${temporary_dir}"/consul-remove.sh  
 
 echo 'consul-remove.sh ready.' 

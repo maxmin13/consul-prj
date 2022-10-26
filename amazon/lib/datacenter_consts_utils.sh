@@ -158,31 +158,6 @@ function get_datacenter_application_port()
    return "${exit_code}"
 }
 
-function get_datacenter_application_dns_interface()
-{
-   if [[ $# -lt 3 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   __RESULT=''
-   local exit_code=0
-   local -r instance_key="${1}"
-   local -r application_key="${2}"
-   local -r property_nm="${3}"
-   local property_val=''
-
-   get_datacenter_application "${instance_key}" "${application_key}" 'DnsInterface'
-   # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
-
-   # shellcheck disable=SC2034
-   __RESULT="${property_val}"
-   
-   return "${exit_code}"
-}
-
 function get_datacenter_application_client_interface()
 {
    if [[ $# -lt 3 ]]
@@ -196,11 +171,13 @@ function get_datacenter_application_client_interface()
    local -r instance_key="${1}"
    local -r application_key="${2}"
    local -r property_nm="${3}"
+   local client_interface=''
    local property_val=''
 
    get_datacenter_application "${instance_key}" "${application_key}" 'ClientInterface'
+   client_interface="${__RESULT}"
    # shellcheck disable=SC2086
-   property_val=$(echo $__RESULT | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
+   property_val=$(echo "${client_interface}" | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
 
    # shellcheck disable=SC2034
    __RESULT="${property_val}"
@@ -208,6 +185,59 @@ function get_datacenter_application_client_interface()
    return "${exit_code}"
 }
 
+function get_datacenter_application_bind_interface()
+{
+   if [[ $# -lt 3 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r instance_key="${1}"
+   local -r application_key="${2}"
+   local -r property_nm="${3}"
+   local bind_interface=''
+   local property_val=''
+
+   get_datacenter_application "${instance_key}" "${application_key}" 'BindInterface'
+   bind_interface="${__RESULT}"
+   # shellcheck disable=SC2086
+   property_val=$(echo "${bind_interface}" | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
+
+   # shellcheck disable=SC2034
+   __RESULT="${property_val}"
+   
+   return "${exit_code}"
+}
+
+function get_datacenter_application_consul_interface()
+{
+   if [[ $# -lt 3 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r instance_key="${1}"
+   local -r application_key="${2}"
+   local -r property_nm="${3}"
+   local bind_interface=''
+   local property_val=''
+
+   get_datacenter_application "${instance_key}" "${application_key}" 'ConsulInterface'
+   bind_interface="${__RESULT}"
+   # shellcheck disable=SC2086
+   property_val=$(echo "${bind_interface}" | jq -r --arg property "${property_nm}" -c '.[$property] // empty') 
+
+   # shellcheck disable=SC2034
+   __RESULT="${property_val}"
+   
+   return "${exit_code}"
+}
 
 function get_datacenter_application_url()
 {

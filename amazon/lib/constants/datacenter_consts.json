@@ -79,6 +79,10 @@
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
                   },
+                  "BindInterface":{
+                     "Description":"Consul cluster communication interface",
+                     "Ip":"10.0.10.34"
+                  },
                   "Url":"http://<address>:<port>/ui/consul"
                },
                {
@@ -86,20 +90,25 @@
                   "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
                   "Name":"dnsmasq",
                   "Port":{
-                     "DnsPort":"8600"
+                     "ConsulDnsPort":"8600"
                   },
-                  "DnsInterface":{
-                     "Description":"Interface where DNS queries are forwarded.",
-                     "Name":"dummy0",
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
                },
                {
                   "Key":"nginx-application",
-                  "Description":"Reverse proxy for Consul ui.",
+                  "Description":"Reverse proxy for Consul ui",
                   "Name":"nginx",
                   "Port":{
-                     "ProxyPort":"80"
+                     "ProxyPort":"80",
+                     "ConsulHttpPort":"8500",
+                     "ConsulVaultPort":"8200"
+                  },
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
+                     "Ip":"169.254.1.1"
                   }
                }
             ]
@@ -139,6 +148,10 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
+                  },
+                  "BindInterface":{
+                     "Description":"Consul cluster communication interface",
+                     "Ip":"10.0.10.30"
                   }
                },
                {
@@ -191,6 +204,10 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
+                  },
+                  "BindInterface":{
+                     "Description":"Consul cluster communication interface",
+                     "Ip":"10.0.10.31"
                   }
                },
                {
@@ -243,6 +260,10 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
+                  },
+                  "BindInterface":{
+                     "Description":"Consul cluster communication interface",
+                     "Ip":"10.0.10.32"
                   }
                },
                {
@@ -295,6 +316,10 @@
                      "Description":"HTTP, RPC CLI, DNS interface",
                      "Name":"dummy0",
                      "Ip":"169.254.1.1"
+                  },
+                  "BindInterface":{
+                     "Description":"Consul cluster communication interface",
+                     "Ip":"10.0.10.33"
                   }
                },
                {
