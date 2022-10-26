@@ -3,8 +3,7 @@
 # shellcheck disable=SC2015
 
 ##########################################################################################################
-# Consul is a datacenter runtime that provides service discovery, configuration, and orchestration.
-# The script installs Consul in the Admin instance and runs a cluster with one server.
+# The script removes Consul from the instance.
 ##########################################################################################################
 
 set -o errexit
@@ -259,6 +258,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/service_consts_utils.sh \
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
+    "${PROVISION_DIR}"/dns/dhclient.conf \
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
@@ -280,54 +280,54 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/consul" \
     "${user_nm}" \
     "${user_pwd}"  
 
-# shellcheck disable=SC2015
-ssh_run_remote_command_as_root "${remote_dir}/consul/consul-remove.sh" \
-    "${private_key_file}" \
-    "${eip}" \
-    "${ssh_port}" \
-    "${user_nm}" \
-    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Consul successfully removed.' ||
-    {    
-       echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
-       echo 'Let''s wait a bit and check again.' 
-      
-       wait 60  
-      
-       echo 'Let''s try now.' 
-    
-       ssh_run_remote_command_as_root "${remote_dir}/consul/consul-remove.sh"	 \
-          "${private_key_file}" \
-          "${eip}" \
-          "${ssh_port}" \
-          "${user_nm}" \
-          "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Consul successfully removed.' ||
-          {
-              echo 'ERROR: the problem persists after 3 minutes.'
-              exit 1          
-          }
-    }
- 
-ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-    "${private_key_file}" \
-    "${eip}" \
-    "${ssh_port}" \
-    "${user_nm}"  
-
-#
-# Firewall.
-#
-
-ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
-is_granted="${__RESULT}"
-
-if [[ 'true' == "${is_granted}" ]]
-then
-   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
-
-   echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
-else
-   echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
-fi
+i=0
+set +e
+for i in {1,2}
+do
+   ssh_run_remote_command_as_root "${remote_dir}"/consul/consul-remove.sh \
+       "${private_key_file}" \
+       "${eip}" \
+       "${ssh_port}" \
+       "${user_nm}" \
+       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" ||
+       {     
+          exit_code=$?
+          
+          if [[ 194 -eq "${exit_code}" ]]
+          then
+             echo 'Consul successfully removed.'
+          
+             ssh_run_remote_command "rm -rf ${remote_dir}" \
+                "${private_key_file}" \
+                "${eip}" \
+                "${ssh_port}" \
+                "${user_nm}" \
+                "${user_pwd}"          
+             
+             echo 'Rebooting the instance ...'
+              
+             ssh_run_remote_command_as_root "reboot" \
+                "${private_key_file}" \
+                "${eip}" \
+                "${ssh_port}" \
+                "${user_nm}" \
+                "${user_pwd}"
+                   
+             break 2 ## exit the loop
+          else
+             if [[ 1 -eq "${i}" ]]
+             then
+                echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
+                echo 'Let''s wait a bit and check again.'             
+             
+                wait 30
+             else
+                break 2
+             fi
+          fi
+       }
+done  
+set -e   
 
 #
 # Permissions.
@@ -346,6 +346,22 @@ then
 else
    echo 'WARN: secretsmangers permission policy already detached from role.'
 fi  
+
+#
+# Firewall.
+#
+
+ec2_check_access_is_granted "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'true' == "${is_granted}" ]]
+then
+   ec2_revoke_access_from_cidr "${sgp_id}" "${ssh_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+
+   echo "Access revoked on ${ssh_port} tcp 0.0.0.0/0."
+else
+   echo "WARN: access already revoked ${ssh_port} tcp 0.0.0.0/0."
+fi
 
 ## Clearing
 rm -rf "${temporary_dir:?}"

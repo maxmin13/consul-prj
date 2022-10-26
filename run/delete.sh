@@ -30,12 +30,15 @@ mkdir -p "${LOGS_DIR}"
 
 ## AWS EC2 instances ##
 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'jenkins-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'jenkins-instance'
 . "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-instance' 'consul-network'
 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'nginx-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'nginx-instance'
 . "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-instance' 'consul-network'
 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'sinatra-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-instance' 'consul-network'
 

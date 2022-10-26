@@ -1,5 +1,9 @@
 #!/bin/bash
 
+##########################################################################################################
+# The script removes Consul from the instance and restores the original DNS configuration.
+##########################################################################################################
+
 # shellcheck disable=SC1091
 
 set -o errexit
@@ -92,7 +96,6 @@ else
    echo 'WARN: dummy interface not found.'
 fi
 
-
 ##
 ## dnsmasq
 ##
@@ -102,7 +105,17 @@ rm -rf /etc/dnsmasq.d
 
 echo 'dnsmasq successfull removed.'
 
-yum remove -y jq 
+##
+## DNS server
+##
+
+get_datacenter 'DnsAddress'
+datacenter_dns_addr="${__RESULT}"
+
+# set dnsmasq as the instance's DNS server (in resolv.config point to dnsmask at 127.0.0.1)
+rm -f /etc/dhcp/dhclient.conf
+sed -e "s/SEDdns_addrSED/${datacenter_dns_addr}/g" \
+        dhclient.conf > /etc/dhcp/dhclient.conf
 
 echo 'Restart the instance.'
 echo

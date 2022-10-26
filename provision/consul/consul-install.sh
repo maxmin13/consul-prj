@@ -188,7 +188,9 @@ echo "dnsmask configured."
 ##
 
 # set dnsmasq as the instance's DNS server (in resolv.config point to dnsmask at 127.0.0.1)
-\cp dhclient.conf /etc/dhcp/
+rm -f /etc/dhcp/dhclient.conf
+sed -e "s/SEDdns_addrSED/127.0.0.1/g" \
+        dhclient.conf > /etc/dhcp/dhclient.conf
 
 echo 'dnsmasq configured as the instance''s DNS server.'      
 
