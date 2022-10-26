@@ -3,14 +3,8 @@
 
 ## AWS datacenter
 
-Amazon AWS datacenter that runs EC2 instances with Linux 2 os.
-Every instance runs a Docker service:
-
-Nginx server
-Sinatra server
-Redis database
-Jenkins pipeline
-
+Amazon AWS datacenter that runs EC2 instances with Linux 2 os. Every instance runs a Docker service:
+Nginx server, Sinatra server, Redis database, Jenkins pipeline.
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/vpc.png)
 
