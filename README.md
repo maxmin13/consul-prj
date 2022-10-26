@@ -8,6 +8,8 @@ Nginx server, Sinatra server, Redis database, Jenkins pipeline.
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/vpc.png)
 
+The Admin instance acts as a jumpbox. Dockerfiles are uploaded to it and the images for each service are built
+and uploaded to AWS Ecr registry. Each instance download the images from the registry and runs a container from it.
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/ecr.png)
 
