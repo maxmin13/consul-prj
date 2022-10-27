@@ -11,7 +11,8 @@ and uploaded to AWS ECR registry. Each instance downloads the image from the reg
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/ecr.png)
 
-A cluster of Consul agensts is run in the datacenter. The admin instance runs a Consul server agent, each other instance a 
+A cluster of Consul agensts is run in the datacenter.<br/> 
+The admin instance runs a Consul server agent, each other instance a 
 Consul client agent. The gossip in the cluster is exchanged thourgh 10.0.10.0/24 subnet.
 
 
