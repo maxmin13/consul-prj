@@ -21,7 +21,7 @@ In each AWS instance or in each container, Consul services can be queried by cal
 <br/>
 curl http://169.254.1.1:8500/v1/catalog/service/jenkins-service?pretty
 <br/><br/>
-while Consul DNS service can be called with:<br/>
+while Consul DNS service can be called with:
 <br/><br/>
 dig jenkins.maxmin.it.node.consul
 <br/>
