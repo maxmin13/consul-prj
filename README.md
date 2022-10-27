@@ -20,6 +20,7 @@ Consul client agent. The gossip in the cluster is exchanged thourgh 10.0.10.0/24
 ```
 
 aws-cli/2.7.34
+jq-1.6
 
 cd aws-datacenter
 amazon/run/make.sh
