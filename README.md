@@ -20,11 +20,9 @@ all the remaining queries are passed to the AWS DNS service at 10.0.0.2.<br/>
 In each AWS instance or in each container, Consul services can be queried by calling:<br/>
 <br/>
 curl http://169.254.1.1:8500/v1/catalog/service/jenkins-service?pretty
-<br/><br/>
-while Consul DNS service can be called with:
-<br/><br/>
-dig jenkins.maxmin.it.node.consul
 <br/>
+dig jenkins.maxmin.it.node.consul
+<br/><br/>
 
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
