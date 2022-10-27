@@ -46,6 +46,14 @@ yum update -y && yum install -y yum-utils jq
 get_datacenter_application "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Mode'
 consul_mode="${__RESULT}"
 
+# temporarily set the instance DNS to 10.0.0.2
+get_datacenter 'DnsAddress'
+datacenter_dns_addr="${__RESULT}"
+
+sed -i -e "s/127.0.0.1/${datacenter_dns_addr}/g" /etc/resolv.conf
+
+dig google.com
+
 ####
 echo "Installing Consul in ${consul_mode} mode ..."
 ####
@@ -76,7 +84,7 @@ sed -e "s/SEDdummy_nmSED/${dummy_nm}/g" \
     -e "s/SEDdummy_maskSED/${dummy_mask}/g" \
        ifcfg-dummy > /etc/sysconfig/network-scripts/ifcfg-dummy 
        
-# load the dummy module and create a dummy interface.
+# load the dummy module and create a dummy0 interface.
 \cp dummymodule.conf /etc/modules-load.d/
 
 echo 'Dummy interface created.'
@@ -167,16 +175,12 @@ yum install -y dnsmasq
 systemctl enable dnsmasq
 
 get_datacenter_application_port "${INSTANCE_KEY}" "${DNSMASQ_KEY}" 'ConsulDnsPort'
-dnsmaq_consul_dns_port="${__RESULT}"
+consul_dns_port="${__RESULT}"
 get_datacenter_application_consul_interface "${INSTANCE_KEY}" "${DNSMASQ_KEY}" 'Ip'
-dnsmasq_consul_interface_addr="${__RESULT}"
+consul_interface_addr="${__RESULT}"
 
-# AWS default DNS address, the IP address of the AWS DNS server is always the base of the VPC network range plus two (10.0.0.2: Reserved by AWS).
-get_datacenter 'DnsAddress'
-datacenter_dns_addr="${__RESULT}"
-
-sed -e "s/SEDconsul_dns_addrSED/${dnsmasq_consul_interface_addr}/g" \
-    -e "s/SEDconsul_dns_portSED/${dnsmaq_consul_dns_port}/g" \
+sed -e "s/SEDconsul_dns_addrSED/${consul_interface_addr}/g" \
+    -e "s/SEDconsul_dns_portSED/${consul_dns_port}/g" \
     -e "s/SEDdefaul_dns_addrSED/${datacenter_dns_addr}/g" \
     -e "s/SEDdummy_addrSED/${dummy_addr}/g" \
         dnsmasq.conf > /etc/dnsmasq.d/dnsmasq.conf
@@ -204,32 +208,33 @@ then
    yum clean metadata
    yum -y install nginx
    systemctl enable nginx 
+   mkdir -p /etc/nginx/default.d
 
    # expose the consul ui through nginx reverse proxy, since Consul ui is not accessible externally
    # being 169.254.1.1 not rootable.
    
    get_datacenter_application_consul_interface "${INSTANCE_KEY}" "${NGINX_KEY}" 'Ip'
-   nginx_consul_addr="${__RESULT}"
+   consul_addr="${__RESULT}"
    get_datacenter_application_port "${INSTANCE_KEY}" "${NGINX_KEY}" 'ConsulHttpPort'
-   nginx_consul_http_port="${__RESULT}"
+   consul_http_port="${__RESULT}"
    get_datacenter_application_port "${INSTANCE_KEY}" "${NGINX_KEY}" 'ConsulVaultPort'
-   nginx_consul_vault_port="${__RESULT}"
+   consul_vault_port="${__RESULT}"
 
-   sed -e "s/SEDconsul_addrSED/${nginx_consul_addr}/g" \
-       -e "s/SEDconsul_http_portSED/${nginx_consul_http_port}/g" \
-       -e "s/SEDconsul_vault_portSED/${nginx_consul_vault_port}/g" \
+   sed -e "s/SEDconsul_addrSED/${consul_addr}/g" \
+       -e "s/SEDconsul_http_portSED/${consul_http_port}/g" \
+       -e "s/SEDconsul_vault_portSED/${consul_vault_port}/g" \
            nginx-reverse-proxy.conf > /etc/nginx/default.d/nginx-reverse-proxy.conf
 fi
 
 get_datacenter_application_port "${ADMIN_INSTANCE_KEY}" "${NGINX_KEY}" 'ProxyPort'
-proxy_port="${__RESULT}"
-get_datacenter_application_url "${ADMIN_INSTANCE_KEY}" "${CONSUL_KEY}" "${ADMIN_EIP}" "${proxy_port}"
+nginx_proxy_port="${__RESULT}"
+get_datacenter_application_url "${ADMIN_INSTANCE_KEY}" "${CONSUL_KEY}" "${ADMIN_EIP}" "${nginx_proxy_port}"
 application_url="${__RESULT}"  
 
 yum remove -y jq
     
 echo "${application_url}" 
-echo 'Restart the instance.'
+echo 'Reboot the instance.'
 echo
 
 exit 194

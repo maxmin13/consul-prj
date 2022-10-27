@@ -25,6 +25,25 @@ source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
+#. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin-instance'
+. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
+
+exit
+
+
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'jenkins-instance' 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'nginx-instance' 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'sinatra-instance' 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis-instance' 
+. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin-instance'
+
+
+exit
+
+
+
+
+
 ## Datacenter ##
 
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh 'consul-network'

@@ -24,4 +24,4 @@ find . -type f -name Dockerfile -exec chmod 644 -- {} +
       
       
       
-
+docker exec -it jenkins-service /bin/bash

@@ -117,7 +117,7 @@ rm -f /etc/dhcp/dhclient.conf
 sed -e "s/SEDdns_addrSED/${datacenter_dns_addr}/g" \
         dhclient.conf > /etc/dhcp/dhclient.conf
 
-echo 'Restart the instance.'
+echo 'Reboot the instance.'
 echo
 
 exit 194

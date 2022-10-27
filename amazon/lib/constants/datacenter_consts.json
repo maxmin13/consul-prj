@@ -159,11 +159,10 @@
                   "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
                   "Name":"dnsmasq",
                   "Port":{
-                     "DnsPort":"8600"
+                     "ConsulDnsPort":"8600"
                   },
-                  "DnsInterface":{
-                     "Description":"Interface where DNS queries are forwarded.",
-                     "Name":"dummy0",
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
                }
@@ -215,11 +214,10 @@
                   "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
                   "Name":"dnsmasq",
                   "Port":{
-                     "DnsPort":"8600"
+                     "ConsulDnsPort":"8600"
                   },
-                  "DnsInterface":{
-                     "Description":"Interface where DNS queries are forwarded.",
-                     "Name":"dummy0",
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
                }
@@ -268,14 +266,13 @@
                },
                {
                   "Key":"dnsmasq-application",
-                  "Description":"Instance DNS server.",
+                  "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
                   "Name":"dnsmasq",
                   "Port":{
-                     "DnsPort":"8600"
+                     "ConsulDnsPort":"8600"
                   },
-                  "DnsInterface":{
-                     "Description":"Interface where DNS queries are forwarded.",
-                     "Name":"dummy0",
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
                }
@@ -324,14 +321,13 @@
                },
                {
                   "Key":"dnsmasq-application",
-                  "Description":"Instance DNS server.",
+                  "Description":"Instance DNS server, forwards queries ending in .consul to Consul, the others to the AWS DNS server.",
                   "Name":"dnsmasq",
                   "Port":{
-                     "DnsPort":"8600"
+                     "ConsulDnsPort":"8600"
                   },
-                  "DnsInterface":{
-                     "Description":"Interface where DNS queries are forwarded.",
-                     "Name":"dummy0",
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
                }

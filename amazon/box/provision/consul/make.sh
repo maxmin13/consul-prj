@@ -242,16 +242,17 @@ do
                 "${user_nm}" \
                 "${user_pwd}"
                    
-             break 2 ## exit the loop
+             break ## exit the loop
           else
-             if [[ 1 -eq "${i}" ]]
+             if [[ 1 -eq "${i}" ]] # if first loop
              then
                 echo 'WARN: changes made to IAM entities can take noticeable time for the information to be reflected globally.'
                 echo 'Let''s wait a bit and check again.'             
              
                 wait 30
              else
-                break 2
+                echo 'ERROR: installing Consul'
+                exit 1
              fi
           fi
        }
