@@ -13,6 +13,10 @@ and uploaded to AWS ECR registry. Each instance downloads the image from the reg
 
 A cluster of Consul agensts is run in the datacenter.<br/> 
 The admin instance runs a Consul server agent, each other instance a Consul client agent.<br/> 
+Console web console is published at the address:
+<br/>
+http://${admin-instance-public-ip}/ui/consul
+<br/><br/>
 Consul is configured to bind its HTTP, CLI RPC, and DNS interfaces to the 169.254.1.1 address.<br/> 
 The cluster gossip is exchanged in the 10.0.10.0/24 network.<br/>
 dnsmaq acts as DNS service for the instance and the containers. It passes queries ending in .consul to the Consul agent, while
@@ -24,10 +28,7 @@ curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty
 <br/>
 dig jenkins.maxmin.it.node.consul
 <br/><br/>
-In the Admin instance Consul angent publish a Console at the address:
-<br/>
-http://${admin-instance-public-ip}/ui/consul
-<br/><br/>
+
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
 
