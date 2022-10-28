@@ -1,5 +1,6 @@
 {
    "Datacenter":{
+      "Description":"AWS VPC",
       "Name":"consul-datacenter",
       "Cidr":"10.0.0.0/16",
       "DnsAddress":"10.0.0.2",

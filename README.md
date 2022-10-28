@@ -29,24 +29,34 @@ curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty
 dig jenkins.maxmin.it.node.consul
 <br/><br/>
 
-
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
 
-```
+## Required:
 
+```
 Fedora
+AWS account
 aws-cli/2.7.34
 jq-1.6
+```
 
-cd aws-datacenter
+## Configure
+
+```
+Edit datacenter_consts.json, set Region and Az values.
+```
+
+## Istall
+
+```
+cd consul-prj
 amazon/run/make.sh
-
 ```
 
-## Delete the datacenter
+## Delete
 
 ```
-cd aws-datacenter
+cd consul-prj
 amazon/run/delete.sh
 
 ```
