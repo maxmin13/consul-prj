@@ -29,7 +29,7 @@ source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/registry.sh
 source "${LIBRARY_DIR}"/consul.sh
 
-yum update -y && yum install -y jq
+yum update -y
 
 ####
 echo 'Running container ...'
@@ -97,61 +97,5 @@ docker_run_container "${SERVICE_KEY}" "${CONTAINER_NM}" "${INSTANCE_KEY}" "${CON
 docker_logout_ecr_registry "${registry_uri}" 
    
 echo 'Logged out of ECR registry.' 
-
-#
-# Environment variables
-#
-
-get_datacenter_application_client_interface "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Ip'
-consul_client_interface_addr="${__RESULT}"    
-get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'HttpPort'
-http_port="${__RESULT}"
-get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'RpcPort'
-rpc_port="${__RESULT}"
-
-if [[ ! -v CONSUL_HTTP_ADDR && ! -v CONSUL_RPC_ADDR ]]
-then
-   # available from next login.
-   echo "CONSUL_HTTP_ADDR=${consul_client_interface_addr}:${http_port}" >> /etc/environment
-   echo "CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}" >> /etc/environment
-   
-   # make them available in current session without logout/login.
-   export CONSUL_HTTP_ADDR="${consul_client_interface_addr}":"${http_port}"
-   export CONSUL_RPC_ADDR="${consul_client_interface_addr}":"${rpc_port}"
-   
-   echo "Environment variables updated."
-else
-   echo "WARN: environment variable already updated."
-fi
-
-#
-# Consul registration
-#  
-
-consul_verify_and_wait
-is_ready="${__RESULT}"
-
-if [[ 'true' == "${is_ready}" ]]
-then
-   echo 'Registering container with Consul agent ...'
-   
-   get_service_application "${SERVICE_KEY}" 'HostPort'
-   application_port="${__RESULT}"
-
-   cd "${REMOTE_DIR}"
-   
-   sed -e "s/SEDnameSED/${SERVICE_KEY}/g" \
-       -e "s/SEDtagsSED/${SERVICE_KEY}/g" \
-       -e "s/SEDportSED/${application_port}/g" \
-          consul-register.json > /etc/consul.d/"${SERVICE_KEY}".json
-
-   consul_restart_service 
-
-   echo 'Container registered with Consul agent.'
-else
-   echo 'WARN: container not registered with Consul.'
-fi
-
-yum remove -y jq
 
 echo

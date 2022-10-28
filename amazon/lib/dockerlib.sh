@@ -439,6 +439,8 @@ function docker_run_container()
    local -r consul_key="${2}"
    
    local cmd='docker run -d'
+   
+   cmd+=" --restart unless-stopped"
    cmd+=" --name ${container_nm}"
    
    #
@@ -573,7 +575,7 @@ function docker_run_container()
 # Globals:
 #  none
 # Arguments:
-#  none
+#  container_nm: the container name.
 # Returns:      
 #  none.  
 #===============================================================================
@@ -588,6 +590,36 @@ function docker_run_helloworld_container()
    local -r container_nm="${1}"
    
    docker run --name "${container_nm}" -i -t hello-world
+}     
+
+#===============================================================================
+# Registrator automatically registers and deregisters with Consul services for 
+# any Docker container by inspecting containers as they come online. 
+# 
+# Globals:
+#  none
+# Arguments:
+#  container_nm: the container name.
+#  consul_port:  Consul HTTP port.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_run_registrator()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local -r container_nm="${1}"
+
+   docker run -d --name="${container_nm}" \
+       --restart unless-stopped \
+       --net=host \
+       --volume=/var/run/docker.sock:/tmp/docker.sock \
+         gliderlabs/registrator:latest \
+         consul://"${CONSUL_HTTP_ADDR}"    
 }     
 
 #===============================================================================

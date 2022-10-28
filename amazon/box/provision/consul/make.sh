@@ -31,6 +31,7 @@ consul_key='consul-application'
 nginx_key='nginx-application'
 consul_key='consul-application'
 dnsmasq_key='dnsmasq-application'
+registrator_key='registrator-application'
 logfile_nm="${instance_key}".log
 
 ####
@@ -157,6 +158,7 @@ sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDnginx_keySED/${nginx_key}/g" \
     -e "s/SEDconsul_keySED/${consul_key}/g" \
     -e "s/SEDdnsmasq_keySED/${dnsmasq_key}/g" \
+    -e "s/SEDregistrator_keySED/${registrator_key}/g" \
     -e "s/SEDdummy_keySED/${dummy_key}/g" \
     -e "s/SEDadmin_eipSED/${admin_eip}/g" \
     -e "s/SEDadmin_instance_keySED/${admin_instance_key}/g" \
@@ -182,6 +184,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
     "${LIBRARY_DIR}"/consul.sh \
+    "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/network.sh \
     "${PROVISION_DIR}"/dnsmasq/dnsmasq.conf \
     "${PROVISION_DIR}"/dns/dhclient.conf \

@@ -20,8 +20,6 @@ source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/registry.sh
 
-yum update -y && yum install -y jq
-
 ####
 echo "Deleting ${SERVICE_KEY} image ..."
 ####
@@ -85,8 +83,6 @@ then
 else
    echo 'WARN: image already deleted.'
 fi
-
-yum remove -y jq
 
 echo "${image_nm} removed."
 echo

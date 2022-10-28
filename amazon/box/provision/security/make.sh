@@ -146,7 +146,7 @@ echo 'secure-linux.sh ready'
 scp_upload_files "${private_key_file}" "${eip}" "${current_ssh_port}" "${user_nm}" "${remote_dir}" \
     "${temporary_dir}"/secure-linux.sh \
     "${PROVISION_DIR}"/security/check-linux.sh \
-    "${PROVISION_DIR}"/yumupdate.sh \
+    "${PROVISION_DIR}"/security/yumupdate.sh \
     "${temporary_dir}"/sshd_config        
 
 get_datacenter_instance "${instance_key}" 'UserPassword'

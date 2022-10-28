@@ -108,7 +108,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/update
     "${ssh_port}" \
     "${user_nm}"                     
    
-sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/updates)/g" \
+sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/updates)/g" \
        "${PROVISION_DIR}"/docker/docker-install.sh > "${temporary_dir}"/docker-install.sh    
        
 echo 'docker-install.sh ready.'    
@@ -121,7 +121,8 @@ echo 'awscli-update.sh ready.'
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/updates \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${temporary_dir}"/docker-install.sh \
-    "${temporary_dir}"/awscli-update.sh      
+    "${temporary_dir}"/awscli-update.sh \
+    "${PROVISION_DIR}"/utilities/programs-install.sh       
 
 get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
@@ -132,9 +133,11 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}" \
     "${ssh_port}" \
     "${user_nm}" \
     "${user_pwd}" 
-    
+
+#    
 echo 'Installing Docker ...'
-                  
+#
+                 
 # shellcheck disable=SC2015                     
 ssh_run_remote_command_as_root "${remote_dir}"/updates/docker-install.sh \
     "${private_key_file}" \
@@ -146,8 +149,10 @@ ssh_run_remote_command_as_root "${remote_dir}"/updates/docker-install.sh \
        echo 'ERROR: installing Docker.'
        exit 1    
     }
-    
+
+#    
 echo 'Updating awscli ...'
+#
    
 # shellcheck disable=SC2015                              
 ssh_run_remote_command_as_root "${remote_dir}"/updates/awscli-update.sh \
@@ -159,7 +164,23 @@ ssh_run_remote_command_as_root "${remote_dir}"/updates/awscli-update.sh \
     {
        echo 'ERROR: updating awscli.'
        exit 1    
-    }    
+    }  
+    
+#    
+echo 'Installing utilities ...'
+#
+                 
+# shellcheck disable=SC2015                     
+ssh_run_remote_command_as_root "${remote_dir}"/updates/programs-install.sh \
+    "${private_key_file}" \
+    "${eip}" \
+    "${ssh_port}" \
+    "${user_nm}" \
+    "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Utilities successfully installed.' ||
+    {
+       echo 'ERROR: installing utilities.'
+       exit 1    
+    }      
    
 # Clear remote directory.
 ssh_run_remote_command "rm -rf ${remote_dir:?}" \

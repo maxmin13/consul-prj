@@ -20,7 +20,7 @@ source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/registry.sh
 
-yum update -y && yum install -y jq
+yum update -y
 
 ####
 echo "Building ${SERVICE_KEY} image ..."
@@ -77,8 +77,6 @@ echo 'Image pushed to ECR.'
                        
 docker_logout_ecr_registry "${registry_uri}" 
 
-yum remove -y jq
-   
 echo 'Logged out of ECR registry.'
 echo
 

@@ -19,7 +19,7 @@ dnsmaq acts as DNS service for the instance and the containers. It passes querie
 all the remaining queries are passed to the AWS DNS service at 10.0.0.2.<br/>
 In each AWS instance or in each container, Consul services can be queried by calling:<br/>
 <br/>
-curl http://169.254.1.1:8500/v1/catalog/service/jenkins-service?pretty
+curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins-service?pretty
 <br/>
 dig jenkins.maxmin.it.node.consul
 <br/><br/>
@@ -29,6 +29,7 @@ dig jenkins.maxmin.it.node.consul
 
 ```
 
+Fedora
 aws-cli/2.7.34
 jq-1.6
 

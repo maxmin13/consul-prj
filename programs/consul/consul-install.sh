@@ -30,6 +30,7 @@ INSTANCE_KEY='SEDinstance_keySED'
 NGINX_KEY='SEDnginx_keySED'
 CONSUL_KEY='SEDconsul_keySED'
 DNSMASQ_KEY='SEDdnsmasq_keySED'
+REGISTRATOR_KEY='SEDregistrator_keySED'
 DUMMY_KEY='SEDdummy_keySED'
 ADMIN_INSTANCE_KEY='SEDadmin_instance_keySED'						
 ADMIN_EIP='SEDadmin_eipSED'									
@@ -40,19 +41,19 @@ source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh
 source "${LIBRARY_DIR}"/consul.sh
+source "${LIBRARY_DIR}"/dockerlib.sh
 
-yum update -y && yum install -y yum-utils jq
-
-get_datacenter_application "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Mode'
-consul_mode="${__RESULT}"
+yum update -y && yum install -y yum-utils
 
 # temporarily set the instance DNS to 10.0.0.2
 get_datacenter 'DnsAddress'
 datacenter_dns_addr="${__RESULT}"
 
 sed -i -e "s/127.0.0.1/${datacenter_dns_addr}/g" /etc/resolv.conf
-
 dig google.com
+
+get_datacenter_application "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Mode'
+consul_mode="${__RESULT}"
 
 ####
 echo "Installing Consul in ${consul_mode} mode ..."
@@ -166,6 +167,32 @@ echo "Consul configured with bind address ${consul_bind_interface_addr} and clie
 sed "s/SEDconsul_config_dirSED/$(escape '/etc/consul.d')/g" \
      consul-systemd.service > /etc/systemd/system/consul.service
  
+#
+# Environment variables
+#
+
+get_datacenter_application_client_interface "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Ip'
+consul_client_interface_addr="${__RESULT}"    
+get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'HttpPort'
+http_port="${__RESULT}"
+get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'RpcPort'
+rpc_port="${__RESULT}"
+
+if [[ ! -v CONSUL_HTTP_ADDR && ! -v CONSUL_RPC_ADDR ]]
+then
+   # available from next login.
+   echo "CONSUL_HTTP_ADDR=${consul_client_interface_addr}:${http_port}" >> /etc/environment
+   echo "CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}" >> /etc/environment
+   
+   # make them available in current session without logout/login.
+   export CONSUL_HTTP_ADDR="${consul_client_interface_addr}":"${http_port}"
+   export CONSUL_RPC_ADDR="${consul_client_interface_addr}":"${rpc_port}"
+   
+   echo "Environment variables updated."
+else
+   echo "WARN: environment variable already updated."
+fi 
+ 
 ##
 ## dnsmasq
 ##
@@ -186,17 +213,6 @@ sed -e "s/SEDconsul_dns_addrSED/${consul_interface_addr}/g" \
         dnsmasq.conf > /etc/dnsmasq.d/dnsmasq.conf
        
 echo "dnsmask configured."
-
-##
-## DNS server
-##
-
-# set dnsmasq as the instance's DNS server (in resolv.config point to dnsmask at 127.0.0.1)
-rm -f /etc/dhcp/dhclient.conf
-sed -e "s/SEDdns_addrSED/127.0.0.1/g" \
-        dhclient.conf > /etc/dhcp/dhclient.conf
-
-echo 'dnsmasq configured as the instance''s DNS server.'      
 
 ##
 ## nginx reverse proxy.
@@ -226,13 +242,41 @@ then
            nginx-reverse-proxy.conf > /etc/nginx/default.d/nginx-reverse-proxy.conf
 fi
 
+##
+## Registrator
+##
+
+get_datacenter_application "${INSTANCE_KEY}" "${REGISTRATOR_KEY}" 'Name'
+registrator_nm="${__RESULT}"
+docker_check_container_exists "${registrator_nm}"
+container_exists="${__RESULT}"
+
+if [[ 'true' == "${container_exists}" ]]
+then
+   docker_stop_container "${registrator_nm}"
+   docker_delete_container "${registrator_nm}"
+   
+   echo 'Registrator container removed.'
+fi
+
+docker_run_registrator "${registrator_nm}"
+
+##
+## DNS server
+##
+
+# set dnsmasq as the instance's DNS server (in resolv.config point to dnsmask at 127.0.0.1)
+rm -f /etc/dhcp/dhclient.conf
+sed -e "s/SEDdns_addrSED/127.0.0.1/g" \
+        dhclient.conf > /etc/dhcp/dhclient.conf
+
+echo 'dnsmasq configured as the instance''s DNS server.'  
+
 get_datacenter_application_port "${ADMIN_INSTANCE_KEY}" "${NGINX_KEY}" 'ProxyPort'
 nginx_proxy_port="${__RESULT}"
 get_datacenter_application_url "${ADMIN_INSTANCE_KEY}" "${CONSUL_KEY}" "${ADMIN_EIP}" "${nginx_proxy_port}"
 application_url="${__RESULT}"  
 
-yum remove -y jq
-    
 echo "${application_url}" 
 echo 'Reboot the instance.'
 echo

@@ -13,9 +13,11 @@ set +o xtrace
 
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+REMOTE_DIR='SEDremote_dirSED'	
 INSTANCE_KEY='SEDinstance_keySED'
 CONSUL_KEY='SEDconsul_keySED'
 DUMMY_KEY='SEDdummy_keySED'
+REGISTRATOR_KEY='SEDregistrator_keySED'
 
 source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/network.sh
@@ -23,8 +25,16 @@ source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh
 source "${LIBRARY_DIR}"/consul.sh
+source "${LIBRARY_DIR}"/dockerlib.sh
 
-yum install -y jq
+cd "${REMOTE_DIR}"
+
+# temporarily set the instance DNS to 10.0.0.2
+get_datacenter 'DnsAddress'
+datacenter_dns_addr="${__RESULT}"
+
+sed -i -e "s/127.0.0.1/${datacenter_dns_addr}/g" /etc/resolv.conf
+dig google.com
 
 ####
 echo 'Removing Consul ...'
@@ -76,6 +86,27 @@ rm -rf /etc/consul.d
 
 echo 'Consul removed.'
 
+#
+# Environment variables
+#
+
+get_datacenter_application_client_interface "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Ip'
+consul_client_interface_addr="${__RESULT}"    
+get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'HttpPort'
+http_port="${__RESULT}"
+get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'RpcPort'
+rpc_port="${__RESULT}"
+
+if [[ -v CONSUL_HTTP_ADDR && ! -v CONSUL_RPC_ADDR ]]
+then
+   grep -v "CONSUL_HTTP_ADDR" /etc/environment > tmpfile && mv tmpfile /etc/environment
+   grep -v "CONSUL_RPC_ADDR" /etc/environment > tmpfile && mv tmpfile /etc/environment
+
+   echo "Consul environment variables removed."
+else
+   echo "WARN: Consul environment variables already removed."
+fi 
+
 ##
 ## dummy interface. 
 ##
@@ -97,6 +128,25 @@ else
 fi
 
 ##
+## Registrator
+##
+
+get_datacenter_application "${INSTANCE_KEY}" "${REGISTRATOR_KEY}" 'Name'
+registrator_nm="${__RESULT}"
+docker_check_container_exists "${registrator_nm}"
+container_exists="${__RESULT}"
+
+if [[ 'true' == "${container_exists}" ]]
+then
+   docker_stop_container "${registrator_nm}"
+   docker_delete_container "${registrator_nm}"
+   
+   echo 'Registrator container removed.'
+else
+   echo 'WARN: Registrator container already removed.'
+fi
+
+##
 ## dnsmasq
 ##
 
@@ -112,7 +162,7 @@ echo 'dnsmasq successfull removed.'
 get_datacenter 'DnsAddress'
 datacenter_dns_addr="${__RESULT}"
 
-# set dnsmasq as the instance's DNS server (in resolv.config point to dnsmask at 127.0.0.1)
+# set the AWS DNS service as the instance's DNS.
 rm -f /etc/dhcp/dhclient.conf
 sed -e "s/SEDdns_addrSED/${datacenter_dns_addr}/g" \
         dhclient.conf > /etc/dhcp/dhclient.conf

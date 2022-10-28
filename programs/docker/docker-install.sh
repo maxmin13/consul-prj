@@ -27,10 +27,10 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-REMOTE_DIR='SEDremote_dirSED'
+LIBRARY_DIR='SEDlibrary_dirSED'
 
 # shellcheck disable=SC1091
-source "${REMOTE_DIR}"/dockerlib.sh
+source "${LIBRARY_DIR}"/dockerlib.sh
 
 STEP() { echo ; echo ; echo "==\\" ; echo "===>" "$@" ; echo "==/" ; echo ; }
 

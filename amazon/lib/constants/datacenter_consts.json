@@ -98,6 +98,18 @@
                   }
                },
                {
+                  "Key":"registrator-application",
+                  "Description":"Registrator automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.",
+                  "Name":"registrator-service",
+                  "Port":{
+                     "ConsulHttpPort":"8500"
+                  },
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
+                     "Ip":"169.254.1.1"
+                  }
+               },
+               {
                   "Key":"nginx-application",
                   "Description":"Reverse proxy for Consul ui",
                   "Name":"nginx",
@@ -165,6 +177,18 @@
                      "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
+               },
+               {
+                  "Key":"registrator-application",
+                  "Description":"Registrator automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.",
+                  "Name":"registrator-service",
+                  "Port":{
+                     "ConsulHttpPort":"8500"
+                  },
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
+                     "Ip":"169.254.1.1"
+                  }
                }
             ]
          },
@@ -215,6 +239,18 @@
                   "Name":"dnsmasq",
                   "Port":{
                      "ConsulDnsPort":"8600"
+                  },
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
+                     "Ip":"169.254.1.1"
+                  }
+               },
+               {
+                  "Key":"registrator-application",
+                  "Description":"Registrator automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.",
+                  "Name":"registrator-service",
+                  "Port":{
+                     "ConsulHttpPort":"8500"
                   },
                   "ConsulInterface":{
                      "Description":"Consul client interface",
@@ -275,6 +311,18 @@
                      "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
+               },
+               {
+                  "Key":"registrator-application",
+                  "Description":"Registrator automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.",
+                  "Name":"registrator-service",
+                  "Port":{
+                     "ConsulHttpPort":"8500"
+                  },
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
+                     "Ip":"169.254.1.1"
+                  }
                }
             ]
          },
@@ -325,6 +373,18 @@
                   "Name":"dnsmasq",
                   "Port":{
                      "ConsulDnsPort":"8600"
+                  },
+                  "ConsulInterface":{
+                     "Description":"Consul client interface",
+                     "Ip":"169.254.1.1"
+                  }
+               },
+               {
+                  "Key":"registrator-application",
+                  "Description":"Registrator automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.",
+                  "Name":"registrator-service",
+                  "Port":{
+                     "ConsulHttpPort":"8500"
                   },
                   "ConsulInterface":{
                      "Description":"Consul client interface",

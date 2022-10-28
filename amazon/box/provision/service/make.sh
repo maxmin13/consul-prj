@@ -155,8 +155,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/registry.sh \
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/network.sh \
-    "${temporary_dir}"/container-run.sh \
-    "${PROVISION_DIR}"/consul/consul-register.json 
+    "${temporary_dir}"/container-run.sh
     
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}/service/${service_key}/constants" \
     "${LIBRARY_DIR}"/constants/datacenter_consts.json \

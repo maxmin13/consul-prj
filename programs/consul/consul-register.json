@@ -1,9 +1,0 @@
-{
-   "service":{
-      "name":"SEDnameSED",
-      "tags":[
-         "SEDtagsSED"
-      ],
-      "port":SEDportSED
-   }
-}

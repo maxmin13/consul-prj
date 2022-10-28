@@ -25,25 +25,6 @@ source "${LIBRARY_DIR}"/secretsmanager.sh
 
 mkdir -p "${LOGS_DIR}"
 
-#. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'admin-instance'
-. "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
-
-exit
-
-
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'jenkins-instance' 
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'nginx-instance' 
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'sinatra-instance' 
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis-instance' 
-. "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin-instance'
-
-
-exit
-
-
-
-
-
 ## Datacenter ##
 
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh 'consul-network'
@@ -77,12 +58,12 @@ exit
 . "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'nginx-instance' 'nginx-service' 
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'redis-instance' 'consul-network'
-. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'redis'
+. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'redis-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'redis-instance' 
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'redis-instance' 'redis-service'
 
 . "${PROJECT_DIR}"/amazon/box/make.sh 'sinatra-instance' 'consul-network'
-. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra'
+. "${PROJECT_DIR}"/amazon/box/permissions/make.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'sinatra-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/service/webapp/deploy/make.sh 'sinatra-instance' 'sinatra-service' 
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'sinatra-instance' 'sinatra-service'

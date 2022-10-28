@@ -20,7 +20,7 @@ APPLICATION_ADDRESS='SEDapplication_addressSED'
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 
-yum update -y && yum install -y jq
+yum update -y
 
 ####
 echo 'Deploying webapp ...'
@@ -41,8 +41,6 @@ find "${volume_dir}" -type f -exec chmod 744 {} +
 
 get_service_webapp_url "${SERVICE_KEY}" "${APPLICATION_ADDRESS}" "${application_port}"
 webapp_url="${__RESULT}"
-
-yum remove -y jq
 
 echo 'webapp deployed.'
 echo "${webapp_url}"

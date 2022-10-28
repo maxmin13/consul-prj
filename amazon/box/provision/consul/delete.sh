@@ -23,6 +23,7 @@ instance_key="${1}"
 ssh_key='ssh-application'
 consul_key='consul-application'
 dummy_key='dummy0-network'
+registrator_key='registrator-application'
 logfile_nm="${instance_key}".log
 
 ####
@@ -247,9 +248,11 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul/
 #
 
 sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/consul)/g" \
+    -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDconsul_keySED/${consul_key}/g" \
     -e "s/SEDdummy_keySED/${dummy_key}/g" \
+    -e "s/SEDregistrator_keySED/${registrator_key}/g" \
     "${PROVISION_DIR}"/consul/consul-remove.sh > "${temporary_dir}"/consul-remove.sh  
 
 echo 'consul-remove.sh ready.' 
@@ -262,6 +265,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
+    "${LIBRARY_DIR}"/dockerlib.sh \
     "${temporary_dir}"/consul-remove.sh
     
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/consul/constants \
@@ -313,7 +317,7 @@ do
                 "${user_nm}" \
                 "${user_pwd}"
                    
-             exit 0 ## exit the loop
+             break ## exit the loop
           else
              if [[ 1 -eq "${i}" ]] # if first loop
              then
