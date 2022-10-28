@@ -14,7 +14,7 @@ and uploaded to AWS ECR registry. Each instance downloads the image from the reg
 A cluster of Consul agensts is run in the datacenter.<br/> 
 The admin instance runs a Consul server agent, each other instance a Consul client agent.<br/> 
 Console web console is published at the address:
-<br/>
+<br/><br/>
 http://${admin-instance-public-ip}/ui/consul
 <br/><br/>
 Consul is configured to bind its HTTP, CLI RPC, and DNS interfaces to the 169.254.1.1 address.<br/> 
