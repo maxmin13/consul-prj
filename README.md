@@ -1,5 +1,5 @@
 
-## AWS datacenter
+## Consul datacenter
 
 Amazon AWS datacenter that runs AWS EC2 instances with Linux 2 os. Every instance runs a Docker service:
 Nginx server, Sinatra server, Redis database, Jenkins pipeline.
@@ -60,4 +60,18 @@ cd consul-prj
 amazon/run/delete.sh
 
 ```
+
+## Access to Nginx website
+
+http://${nginx-instance-public-ip}:80/welcome
+
+## Access to Sinatra website
+
+http://${sinatra-instance-public-ip}:4567/info
+
+## Access to Jenkins website
+
+http://${jenkins-instance-public-ip}:80/jenkins
+
+
 
