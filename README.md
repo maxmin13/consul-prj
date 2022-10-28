@@ -26,7 +26,7 @@ dig jenkins.maxmin.it.node.consul
 <br/><br/>
 In the Admin instance Consul angent publish a Console at the address:
 <br/>
-http://<admin-instance-public-ip>/ui/consul
+http://${admin-instance-public-ip}/ui/consul
 <br/><br/>
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
