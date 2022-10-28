@@ -68,6 +68,10 @@ http://${nginx-instance-public-ip}:80/welcome
 
 http://${sinatra-instance-public-ip}:4567/info
 
+curl -i -H 'Accept: application/json' -d 'name=Foo&status=Bar' http://${sinatra-instance-public-ip}:4567/json
+
+curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}:4567/json
+
 ## Jenkins website
 
 http://${jenkins-instance-public-ip}:80/jenkins
