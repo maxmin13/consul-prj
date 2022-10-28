@@ -58,18 +58,17 @@ amazon/run/make.sh
 ```
 cd consul-prj
 amazon/run/delete.sh
-
 ```
 
-## Access to Nginx website
+## Nginx website
 
 http://${nginx-instance-public-ip}:80/welcome
 
-## Access to Sinatra website
+## Sinatra website
 
 http://${sinatra-instance-public-ip}:4567/info
 
-## Access to Jenkins website
+## Jenkins website
 
 http://${jenkins-instance-public-ip}:80/jenkins
 
