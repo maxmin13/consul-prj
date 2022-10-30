@@ -38,9 +38,9 @@ then
    # other standalone containers running on other Docker daemons
    docker_network_create "${NETWORK_NM}" 'overlay' "${NETWORK_CIDR}" "${NETWORK_GATE}"
 
-   echo 'Network created.'
+   echo 'Docker overlay network created.'
 else 
-   echo 'WARN: network already created.'
+   echo 'WARN: Docker overlay network already created.'
 fi
 
 echo

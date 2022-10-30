@@ -704,10 +704,11 @@ function docker_network_create()
    local -r gateway_add="${4}"
 
    docker network create "${network_nm}" \
-                         --subnet "${subnet_cidr}" \
-                         --gateway "${gateway_add}" \
-                         --driver "${driver}" \
-                         --attachable        
+       --subnet "${subnet_cidr}" \
+       --gateway "${gateway_add}" \
+       --driver "${driver}" \
+       --attachable   
+            
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
