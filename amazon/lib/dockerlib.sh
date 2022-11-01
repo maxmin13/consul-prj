@@ -463,6 +463,10 @@ function docker_run_container()
       echo 'WARN: DNS network interface not found.'
    fi 
     
+   #
+   # Environment varialbles
+   #
+    
    get_datacenter_application_client_interface "${instance_key}" "${consul_key}" 'Ip'
    consul_client_interface_addr="${__RESULT}"    
    get_datacenter_application_port "${instance_key}" "${consul_key}" 'HttpPort'
@@ -474,7 +478,7 @@ function docker_run_container()
    cmd+=" -e CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}"  
    
    #
-   # Host network.
+   # Network.
    #
    
    get_service_host_interface "${service_key}" 'Name'
@@ -488,6 +492,10 @@ function docker_run_container()
    else
       echo 'WARN: host interface not found.'
    fi 
+   
+   #
+   # Volume
+   #
    
    # get the container volume.
    get_service_application "${service_key}" 'HostVolume'
@@ -506,7 +514,11 @@ function docker_run_container()
    if [[ -n "${v_mount_mode}" ]]
    then  
       cmd+=":${v_mount_mode}"  
-   fi  
+   fi 
+   
+   #
+   # Docker socket
+   # 
    
    # mount the Docker socket of the host in the container.
    get_service_engine "${service_key}" 'HostSocket'
@@ -527,6 +539,10 @@ function docker_run_container()
       cmd+=":${s_mount_mode}"  
    fi 
    
+   #
+   # Port
+   #
+   
    # get the container port.
    get_service_application "${service_key}" 'HostPort'
    local host_port="${__RESULT}"
@@ -537,6 +553,10 @@ function docker_run_container()
    then  
       cmd+=" -p ${host_port}:${container_port}"
    fi
+   
+   #
+   # Docker image
+   #
    
    # get image name and tag
    get_service_image "${service_key}" 'Name'
@@ -551,6 +571,10 @@ function docker_run_container()
    local image_tag="${__RESULT}"
    
    cmd+=" ${repository_uri}:${image_tag}" 
+   
+   #
+   # Command
+   #
 
    # get the command to run in the container when it starts.
    get_service_container "${service_key}" "Cmd"
