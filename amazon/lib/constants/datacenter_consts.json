@@ -1,18 +1,18 @@
 {
    "Datacenter":{
       "Description":"AWS VPC",
-      "Name":"consul-datacenter",
+      "Name":"maxmin-datacenter",
       "Cidr":"10.0.0.0/16",
       "DnsAddress":"10.0.0.2",
-      "Gateway":"consul-gateway",
+      "Gateway":"maxmin-gateway",
       "Region":"eu-west-1",
       "Az":"eu-west-1a",
-      "RouteTable":"consul-routetable",
+      "RouteTable":"maxmin-routetable",
       "Networks":[
          {
-            "Description":"Network shared by all the AWS instances.",
-            "Key":"consul-network",
-            "Name":"consul-subnet",
+            "Description":" AWS network shared by all the instances.",
+            "Key":"mm-network",
+            "Name":"maxmin0-subnet",
             "Cidr":"10.0.10.0/24"
          },
          {
@@ -22,6 +22,12 @@
             "Cidr":"169.254.1.1/32",
             "Address":"169.254.1.1",
             "Mask":"255.255.255.255"
+         },
+         {
+            "Description":"Docker overlay network.",
+            "Key":"sinnet3-network",
+            "Name":"sinnet3",
+            "Cidr":"192.168.3.0/24"
          }
       ],
       "Instances":[
@@ -123,6 +129,21 @@
                      "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
+               },
+               {
+                  "Key":"swarm-application",
+                  "Description":"Docker swarm service",
+                  "NodeMode":"manager",
+                  "JoinTokenName":"docker/swarm/token",
+                  "Port":{
+                     "ClusterPort":"2377",
+                     "NodesPort":"7946",
+                     "TrafficPort":"4789"
+                  },
+                  "AdvertiseInterface":{
+                     "Description":"address advertised to other members of the swarm for API access and overlay networking",
+                     "Ip":"10.0.10.34"
+                  }
                }
             ]
          },
@@ -190,6 +211,21 @@
                      "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
                   }
+               },
+               {
+                  "Key":"swarm-application",
+                  "Description":"Docker swarm service",
+                  "NodeMode":"worker",
+                  "JoinTokenName":"docker/swarm/token",
+                  "Port":{
+                     "ClusterPort":"2377",
+                     "NodesPort":"7946",
+                     "TrafficPort":"4789"
+                  },
+                  "AdvertiseInterface":{
+                     "Description":"address advertised to other members of the swarm for API access and overlay networking",
+                     "Ip":"10.0.10.34"
+                  }
                }
             ]
          },
@@ -256,6 +292,21 @@
                   "ConsulInterface":{
                      "Description":"Consul client interface",
                      "Ip":"169.254.1.1"
+                  }
+               },
+               {
+                  "Key":"swarm-application",
+                  "Description":"Docker swarm service",
+                  "NodeMode":"worker",
+                  "JoinTokenName":"docker/swarm/token",
+                  "Port":{
+                     "ClusterPort":"2377",
+                     "NodesPort":"7946",
+                     "TrafficPort":"4789"
+                  },
+                  "AdvertiseInterface":{
+                     "Description":"address advertised to other members of the swarm for API access and overlay networking",
+                     "Ip":"10.0.10.34"
                   }
                }
             ]

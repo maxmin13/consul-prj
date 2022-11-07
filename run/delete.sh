@@ -32,28 +32,28 @@ mkdir -p "${LOGS_DIR}"
 
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'jenkins-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'jenkins-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-instance' 'consul-network'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'jenkins-instance' 'mm-network'
 
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'nginx-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'nginx-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-instance' 'consul-network'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'nginx-instance' 'mm-network'
 
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'sinatra-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'sinatra-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-instance' 'consul-network'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'sinatra-instance' 'mm-network'
 
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'redis-instance' 
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'redis-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis-instance' 'consul-network'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'redis-instance' 'mm-network'
 
    # Jumpbox.
 . "${PROJECT_DIR}"/amazon/box/provision/consul/delete.sh 'admin-instance'
 . "${PROJECT_DIR}"/amazon/box/permissions/delete.sh 'admin-instance'
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin-instance' 'consul-network'
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'admin-instance' 'mm-network'
 
 ## AWS custom images ##
 
-. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared-instance' 'consul-network'      
+. "${PROJECT_DIR}"/amazon/box/delete.sh 'shared-instance' 'mm-network'      
 . "${PROJECT_DIR}"/amazon/image/delete.sh 'shared-instance'           
 
 ## Permission policies ##
@@ -62,6 +62,6 @@ mkdir -p "${LOGS_DIR}"
 
 ## Datacenter ##
 
-. "${PROJECT_DIR}"/amazon/datacenter/delete.sh 'consul-network'     
+. "${PROJECT_DIR}"/amazon/datacenter/delete.sh 'mm-network'     
 
 echo

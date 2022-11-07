@@ -14,7 +14,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-REMOTE_DIR='SEDremote_dirSED'
 LIBRARY_DIR='SEDlibrary_dirSED' 
 INSTANCE_KEY='SEDinstance_keySED'
 SERVICE_KEY='SEDservice_keySED'

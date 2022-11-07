@@ -29,7 +29,6 @@ ssh_key='ssh-application'
 admin_instance_key='admin-instance'
 consul_key='consul-application'
 nginx_key='nginx-application'
-consul_key='consul-application'
 dnsmasq_key='dnsmasq-application'
 registrator_key='registrator-application'
 logfile_nm="${instance_key}".log
@@ -188,8 +187,8 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/network.sh \
     "${PROVISION_DIR}"/dnsmasq/dnsmasq.conf \
     "${PROVISION_DIR}"/dns/dhclient.conf \
-    "${PROVISION_DIR}"/network/ifcfg-dummy \
-    "${PROVISION_DIR}"/network/dummymodule.conf \
+    "${PROVISION_DIR}"/network/dummy/ifcfg-dummy \
+    "${PROVISION_DIR}"/network/dummy/dummymodule.conf \
     "${PROVISION_DIR}"/nginx/nginx-reverse-proxy.conf \
     "${temporary_dir}"/consul-config.json \
     "${PROVISION_DIR}"/consul/consul-systemd.service \

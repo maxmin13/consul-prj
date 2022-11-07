@@ -1,11 +1,2 @@
 
-
-################# TODO /etc/nginx/nginx.conf set http to 80 with parameter
-#####################TODO Use a program such as Registrator to publish the containers’ services.
-
-
-
-
-
-
-check consul remove script if it completes successfully
+ change bind 0.0.0.0 in sinatra app.rb and redis.conf, bind only on the overlay interface   

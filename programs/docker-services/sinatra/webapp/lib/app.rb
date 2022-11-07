@@ -2,26 +2,32 @@ require "rubygems"
 require "sinatra"
 require "json"
 require "redis"
+require 'uri'
+require 'net/http'
 
+# Webapp that connects to a redisdb instance.
 class App < Sinatra::Application
 
-      # Webapp that connects to a redisdb instance.
-      
-      # Docker’s own network stack.
-      # Docker containers exposing ports and binding interfaces so that container services are published on the local Docker host’s external 
-      # network (e.g., binding port  80 inside a container to a high port on the local host).
-      
-      # In addition to this capability, Docker has another facet.
-      # Docker internal networking.
-      # Every Docker container is assigned an IP address, provided through an interface created when we installed Docker. 
-      # That interface is called docker0. 
-      # ip add show docker0
-      # The docker0 interface is a virtual Ethernet bridge that connects our containers and the local host network.
-      
-      redis = Redis.new(:host => '10.0.10.30', :port => '6379') 
-      #redis = Redis.new(:host => 'redisdb', :port => '6379') 
+      # call the local Consul agent to get the local interface to which to bind.
+      #uri = URI.parse("http://#{ENV['CONSUL_HTTP_ADDR']}/v1/catalog/service/sinatra?pretty") 
+      #http = Net::HTTP.new(uri.host, uri.port)
+      #request = Net::HTTP::Get.new(uri.request_uri)
+      #response = http.request(request)
+      #body = response.body
+      #bind = JSON.parse(body)[0]['ServiceAddress']
+      #set :bind, bind
+      set :bind, '0.0.0.0' ## bind on all interfaces.
 
-      set :bind, '0.0.0.0' ## app available on all interfaces.
+      # call the local Consul agent to get Redis database address and port
+      uri = URI.parse("http://#{ENV['CONSUL_HTTP_ADDR']}/v1/catalog/service/redis?pretty")
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      request = Net::HTTP::Get.new(uri.request_uri)
+      response = http.request(request)
+      body = response.body
+      address = JSON.parse(body)[0]['ServiceAddress']
+      port = JSON.parse(body)[0]['ServicePort']
+      redis = Redis.new(:host => address, :port => port)
 
       get '/info' do
         "<h1>DockerBook Test Redis-enabled Sinatra app</h1>"
@@ -29,13 +35,13 @@ class App < Sinatra::Application
 
       get '/json' do
         params = redis.get "params"
-        params.to_json
+        params
       end
 
       post '/json/?' do
         redis.set "params", [params].to_json
-        params.to_json
       end
+
 end
 
 

@@ -213,7 +213,7 @@ function get_service_engine()
    return "${exit_code}"
 }
 
-function get_service_host_interface()
+function get_service_network()
 {
    if [[ $# -lt 1 ]]
    then
@@ -226,7 +226,7 @@ function get_service_host_interface()
    local -r service_key="${1}"
    local property_val=''
 
-   get_service_container "${service_key}" "HostInterface"
+   get_service_container "${service_key}" "Network"
    # shellcheck disable=SC2086
    property_val=$(echo $__RESULT | jq -r -c '.Name // empty') 
 

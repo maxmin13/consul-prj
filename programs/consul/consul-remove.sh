@@ -90,22 +90,10 @@ echo 'Consul removed.'
 # Environment variables
 #
 
-get_datacenter_application_client_interface "${INSTANCE_KEY}" "${CONSUL_KEY}" 'Ip'
-consul_client_interface_addr="${__RESULT}"    
-get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'HttpPort'
-http_port="${__RESULT}"
-get_datacenter_application_port "${INSTANCE_KEY}" "${CONSUL_KEY}" 'RpcPort'
-rpc_port="${__RESULT}"
+grep -vwE "CONSUL_HTTP_ADDR" /etc/environment > tmpfile && mv tmpfile /etc/environment
+grep -vwE "CONSUL_RPC_ADDR" /etc/environment > tmpfile && mv tmpfile /etc/environment
 
-if [[ -v CONSUL_HTTP_ADDR && ! -v CONSUL_RPC_ADDR ]]
-then
-   grep -v "CONSUL_HTTP_ADDR" /etc/environment > tmpfile && mv tmpfile /etc/environment
-   grep -v "CONSUL_RPC_ADDR" /etc/environment > tmpfile && mv tmpfile /etc/environment
-
-   echo "Consul environment variables removed."
-else
-   echo "WARN: Consul environment variables already removed."
-fi 
+echo "Consul environment variables removed."
 
 ##
 ## dummy interface. 

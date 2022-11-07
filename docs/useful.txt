@@ -2,11 +2,11 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/hostsnet-network/consul-network/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/get_service_host_interface/get_service_network/g' {} \;
 
 
 
-   sudo docker events&
+   sudo docker events
    sudo docker logs <container id>
 
 
@@ -22,6 +22,11 @@ find . -type f -name Dockerfile -exec chmod 644 -- {} +
      aws secretsmanager delete-secret --force-delete-without-recovery \
       --secret-id "consulkey" --region 'eu-west-1'
       
-      
+  dig jenkins.maxmin.it.node.consul    
+  curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty
       
 docker exec -it jenkins-service /bin/bash
+
+docker run -d --name mycentos centos:centos8
+
+docker run -it --name mycentos centos:centos8 /bin/bash

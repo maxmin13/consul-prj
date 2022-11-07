@@ -4,8 +4,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
-
-REMOTE_DIR='SEDremote_dirSED'
 	
 echo 'Installing utilities ...'
 

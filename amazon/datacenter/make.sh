@@ -23,7 +23,7 @@ network_key="${1}"
 logfile_nm='datacenter.log'
 
 ###
-STEP 'Data-center'
+STEP 'Datacenter'
 ###
 
 get_datacenter 'Name' 

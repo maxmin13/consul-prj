@@ -16,7 +16,7 @@ fi
 network_key="${1}"
 
 ###
-STEP 'Data-center'
+STEP 'Datacenter'
 ###
 
 get_datacenter 'Name' 

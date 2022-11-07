@@ -72,3 +72,62 @@ function consul_verify_and_wait()
    
    return "${exit_code}"
 }
+
+#===============================================================================
+# Adds a key in Consul's key value store.
+#
+# Globals:
+#  None
+# Arguments:
+# +key_nm    -- key name.
+# +key_value -- key value.
+# Returns:      
+#  None 
+#===============================================================================
+function consul_put_key()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local exit_code=0
+   local -r key_nm="${1}"  
+   local -r key_value="${2}"  
+   
+   consul kv put "${key_nm}" "${key_value}"
+   
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Returns a key stored in Consul's key value store.
+#
+# Globals:
+#  None
+# Arguments:
+# +key_nm -- key name.
+# Returns:      
+#  the key value in the __RESULT varialble 
+#===============================================================================
+function consul_get_key()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   __RESULT=''
+   local exit_code=0
+   local -r key_nm="${1}"  
+   local key_value=''
+   
+   key_value="$(consul kv get "${key_nm}")"
+   
+   # shellcheck disable=SC2034 
+   __RESULT="${key_value}"
+   
+   return "${exit_code}"
+}

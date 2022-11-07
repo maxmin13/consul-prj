@@ -421,6 +421,10 @@ function docker_delete_container()
 # +service_key  -- key into the file service_consts.json, indentifies the 
 #                  container.
 # +container_nm -- name assingned to the container.
+# +instance_key -- key into the file datacenter_consts.json, indentifies the 
+#                  instance.
+# +consul_key   -- key into the file datacenter_consts.json, indentifies the 
+#                  application.
 # Returns:      
 #  None
 #===============================================================================
@@ -435,8 +439,8 @@ function docker_run_container()
    local exit_code=0
    local -r service_key="${1}"
    local -r container_nm="${2}"
-   local -r instance_key="${2}"
-   local -r consul_key="${2}"
+   local -r instance_key="${3}"
+   local -r consul_key="${4}"
    
    local cmd='docker run -d'
    
@@ -466,14 +470,16 @@ function docker_run_container()
    #
    # Environment varialbles
    #
-    
+
    get_datacenter_application_client_interface "${instance_key}" "${consul_key}" 'Ip'
-   consul_client_interface_addr="${__RESULT}"    
+   consul_client_interface_addr="${__RESULT}"   
+    
    get_datacenter_application_port "${instance_key}" "${consul_key}" 'HttpPort'
    http_port="${__RESULT}"
+   
    get_datacenter_application_port "${instance_key}" "${consul_key}" 'RpcPort'
    rpc_port="${__RESULT}"  
-   
+
    cmd+=" -e CONSUL_HTTP_ADDR=${consul_client_interface_addr}:${http_port}"  
    cmd+=" -e CONSUL_RPC_ADDR=${consul_client_interface_addr}:${rpc_port}"  
    
@@ -481,17 +487,9 @@ function docker_run_container()
    # Network.
    #
    
-   get_service_host_interface "${service_key}" 'Name'
-   local host_interface_nm="${__RESULT}"
-   docker_check_network_interface_exists "${host_interface_nm}"
-   local host_interface_exits="${__RESULT}"
-
-   if [[ 'true' == "${host_interface_exits}" ]]
-   then
-      cmd+=" --net ${host_interface_nm}" 
-   else
-      echo 'WARN: host interface not found.'
-   fi 
+   get_service_network "${service_key}" 'Name'
+   local network_nm="${__RESULT}"
+   cmd+=" --net ${network_nm}" 
    
    #
    # Volume
@@ -619,6 +617,7 @@ function docker_run_helloworld_container()
 #===============================================================================
 # Registrator automatically registers and deregisters with Consul services for 
 # any Docker container by inspecting containers as they come online. 
+# The env varialble CONSUL_HTTP_ADDR must be set.
 # 
 # Globals:
 #  none
@@ -715,21 +714,19 @@ function docker_exec()
 #===============================================================================
 function docker_network_create()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
    fi
 
    local exit_code=0
-   local -r network_nm="${1}" 
-   local -r driver="${2}"  
-   local -r subnet_cidr="${3}"
-   local -r gateway_add="${4}"
+   local -r network_nm="${1}"  
+   local -r subnet_cidr="${2}"
+   local -r driver="${3}" 
 
    docker network create "${network_nm}" \
        --subnet "${subnet_cidr}" \
-       --gateway "${gateway_add}" \
        --driver "${driver}" \
        --attachable   
             
@@ -776,7 +773,7 @@ function docker_network_remove()
 } 
 
 #===============================================================================
-# Check if a nework exists.  
+# Check if a Docker network exists.  
 # 
 # Globals:
 #  None
@@ -811,6 +808,19 @@ function docker_check_network_interface_exists()
    return "${exit_code}"
 }
 
+function docker_networks_display()
+{
+   docker network ls   
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: displaying networks.'
+   fi     
+            
+   return "${exit_code}"
+} 
+
 #===============================================================================
 # Returns 'active' if the Docker node is part of a swarm, 'inactive' if not.  
 # 
@@ -823,12 +833,6 @@ function docker_check_network_interface_exists()
 #===============================================================================
 function docker_swarm_status()
 {
-   if [[ $# -lt 0 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
    __RESULT='false'
    local exit_code=0
    local swarm_status=''
@@ -841,26 +845,98 @@ function docker_swarm_status()
 } 
 
 #===============================================================================
-# Initializes a swarm.  
+# Initialize a swarm. The docker engine targeted by this command becomes a 
+# manager in the newly created single-node swarm. 
 # 
 # Globals:
 #  None
 # Arguments:
-#  none.
+# +advertise_add -- the address on wich the node will listen for inbound swarm 
+#                   manager traffic.
 # Returns:      
 #  none.  
 #===============================================================================
 function docker_swarm_init()
 {
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
    local exit_code=0
+   local -r advertise_add="${1}"
 
-   docker swarm init      
+   docker swarm init --advertise-addr="${advertise_add}"     
    exit_code=$?    
   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: initializing swarm.'
    fi     
+            
+   return "${exit_code}"
+} 
+
+#===============================================================================
+# Joins a node to a swarm.
+# 
+# Globals:
+#  None
+# Arguments:
+# +swarm_token -- the Docker swarm join token.
+# Returns:      
+#  none.  
+#===============================================================================
+function docker_swarm_join()
+{
+   if [[ $# -lt 3 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local exit_code=0
+   local -r swarm_token="${1}"
+   local -r listen_add="${2}"
+   local -r listen_port="${3}"
+
+   docker swarm join --token "${swarm_token}" "${listen_add}":"${listen_port}"    
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: joining swarm.'
+   fi 
+            
+   return "${exit_code}"
+} 
+
+#===============================================================================
+# Returns the current token to join a worker node to the swarm.  
+# 
+# Globals:
+#  None
+# Arguments:
+#  none.
+# Returns:      
+#  the token value in the __RESULT variable.  
+#===============================================================================
+function docker_swarm_get_worker_token()
+{
+   __RESULT=''
+   local exit_code=0
+   local swarm_token=''
+
+   swarm_token="$(docker swarm join-token worker --quiet)"    
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving swarm join token.'
+   fi  
+   
+   __RESULT="${swarm_token}"   
             
    return "${exit_code}"
 } 

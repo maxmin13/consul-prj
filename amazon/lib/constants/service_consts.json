@@ -34,9 +34,9 @@
                ]
             },
             "Container":{
-               "HostInterface":{
-                  "Description":"Network interface to the AWS host instance network.",
-                  "Name":"bridge"
+               "Network":{
+		  "Description":"Docker overlay network.",
+                  "Name":"sinnet3"
                },
                "DnsInterface":{
                   "Description":"Network interface where the container sends DSN queries.",
@@ -60,9 +60,9 @@
                "Tag":"v1"
             },
             "Container":{
-               "HostInterface":{
-                  "Description":"Network interface to the AWS host instance network.",
-                  "Name":"bridge"
+               "Network":{
+                  "Description":"Docker overlay network.",
+                  "Name":"sinnet3"
                },
                "DnsInterface":{
                   "Description":"Network interface where the container sends DSN queries.",
@@ -95,8 +95,8 @@
                ]
             },
             "Container":{
-               "HostInterface":{
-                  "Description":"Network interface to the AWS host instance network.",
+               "Network":{
+                  "Description":"Docker bridge network.",
                   "Name":"bridge"
                },
                "DnsInterface":{
@@ -132,8 +132,8 @@
                   "ContainerSocket":"/var/run/docker.sock",
                   "HostSocket":"/var/run/docker.sock"
                },
-               "HostInterface":{
-                  "Description":"Network interface to the AWS host instance network.",
+               "Network":{
+                  "Description":"Docker bridge network.",
                   "Name":"bridge"
                },
                "DnsInterface":{

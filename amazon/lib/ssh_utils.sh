@@ -366,7 +366,7 @@ function ssh_run_remote_command_as_root()
       } >> "${expect_script}"     
    
       chmod +x "${expect_script}"
-      "${expect_script}" 
+      "${expect_script}"
       exit_code=$?
       rm -f "${expect_script}"     
    fi 

@@ -43,6 +43,7 @@ get_service_webapp_url "${SERVICE_KEY}" "${APPLICATION_ADDRESS}" "${application_
 webapp_url="${__RESULT}"
 
 echo 'webapp deployed.'
+echo 'Reboot the (Docker) service.'
 echo "${webapp_url}"
 echo
 
