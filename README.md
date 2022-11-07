@@ -48,8 +48,6 @@ port = JSON.parse(body)[0]['ServicePort']
 redis = Redis.new(:host => address, :port => port)
 ```
 
-<br/>
-
 ## Required:
 
 ```
