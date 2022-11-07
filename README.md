@@ -29,6 +29,10 @@ curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty
 dig jenkins.maxmin.it.node.consul
 <br/><br/>
 
+![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
+
+<br/>
+
 In an application running in a Ruby container, 
 an example of the code to retrieve the database address and port may be:
 
@@ -44,7 +48,7 @@ port = JSON.parse(body)[0]['ServicePort']
 redis = Redis.new(:host => address, :port => port)
 ```
 
-![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
+<br/>
 
 ## Required:
 
