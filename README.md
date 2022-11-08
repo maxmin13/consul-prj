@@ -49,7 +49,9 @@ port = JSON.parse(body)[0]['ServicePort']
 redis = Redis.new(:host => address, :port => port)
 ```
 
-## Required:
+### Deployment:
+</br>
+## Required
 
 ```
 Fedora
@@ -87,18 +89,20 @@ The incoming URL parameters are stored in the Redis database and they are return
 ***<pre>  curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}/json</pre>***
 The Sinatra web application and Redis database are run in Docker containers on different AWS instances/Docker engines.</br>
 All the AWS instances in the datacenter partecipates in a Docker swarm, on top of which has been laid a Docker overlay network, ***sinnet3***.
-
+The Sinatra and Redis containers are isolated in this network.
 
 
 
 
 ## Nginx website
 
-http://${nginx-instance-public-ip}:80/welcome
+Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
+***<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>***
 
 ## Jenkins website
 
-http://${jenkins-instance-public-ip}:80/jenkins
+Standalone web application, attached to the defaul Docker bridge network.
+***<pre>  http://${jenkins-instance-public-ip}:80/jenkins</pre>***
 
 
 
