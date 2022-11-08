@@ -31,6 +31,7 @@ A Registrator container in each instance automatically registers and deregisters
 
 In each AWS instance or in each container, Consul services can be queried by calling:
 ***<pre>  curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty</pre>*** 
+where CONSUL_HTTP_ADDR is an environment variable.
 ***<pre>  dig jenkins.maxmin.it.node.consul</pre>***
 In an application running in a Ruby container, 
 an example of the code to retrieve the database address and port may be:
