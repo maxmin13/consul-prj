@@ -78,17 +78,23 @@ cd consul-prj
 amazon/run/delete.sh
 ```
 
+## Sinatra application
+
+Ruby-based web application with a Redis back end. 
+The incoming URL parameters are stored in the Redis database and they are returned as a Json file when requested.</br>
+***<pre>  http://${sinatra-instance-public-ip}:4567/info</pre>***
+***<pre>  curl -i -H 'Accept: application/json' -d 'name=Foo33&status=Bar33' http://${sinatra-instance-public-ip}:4567/json</pre>***
+***<pre>  curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}/json</pre>***
+The Sinatra web application and Redis database are run in Docker containers on different AWS instances/engines.</br>
+All the AWS instances in the datacenter partecipates in a Docker swarm, on top of which has been laid a Docker overlay network, ***sinnet3***.
+
+
+
+
+
 ## Nginx website
 
 http://${nginx-instance-public-ip}:80/welcome
-
-## Sinatra website
-
-http://${sinatra-instance-public-ip}:4567/info
-
-curl -i -H 'Accept: application/json' -d 'name=Foo33&status=Bar33' http://${sinatra-instance-public-ip}:4567/json
-
-curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}/json
 
 ## Jenkins website
 
