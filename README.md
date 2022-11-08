@@ -13,7 +13,7 @@ and uploaded to AWS ECR registry. Each instance downloads the image from the reg
 
 A cluster of Consul agensts is run in the datacenter.
 <br/> 
-The admin instance runs a Consul server agent, each other instance a Consul client agent.
+The admin instance acts as Consul server agent, each other instance as Consul client agent.
 <br/> 
 Console web console is published at the address:
 <br/><br/>
