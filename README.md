@@ -98,7 +98,7 @@ The Sinatra and Redis containers are isolated in this network.
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
 ***<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>***
 
-# Jenkins website
+# Jenkins pipeline
 
 Standalone web application, attached to the defaul Docker bridge network.
 ***<pre>  http://${jenkins-instance-public-ip}:80/jenkins</pre>***
