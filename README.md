@@ -38,8 +38,9 @@ an example of the code to retrieve the database address and port may be:
 
 ```
 uri = URI.parse("http://#{ENV['CONSUL_HTTP_ADDR']}/v1/catalog/service/redis?pretty")
-
 http = Net::HTTP.new(uri.host, uri.port)
+
+# Consul api call.
 request = Net::HTTP::Get.new(uri.request_uri)
 response = http.request(request)
 body = response.body
