@@ -79,7 +79,7 @@ cd consul-prj
 amazon/run/delete.sh
 ```
 
-## Sinatra application
+# Sinatra application
 
 Ruby-based web application with a Redis back end. 
 The incoming URL parameters are stored in the Redis database and they are returned as a Json file when requested.</br>
@@ -93,12 +93,12 @@ The Sinatra and Redis containers are isolated in this network.
 
 
 
-## Nginx website
+# Nginx website
 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
 ***<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>***
 
-## Jenkins website
+# Jenkins website
 
 Standalone web application, attached to the defaul Docker bridge network.
 ***<pre>  http://${jenkins-instance-public-ip}:80/jenkins</pre>***
