@@ -17,7 +17,7 @@ The admin instance acts as Consul server agent, each other instance as Consul cl
 <br/> 
 Consul web ui is published at the address:
 <br/><br/>
-<pre>  ***http://${admin-instance-public-ip}/ui/consul***</pre> 
+***<pre>  http://${admin-instance-public-ip}/ui/consul</pre>*** 
 <br/><br/>
 In each instance Consul is configured to bind its HTTP, CLI RPC, and DNS services to the 169.254.1.1 address.
 <br/> 
@@ -33,9 +33,9 @@ A Registrator container in each instance automatically registers and deregisters
 
 In each AWS instance or in each container, Consul services can be queried by calling:
 <br/><br/>
-<pre>  ***curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty***</pre> 
+***<pre>  curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty</pre>*** 
 <br/><br/>
-<pre>  ***dig jenkins.maxmin.it.node.consul***</pre>  
+***<pre>  dig jenkins.maxmin.it.node.consul</pre>***
 <br/><br/>
 In an application running in a Ruby container, 
 an example of the code to retrieve the database address and port may be:
