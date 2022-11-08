@@ -30,3 +30,9 @@ docker exec -it jenkins-service /bin/bash
 docker run -d --name mycentos centos:centos8
 
 docker run -it --name mycentos centos:centos8 /bin/bash
+
+docker exec sinatra-service ip addr show
+docker exec sinatra-service ip -details link show eth0
+
+
+docker exec sinatra-service ip route show

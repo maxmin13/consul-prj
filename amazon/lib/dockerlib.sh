@@ -687,7 +687,7 @@ function docker_exec()
 } 
 
 #===============================================================================
-# Creates a Docker network and assign a network segment to it.  
+# Creates a Docker network and assign a network segment to it. 
 #
 # Overlay network:
 # all swarm service management traffic is encrypted by default, manager nodes in 

@@ -89,10 +89,11 @@ The incoming URL parameters are stored in the Redis database and they are return
 The Sinatra web application and Redis database are run in Docker containers on different AWS instances/Docker engines.</br>
 All the AWS instances in the datacenter partecipates in a Docker swarm, on top of which has been laid a Docker overlay network, ***sinnet3***.
 The Sinatra and Redis containers are isolated in this network.
+<br/> 
 
+![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/overlay.png)
 
-
-
+</br>
 # Nginx website
 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
