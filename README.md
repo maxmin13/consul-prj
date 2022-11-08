@@ -19,7 +19,7 @@ Consul web ui is published at the address:
 <br/><br/>
 http://${admin-instance-public-ip}/ui/consul
 <br/><br/>
-Consul is configured to bind its HTTP, CLI RPC, and DNS interfaces to the 169.254.1.1 address.
+Consul is configured to bind its HTTP, CLI RPC, and DNS services to the 169.254.1.1 address.
 <br/> 
 The cluster gossip is exchanged in the 10.0.10.0/24 network.
 <br/>
