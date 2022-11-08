@@ -15,7 +15,7 @@ A cluster of Consul agensts is run in the datacenter.
 <br/> 
 The admin instance acts as Consul server agent, each other instance as Consul client agent.
 <br/> 
-Console web console is published at the address:
+Consul web ui is published at the address:
 <br/><br/>
 http://${admin-instance-public-ip}/ui/consul
 <br/><br/>
