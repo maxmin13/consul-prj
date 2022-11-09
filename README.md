@@ -94,6 +94,7 @@ The Sinatra and Redis containers are isolated in this network.
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/overlay.png)
 
 </br>
+
 # Nginx website
 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
