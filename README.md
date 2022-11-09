@@ -87,7 +87,7 @@ The incoming URL parameters are stored in the Redis database and they are return
 ***<pre>  curl -i -H 'Accept: application/json' -d 'name=Foo33&status=Bar33' http://${sinatra-instance-public-ip}:4567/json</pre>***
 ***<pre>  curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}/json</pre>***
 The Sinatra web application and Redis database are run in Docker containers on different AWS instances/Docker engines.</br>
-All the AWS instances in the datacenter partecipates in a Docker swarm, on top of which has been laid a Docker overlay network, ***sinnet3***.
+The Sinatra and Redis AWS instances and the Admin instance partecipates in a Docker swarm, on top of which has been laid a Docker overlay network, ***sinnet3***.
 The Sinatra and Redis containers are isolated in this network.
 <br/> 
 
