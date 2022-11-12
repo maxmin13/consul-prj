@@ -13,6 +13,7 @@ set +o xtrace
 
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+CONSTANTS_DIR='SEDconstants_dirSED'
 REMOTE_DIR='SEDremote_dirSED'	
 INSTANCE_KEY='SEDinstance_keySED'
 CONSUL_KEY='SEDconsul_keySED'

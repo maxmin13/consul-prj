@@ -13,6 +13,7 @@ set +o xtrace
 
 REMOTE_DIR='SEDremote_dirSED'
 LIBRARY_DIR='SEDlibrary_dirSED'
+CONSTANTS_DIR='SEDconstants_dirSED'
 WEBAPP_ARCHIVE_NM='SEDwebapp_archiveSED'
 SERVICE_KEY='SEDservice_keySED'
 APPLICATION_ADDRESS='SEDapplication_addressSED'

@@ -131,3 +131,29 @@ function consul_get_key()
    
    return "${exit_code}"
 }
+
+#===============================================================================
+# Removes a key from Consul's key value store.
+#
+# Globals:
+#  None
+# Arguments:
+# +key_nm -- key name.
+# Returns:      
+#  None 
+#===============================================================================
+function consul_remove_key()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   local exit_code=0
+   local -r key_nm="${1}"  
+   
+   consul kv delete "${key_nm}" 
+   
+   return "${exit_code}"
+}

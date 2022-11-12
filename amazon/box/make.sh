@@ -93,6 +93,19 @@ else
    echo 'WARN: the security group is already created.'
 fi
 
+# Enable ping
+ec2_check_access_is_granted "${sgp_id}" "-1" 'icmp' '0.0.0.0/0'
+is_granted="${__RESULT}"
+
+if [[ 'false' == "${is_granted}" ]]
+then
+   ec2_allow_access_from_cidr "${sgp_id}" "-1" 'icmp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}" 
+   
+   echo 'Granted ICMP access.'
+else
+   echo 'WARN: ICMP access already granted.'
+fi
+
 #
 # SSH key
 #

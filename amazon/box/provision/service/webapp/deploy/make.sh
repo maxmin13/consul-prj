@@ -126,7 +126,7 @@ private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/service/${service_key}/constants" \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/service/${service_key}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -140,6 +140,7 @@ webapp_archive='webapp.zip'
 
 sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
     -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
+    -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
     -e "s/SEDwebapp_archiveSED/${webapp_archive}/g" \
     -e "s/SEDservice_keySED/${service_key}/g" \
     -e "s/SEDapplication_addressSED/${eip}/g" \
@@ -164,11 +165,9 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/service_consts_utils.sh \
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
     "${temporary_dir}"/webapp-deploy.sh \
-    "${temporary_dir}"/"${webapp_archive}"
-    
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}/service/${service_key}/constants" \
-    "${LIBRARY_DIR}"/constants/service_consts.json \
-    "${LIBRARY_DIR}"/constants/datacenter_consts.json       
+    "${temporary_dir}"/"${webapp_archive}" \
+    "${CONSTANTS_DIR}"/service_consts.json \
+    "${CONSTANTS_DIR}"/datacenter_consts.json  
 
 get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"

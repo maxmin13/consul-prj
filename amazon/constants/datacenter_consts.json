@@ -33,7 +33,7 @@
       "Instances":[
          {
             "Key":"shared-instance",
-            "Name":"shared-box",
+            "Name":"shared-box22",
             "UserName":"awsadmin",
             "UserPassword":"awsadmin",
             "PrivateIP":"10.0.10.35",

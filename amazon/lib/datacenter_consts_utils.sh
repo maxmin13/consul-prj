@@ -29,7 +29,7 @@ function get_datacenter()
    local property_val=''
    
    # shellcheck disable=SC2002
-   property_val=$(cat "${LIBRARY_DIR}"/constants/datacenter_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/datacenter_consts.json | 
    	jq -r --arg property "${property_nm}" -c '.Datacenter[$property] // empty')
 
    __RESULT="${property_val}"
@@ -52,7 +52,7 @@ function get_datacenter_instance()
    local property_val=''
    
    # shellcheck disable=SC2002
-   property_val=$(cat "${LIBRARY_DIR}"/constants/datacenter_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/datacenter_consts.json | 
    	jq -r --arg key "${instance_key}" -c '.Datacenter.Instances[] | select(.Key | index($key))' |
    	      jq -r --arg property "${property_nm}" -c '.[$property] // empty')   
    
@@ -97,7 +97,7 @@ function get_datacenter_network()
    local property_val=''
    
    # shellcheck disable=SC2002
-   property_val=$(cat "${LIBRARY_DIR}"/constants/datacenter_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/datacenter_consts.json | 
    	jq -r --arg network "${network_key}" -c '.Datacenter.Networks[] | select(.Key | index($network))' |
    	      jq -r --arg property "${property_nm}" -c '.[$property] // empty')   
    
@@ -122,7 +122,7 @@ function get_datacenter_application()
    local property_val=''
    
    # shellcheck disable=SC2002
-   property_val=$(cat "${LIBRARY_DIR}"/constants/datacenter_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/datacenter_consts.json | 
    	jq -r --arg instancekey "${instance_key}" -c '.Datacenter.Instances[] | select(.Key | index($instancekey))' |
    	   jq -r --arg applicationKey "${application_key}" -c '.Applications[] | select(.Key | index($applicationKey))' |
    	      jq -r --arg property "${property_nm}" -c '.[$property] // empty')

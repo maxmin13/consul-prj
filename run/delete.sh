@@ -8,16 +8,16 @@ set -o nounset
 set +o xtrace
  
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../consul-prj && pwd)"
-LIBRARY_DIR="${PROJECT_DIR}"/amazon/lib
 
-source "${LIBRARY_DIR}"/constants/project_dirs.sh
-source "${LIBRARY_DIR}"/constants/app_consts.sh
+source "${PROJECT_DIR}"/amazon/constants/project_dirs.sh
+source "${CONSTANTS_DIR}"/app_consts.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/ssh_utils.sh
 source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/datacenter.sh
 source "${LIBRARY_DIR}"/registry.sh
+source "${LIBRARY_DIR}"/network.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/auth.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh

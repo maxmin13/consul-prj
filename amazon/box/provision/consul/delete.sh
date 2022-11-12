@@ -237,7 +237,7 @@ private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul/constants" \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -249,6 +249,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul/
 
 sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/consul)/g" \
+    -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDconsul_keySED/${consul_key}/g" \
     -e "s/SEDdummy_keySED/${dummy_key}/g" \
@@ -266,11 +267,9 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/secretsmanager.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
-    "${temporary_dir}"/consul-remove.sh
-    
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/consul/constants \
-    "${LIBRARY_DIR}"/constants/datacenter_consts.json \
-    "${LIBRARY_DIR}"/constants/service_consts.json        
+    "${temporary_dir}"/consul-remove.sh \
+    "${CONSTANTS_DIR}"/datacenter_consts.json \
+    "${CONSTANTS_DIR}"/service_consts.json      
    
 echo 'Consul scripts provisioned.'
 

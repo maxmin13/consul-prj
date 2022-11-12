@@ -141,13 +141,14 @@ do
    
    mkdir -p "${temporary_dir}"/"${service_key}"
    
-   ssh_run_remote_command "mkdir -p ${remote_dir}/${service_key}/constants" \
+   ssh_run_remote_command "mkdir -p ${remote_dir}/${service_key}" \
        "${private_key_file}" \
        "${eip}" \
        "${ssh_port}" \
        "${user_nm}" 
            
    sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/"${service_key}")/g" \
+       -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/"${service_key}")/g" \
        -e "s/SEDservice_keySED/${service_key}/g" \
           "${SERVICES_DIR}"/image-remove.sh > "${temporary_dir}"/"${service_key}"/"${service_key}"-remove.sh    
 
@@ -158,12 +159,10 @@ do
       "${LIBRARY_DIR}"/service_consts_utils.sh \
       "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
       "${LIBRARY_DIR}"/registry.sh \
-      "${temporary_dir}"/"${service_key}"/"${service_key}"-remove.sh     
+      "${temporary_dir}"/"${service_key}"/"${service_key}"-remove.sh \
+      "${CONSTANTS_DIR}"/datacenter_consts.json \
+      "${CONSTANTS_DIR}"/service_consts.json           
       
-   scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/"${service_key}"/constants \
-       "${LIBRARY_DIR}"/constants/datacenter_consts.json \
-       "${LIBRARY_DIR}"/constants/service_consts.json      
-
    echo 'Deleting image and ECR repository ...'
 
    get_datacenter_instance "${instance_key}" 'UserPassword'

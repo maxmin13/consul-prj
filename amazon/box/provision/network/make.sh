@@ -105,7 +105,7 @@ private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/overlaynet/constants" \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/overlaynet" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -119,6 +119,7 @@ echo
 
 sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/overlaynet)/g" \
     -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/overlaynet)/g" \
+    -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/overlaynet)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDswarm_keySED/${swarm_key}/g" \
     -e "s/SEDoverlaynet_keySED/${overlaynet_key}/g" \
@@ -131,11 +132,9 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/consul.sh \
-    "${temporary_dir}"/overlaynet-install.sh
-    
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/overlaynet/constants \
-    "${LIBRARY_DIR}"/constants/datacenter_consts.json      
-         
+    "${temporary_dir}"/overlaynet-install.sh \
+    "${CONSTANTS_DIR}"/datacenter_consts.json      
+             
 echo 'Overlay network scripts provisioned.'
 echo 'Creating Docker overlay network ...'
 
@@ -154,7 +153,7 @@ ssh_run_remote_command_as_root "${remote_dir}"/overlaynet/overlaynet-install.sh 
        "${eip}" \
        "${ssh_port}" \
        "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Docker overlay network successully installed.' ||
+       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Docker overlay network successully created.' ||
        {
           echo 'ERROR: installing Docker overlay network.'
           exit 1

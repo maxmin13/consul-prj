@@ -16,6 +16,7 @@ set +o xtrace
 
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+CONSTANTS_DIR='SEDconstants_dirSED'
 INSTANCE_KEY='SEDinstance_keySED'
 SWARM_KEY='SEDswarm_keySED'	
 OVERLAYNET_KEY='SEDoverlaynet_keySED'							
@@ -27,44 +28,87 @@ source "${LIBRARY_DIR}"/consul.sh
 
 yum update -y 
 
+# Clearing existing overlay network, swarm, swarm token.
+
 get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'NodeMode'
 node_mode="${__RESULT}"
 
-echo "Docker swarm node mode ${node_mode}"
+if [[ 'manager' == "${node_mode}" ]]
+then
+   get_datacenter_network "${OVERLAYNET_KEY}" 'Name' 
+   overlaynet_nm="${__RESULT}"
+   docker_check_network_interface_exists "${overlaynet_nm}"
+   overlaynet_exists="${__RESULT}"
+   
+   if [[ 'true' == "${overlaynet_exists}" ]]
+   then
+      echo 'WARN: the overlay network is already created.'
+      echo 'Before removing any running container should be stopped.'
+      echo 'Removing ...'
+   
+      # If any container is running in the network, the following delete command will throw an error.
+      docker_network_remove "${overlaynet_nm}" 
+   
+      echo 'Overlay network sucessfully removed.'
+    else
+      echo 'Overlay network not found.'
+   fi
+fi
+
+echo "Node swarm mode ${node_mode}"
 
 docker_swarm_status
 swarm_status="${__RESULT}"
 
-####
-echo "Installing Docker overlay network ..."
-####
+if [[ 'inactive' != "${swarm_status}" ]]
+then
+   echo 'WARN: the node is already part of a swarm, leaving ...'
+ 
+   docker_swarm_leave
+fi
 
 if [[ 'manager' == "${node_mode}" ]]
 then
-   if [[ 'inactive' == "${swarm_status}" ]]
+   get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'JoinTokenName'
+   swarm_token_nm="${__RESULT}"
+   consul_get_key "${swarm_token_nm}" 
+   swarm_token="${__RESULT}"
+   
+   if [[ -n "swarm_token" ]]
    then
-      echo 'Initializing Docker swarm ...'
-    
-      get_datacenter_application_advertise_interface "${INSTANCE_KEY}" "${SWARM_KEY}" 'Ip'
-      advertise_addr="${__RESULT}"
-    
-      docker_swarm_init "${advertise_addr}"
-    
-      echo 'Docker swarm initialized.'
-    
-      docker_swarm_get_worker_token
-      swarm_token="${__RESULT}"
-      get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'JoinTokenName'
-      swarm_token_nm="${__RESULT}"
+      echo 'WARN: found swarm token, deleting ...'
       
-      consul_put_key "${swarm_token_nm}" "${swarm_token}"
+      consul_remove_key "${swarm_token_nm}"
       
-      echo 'Docker swarm join key stored in Consul vault.'    
-   else
-      echo 'WARN: Docker swarm already initialized.'
+      echo 'Swarm token deleted.'
    fi
-else
-   echo 'Joining the instance to the Docker swarm ...'
+fi
+
+####
+echo "Creating overlay network ..."
+####
+
+if [[ 'manager' == "${node_mode}" ]]
+then       
+   echo 'Initializing swarm ...'
+   
+   get_datacenter_application_advertise_interface "${INSTANCE_KEY}" "${SWARM_KEY}" 'Ip'
+   advertise_addr="${__RESULT}"   
+   
+   docker_swarm_init "${advertise_addr}"
+    
+   echo 'Swarm initialized.'
+    
+   docker_swarm_get_worker_token
+   swarm_token="${__RESULT}"
+   get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'JoinTokenName'
+   swarm_token_nm="${__RESULT}"
+      
+   consul_put_key "${swarm_token_nm}" "${swarm_token}"
+     
+   echo 'Swarm join key stored in the Consul vault.'    
+else 
+   echo 'Joining the node to the swarm ...'
    
    get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'JoinTokenName'
    swarm_token_nm="${__RESULT}"
@@ -74,15 +118,15 @@ else
    get_datacenter_application_advertise_interface "${INSTANCE_KEY}" "${SWARM_KEY}" 'Ip'
    advertise_addr="${__RESULT}"
    get_datacenter_application_port "${INSTANCE_KEY}" "${SWARM_KEY}" 'ClusterPort'
-   cluster_port="${__RESULT}"
-
+   cluster_port="${__RESULT}"   
+   
    if [[ -n "${swarm_token}" ]]
    then
       docker_swarm_join "${swarm_token}" "${advertise_addr}" "${cluster_port}"
    
-      echo 'Instance successfully joined the Docker swarm.'   
+      echo 'The node successfully joined the swarm.'   
    else
-      echo 'ERROR: Docker swarm token not found.'
+      echo 'ERROR: swarm token not found.'
       exit 1 
    fi
 fi
@@ -94,19 +138,11 @@ then
    get_datacenter_network "${OVERLAYNET_KEY}" 'Cidr' 
    overlaynet_cidr="${__RESULT}"
 
-   docker_check_network_interface_exists "${overlaynet_nm}"
-   overlaynet_exists="${__RESULT}"
+   echo 'Creating overlay network ...'
    
-   if [[ 'false' == "${overlaynet_exists}" ]]
-   then
-      echo 'Creating Docker overlay network'
+   docker_network_create "${overlaynet_nm}" "${overlaynet_cidr}" 'overlay'
    
-      docker_network_create "${overlaynet_nm}" "${overlaynet_cidr}" 'overlay'
-   
-      echo 'Docker overlay network sucessfully installed.'
-   else
-      echo 'WARN: Docker overlay network already created.'
-   fi
+   echo 'Overlay network sucessfully created.'
 fi
 
 # A worker host machine will recognize this network only when it hosts a container that connects into this overlay network.

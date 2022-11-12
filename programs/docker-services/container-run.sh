@@ -15,6 +15,7 @@ set -o nounset
 set +o xtrace
 
 LIBRARY_DIR='SEDlibrary_dirSED' 
+CONSTANTS_DIR='SEDconstants_dirSED'
 INSTANCE_KEY='SEDinstance_keySED'
 SERVICE_KEY='SEDservice_keySED'
 CONSUL_KEY='SEDconsul_keySED'
@@ -62,9 +63,7 @@ docker_login_ecr_registry "${registry_uri}" "${login_pwd}"
 
 echo 'Logged into ECR registry.'
 
-#
-# Container run
-#
+# Run the container.
 
 docker_check_container_exists "${CONTAINER_NM}"
 container_exists="${__RESULT}"

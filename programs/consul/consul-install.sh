@@ -26,6 +26,7 @@ set +o xtrace
 REMOTE_DIR='SEDremote_dirSED'
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+CONSTANTS_DIR='SEDconstants_dirSED'
 INSTANCE_KEY='SEDinstance_keySED'
 NGINX_KEY='SEDnginx_keySED'
 CONSUL_KEY='SEDconsul_keySED'
@@ -270,7 +271,7 @@ rm -f /etc/dhcp/dhclient.conf
 sed -e "s/SEDdns_addrSED/127.0.0.1/g" \
         dhclient.conf > /etc/dhcp/dhclient.conf
 
-echo 'dnsmasq configured as the instance''s DNS server.'  
+echo 'dnsmasq configured as instance DNS server.'  
 
 get_datacenter_application_port "${ADMIN_INSTANCE_KEY}" "${NGINX_KEY}" 'ProxyPort'
 nginx_proxy_port="${__RESULT}"

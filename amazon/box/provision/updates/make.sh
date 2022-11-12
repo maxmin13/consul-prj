@@ -109,6 +109,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}"/update
     "${user_nm}"                     
    
 sed -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/updates)/g" \
+    -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/consul)/g" \
        "${PROVISION_DIR}"/docker/docker-install.sh > "${temporary_dir}"/docker-install.sh    
        
 echo 'docker-install.sh ready.'    

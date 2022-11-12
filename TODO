@@ -1,2 +1,0 @@
-
- change bind 0.0.0.0 in sinatra app.rb and redis.conf, bind only on the overlay interface   

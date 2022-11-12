@@ -127,7 +127,7 @@ private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/service/${service_key}/constants" \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/service/${service_key}" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -139,6 +139,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/service
 
 sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
     -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
+    -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/service/"${service_key}")/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDservice_keySED/${service_key}/g" \
     -e "s/SEDconsul_keySED/${consul_key}/g" \
@@ -155,12 +156,10 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/registry.sh \
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/network.sh \
-    "${temporary_dir}"/container-run.sh
+    "${temporary_dir}"/container-run.sh \
+    "${CONSTANTS_DIR}"/datacenter_consts.json \
+    "${CONSTANTS_DIR}"/service_consts.json      
     
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}/service/${service_key}/constants" \
-    "${LIBRARY_DIR}"/constants/datacenter_consts.json \
-    "${LIBRARY_DIR}"/constants/service_consts.json      
-
 get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
 

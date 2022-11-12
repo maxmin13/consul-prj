@@ -24,7 +24,7 @@ function get_service_keys()
    local exit_code=0
    local property_val=''
    
-   property_val=$(cat "${LIBRARY_DIR}"/constants/service_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/service_consts.json | 
    	jq -r -c '.Docker.Services[].Key // empty')
    	
    __RESULT="${property_val}"
@@ -47,7 +47,7 @@ function get_service_sources_directory()
    local -r service_key="${1}"
    local property_val=''
    
-   property_val=$(cat "${LIBRARY_DIR}"/constants/service_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/service_consts.json | 
    	jq -r --arg key "${service_key}" -c '.Docker.Services[] | select(.Key | index($key))' |
    	   jq -r -c '.SourcesDir // empty')
    	
@@ -70,7 +70,7 @@ function get_service_image()
    local -r property_nm="${2}"
    local property_val=''
    
-   property_val=$(cat "${LIBRARY_DIR}"/constants/service_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/service_consts.json | 
    	jq -r --arg key "${service_key}" -c '.Docker.Services[] | select(.Key | index($key))' |
    	   jq -r --arg property "${property_nm}" -c '.Image[$property] // empty')
    	
@@ -118,7 +118,7 @@ function get_service_container()
    local -r property_nm="${2}"
    local property_val=''
 
-   property_val=$(cat "${LIBRARY_DIR}"/constants/service_consts.json | 
+   property_val=$(cat "${CONSTANTS_DIR}"/service_consts.json | 
    	jq -r --arg key "${service_key}" -c '.Docker.Services[] | select(.Key | index($key))' |
    	      jq -r --arg property "${property_nm}" -c '.Container[$property] // empty')
 

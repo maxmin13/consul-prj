@@ -741,7 +741,8 @@ function docker_network_create()
 } 
 
 #===============================================================================
-# Removes a Docker network.  
+# Removes a Docker network, returns an error if any container is in use in the
+# network.
 #
 # Globals:
 #  None
@@ -794,11 +795,11 @@ function docker_check_network_interface_exists()
    local exit_code=0
    local -r network_nm="${1}"  
    local exists='false'
-   local net=''
+   local out=''
 
-   net="$(docker network ls | awk -v nm="${network_nm}" '$2==nm {print $2}')"
+   out="$(docker network ls | awk -v nm="${network_nm}" '$2==nm {print $2}')"
    
-   if [[ -n "${net}" ]]
+   if [[ -n "${out}" ]]
    then
       exists='true'
    fi
@@ -829,7 +830,7 @@ function docker_networks_display()
 # Arguments:
 #  none.
 # Returns:      
-#  active/inactive in the __RESULT variable.
+#  the swarm status in the __RESULT variable.
 #===============================================================================
 function docker_swarm_status()
 {
@@ -841,6 +842,25 @@ function docker_swarm_status()
    
    __RESULT="${swarm_status}"
             
+   return "${exit_code}"
+} 
+
+#===============================================================================
+# Returns 'active' if the Docker node is part of a swarm, 'inactive' if not.  
+# 
+# Globals:
+#  None
+# Arguments:
+#  none.
+# Returns:      
+#  none.
+#===============================================================================
+function docker_swarm_leave()
+{
+   local exit_code=0
+   
+   docker swarm leave --force   
+       
    return "${exit_code}"
 } 
 

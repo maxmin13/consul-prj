@@ -401,7 +401,7 @@ function wait_ssh_started()
    local -r ssh_port="${3}"
    local -r user="${4}"
    
-   echo 'Waiting SSH started ...'
+   echo 'Waiting SSH has started ...'
 
    while ! ssh -q \
                -o StrictHostKeyChecking=no \

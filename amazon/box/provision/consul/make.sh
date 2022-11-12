@@ -134,7 +134,7 @@ private_key_file="${ACCESS_DIR}"/"${keypair_nm}"
 wait_ssh_started "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}"
 remote_dir=/home/"${user_nm}"/script
 
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul/constants" \
+ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir -p ${remote_dir}/consul" \
     "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
@@ -153,6 +153,7 @@ admin_eip="${__RESULT}"
 
 sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDlibrary_dirSED/$(escape "${remote_dir}"/consul)/g" \
+    -e "s/SEDconstants_dirSED/$(escape "${remote_dir}"/consul)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDnginx_keySED/${nginx_key}/g" \
     -e "s/SEDconsul_keySED/${consul_key}/g" \
@@ -192,12 +193,10 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${PROVISION_DIR}"/nginx/nginx-reverse-proxy.conf \
     "${temporary_dir}"/consul-config.json \
     "${PROVISION_DIR}"/consul/consul-systemd.service \
-    "${temporary_dir}"/consul-install.sh
-    
-scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/consul/constants \
-    "${LIBRARY_DIR}"/constants/datacenter_consts.json \
-    "${LIBRARY_DIR}"/constants/service_consts.json         
-         
+    "${temporary_dir}"/consul-install.sh \
+    "${CONSTANTS_DIR}"/datacenter_consts.json \
+    "${CONSTANTS_DIR}"/service_consts.json 
+        
 echo 'Consul scripts provisioned.'
 echo 'Installing Consul ...'
 

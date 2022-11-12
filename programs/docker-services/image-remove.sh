@@ -13,6 +13,7 @@ set -o nounset
 set +o xtrace
 
 LIBRARY_DIR='SEDlibrary_dirSED'
+CONSTANTS_DIR='SEDconstants_dirSED'
 SERVICE_KEY="SEDservice_keySED"
 
 source "${LIBRARY_DIR}"/service_consts_utils.sh

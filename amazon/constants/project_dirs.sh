@@ -2,6 +2,8 @@
  
 # shellcheck disable=SC2034 
 
+LIBRARY_DIR="${PROJECT_DIR}"/amazon/lib
+CONSTANTS_DIR="${PROJECT_DIR}"/amazon/constants
 TMP_DIR="${PROJECT_DIR}"/temp
 ACCESS_DIR="${PROJECT_DIR}"/access
 PROVISION_DIR="${PROJECT_DIR}"/programs
