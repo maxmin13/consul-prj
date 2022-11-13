@@ -13,6 +13,7 @@ set +o xtrace
 
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+# shellcheck disable=SC2034
 CONSTANTS_DIR='SEDconstants_dirSED'
 REMOTE_DIR='SEDremote_dirSED'	
 INSTANCE_KEY='SEDinstance_keySED'
@@ -104,7 +105,7 @@ rm -f /etc/sysconfig/network-scripts/ifcfg-dummy
 
 get_datacenter_network "${DUMMY_KEY}" 'Name' 
 dummy_nm="${__RESULT}"
-ip_check_network_interface_exists "${dummy_nm}"
+ip_check_protocol_address_exists "${dummy_nm}"
 dummy_nm_exists="${__RESULT}"
 
 if [[ 'true' == "${dummy_nm_exists}" ]]

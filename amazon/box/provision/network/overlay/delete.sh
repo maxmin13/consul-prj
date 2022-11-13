@@ -26,7 +26,7 @@ overlaynet_key='sinnet3-network'
 logfile_nm="${instance_key}".log
 
 ####
-STEP "${instance_key} box network provision."
+STEP "${instance_key} box overlay network remove."
 ####
 
 get_datacenter_instance "${instance_key}" 'Name'
@@ -95,7 +95,7 @@ else
    echo "WARN: access already granted ${ssh_port} tcp 0.0.0.0/0."
 fi
 
-echo 'Provisioning instance ...'
+echo 'Removing overlay network ...'
 
 get_datacenter_instance "${instance_key}" 'UserName'
 user_nm="${__RESULT}"
@@ -123,20 +123,20 @@ sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/overlaynet)/g" \
     -e "s/SEDinstance_keySED/${instance_key}/g" \
     -e "s/SEDswarm_keySED/${swarm_key}/g" \
     -e "s/SEDoverlaynet_keySED/${overlaynet_key}/g" \
-       "${PROVISION_DIR}"/network/overlaynet-install.sh > "${temporary_dir}"/overlaynet-install.sh  
+       "${PROVISION_DIR}"/network/overlaynet-remove.sh > "${temporary_dir}"/overlaynet-remove.sh  
        
-echo 'overlaynet-install.sh ready.'
+echo 'overlaynet-remove.sh ready.'
 
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/overlaynet \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/consul.sh \
-    "${temporary_dir}"/overlaynet-install.sh \
+    "${temporary_dir}"/overlaynet-remove.sh \
     "${CONSTANTS_DIR}"/datacenter_consts.json      
              
 echo 'Overlay network scripts provisioned.'
-echo 'Creating Docker overlay network ...'
+echo 'Removing overlay network ...'
 
 get_datacenter_instance "${instance_key}" 'UserPassword'
 user_pwd="${__RESULT}"
@@ -148,14 +148,14 @@ ssh_run_remote_command_as_root "chmod -R +x ${remote_dir}/overlaynet" \
     "${user_nm}" \
     "${user_pwd}"   
 
-ssh_run_remote_command_as_root "${remote_dir}"/overlaynet/overlaynet-install.sh \
+ssh_run_remote_command_as_root "${remote_dir}"/overlaynet/overlaynet-remove.sh \
        "${private_key_file}" \
        "${eip}" \
        "${ssh_port}" \
        "${user_nm}" \
-       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Docker overlay network successully created.' ||
+       "${user_pwd}" >> "${LOGS_DIR}"/"${logfile_nm}" && echo 'Overlay network successully removed.' ||
        {
-          echo 'ERROR: installing Docker overlay network.'
+          echo 'ERROR: removing overlay network.'
           exit 1
        } 
        
@@ -186,13 +186,13 @@ cluster_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${cluster_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
-if [[ 'false' == "${is_granted}" ]]
+if [[ 'true' == "${is_granted}" ]]
 then
-   ec2_allow_access_from_cidr "${sgp_id}" "${cluster_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${cluster_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on ${cluster_port} tcp 0.0.0.0/0."
+   echo "Access revoked on ${cluster_port} tcp 0.0.0.0/0."
 else
-   echo "WARN: access already granted ${cluster_port} tcp 0.0.0.0/0."
+   echo "WARN: access already revoked ${cluster_port} tcp 0.0.0.0/0."
 fi
 
 get_datacenter_application_port "${instance_key}" "${swarm_key}" 'NodesPort'
@@ -200,25 +200,25 @@ nodes_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${nodes_port}" 'tcp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
-if [[ 'false' == "${is_granted}" ]]
+if [[ 'true' == "${is_granted}" ]]
 then
-   ec2_allow_access_from_cidr "${sgp_id}" "${nodes_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${nodes_port}" 'tcp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on ${nodes_port} tcp 0.0.0.0/0."
+   echo "Access revoke on ${nodes_port} tcp 0.0.0.0/0."
 else
-   echo "WARN: access already granted ${nodes_port} tcp 0.0.0.0/0."
+   echo "WARN: access already revoked ${nodes_port} tcp 0.0.0.0/0."
 fi
 
 ec2_check_access_is_granted "${sgp_id}" "${nodes_port}" 'udp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
-if [[ 'false' == "${is_granted}" ]]
+if [[ 'true' == "${is_granted}" ]]
 then
-   ec2_allow_access_from_cidr "${sgp_id}" "${nodes_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${nodes_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on ${nodes_port} udp 0.0.0.0/0."
+   echo "Access revoked on ${nodes_port} udp 0.0.0.0/0."
 else
-   echo "WARN: access already granted ${nodes_port} udp 0.0.0.0/0."
+   echo "WARN: access already revoked ${nodes_port} udp 0.0.0.0/0."
 fi
 
 get_datacenter_application_port "${instance_key}" "${swarm_key}" 'TrafficPort'
@@ -226,13 +226,13 @@ traffic_port="${__RESULT}"
 ec2_check_access_is_granted "${sgp_id}" "${traffic_port}" 'udp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
-if [[ 'false' == "${is_granted}" ]]
+if [[ 'true' == "${is_granted}" ]]
 then
-   ec2_allow_access_from_cidr "${sgp_id}" "${traffic_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
+   ec2_revoke_access_from_cidr "${sgp_id}" "${traffic_port}" 'udp' '0.0.0.0/0' >> "${LOGS_DIR}"/"${logfile_nm}"
    
-   echo "Access granted on ${traffic_port} udp 0.0.0.0/0."
+   echo "Access revoked on ${traffic_port} udp 0.0.0.0/0."
 else
-   echo "WARN: access already granted ${traffic_port} udp 0.0.0.0/0."
+   echo "WARN: access already revoked ${traffic_port} udp 0.0.0.0/0."
 fi
 
 # Removing old files

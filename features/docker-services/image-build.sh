@@ -11,7 +11,8 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-LIBRARY_DIR='SEDlibrary_dirSED'
+LIBRARY_DIR='SEDlibrary_dirSED'	
+# shellcheck disable=SC2034
 CONSTANTS_DIR='SEDconstants_dirSED'
 DOCKER_CTX='SEDdocker_ctxSED'
 SERVICE_KEY="SEDservice_keySED"

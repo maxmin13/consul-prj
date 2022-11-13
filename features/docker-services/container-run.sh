@@ -14,7 +14,8 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-LIBRARY_DIR='SEDlibrary_dirSED' 
+LIBRARY_DIR='SEDlibrary_dirSED'	
+# shellcheck disable=SC2034
 CONSTANTS_DIR='SEDconstants_dirSED'
 INSTANCE_KEY='SEDinstance_keySED'
 SERVICE_KEY='SEDservice_keySED'
@@ -24,10 +25,8 @@ CONTAINER_NM='SEDcontainer_nmSED'
 source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
-source "${LIBRARY_DIR}"/network.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/registry.sh
-source "${LIBRARY_DIR}"/consul.sh
 
 yum update -y
 

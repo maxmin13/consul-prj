@@ -134,7 +134,7 @@
                   "Key":"swarm-application",
                   "Description":"Docker swarm service",
                   "NodeMode":"manager",
-                  "JoinTokenName":"docker/swarm/token",
+                  "JoinTokenName":"docker/swarm/join/token",
                   "Port":{
                      "ClusterPort":"2377",
                      "NodesPort":"7946",
@@ -216,7 +216,7 @@
                   "Key":"swarm-application",
                   "Description":"Docker swarm service",
                   "NodeMode":"worker",
-                  "JoinTokenName":"docker/swarm/token",
+                  "JoinTokenName":"docker/swarm/join/token",
                   "Port":{
                      "ClusterPort":"2377",
                      "NodesPort":"7946",
@@ -298,7 +298,7 @@
                   "Key":"swarm-application",
                   "Description":"Docker swarm service",
                   "NodeMode":"worker",
-                  "JoinTokenName":"docker/swarm/token",
+                  "JoinTokenName":"docker/swarm/join/token",
                   "Port":{
                      "ClusterPort":"2377",
                      "NodesPort":"7946",

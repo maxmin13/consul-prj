@@ -74,6 +74,41 @@ function consul_verify_and_wait()
 }
 
 #===============================================================================
+# Checks if a key exists in the key-value store.
+#
+# Globals:
+#  None
+# Arguments:
+# +key_nm -- key name.
+# Returns:      
+#  true/false in the __RESULT varialble 
+#===============================================================================
+function consul_check_key_exists()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   __RESULT='false'
+   local exit_code=0
+   local -r key_nm="${1}"  
+   local keys=''
+   
+   keys="$(consul kv get -keys "${key_nm}")"
+   
+   if [[ -n "${keys}" ]]
+   then
+      __RESULT='true' 
+   else
+      __RESULT='false' 
+   fi
+       
+   return "${exit_code}" 
+}
+
+#===============================================================================
 # Adds a key in Consul's key value store.
 #
 # Globals:

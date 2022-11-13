@@ -24,7 +24,7 @@ set +o xtrace
 # Returns:      
 #  true/false in the __RESULT variable.
 #===============================================================================
-function ip_check_network_interface_exists()
+function ip_check_protocol_address_exists()
 {
    if [[ $# -lt 1 ]]
    then

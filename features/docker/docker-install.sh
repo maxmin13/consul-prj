@@ -28,7 +28,6 @@ set -o nounset
 set +o xtrace
 
 LIBRARY_DIR='SEDlibrary_dirSED'
-CONSTANTS_DIR='SEDconstants_dirSED'
 
 # shellcheck disable=SC1091
 source "${LIBRARY_DIR}"/dockerlib.sh

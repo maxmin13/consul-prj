@@ -16,6 +16,7 @@ set +o xtrace
 
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+# shellcheck disable=SC2034
 CONSTANTS_DIR='SEDconstants_dirSED'
 INSTANCE_KEY='SEDinstance_keySED'
 SWARM_KEY='SEDswarm_keySED'	
@@ -28,65 +29,12 @@ source "${LIBRARY_DIR}"/consul.sh
 
 yum update -y 
 
-# Clearing existing overlay network, swarm, swarm token.
-
-get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'NodeMode'
-node_mode="${__RESULT}"
-
-if [[ 'manager' == "${node_mode}" ]]
-then
-   get_datacenter_network "${OVERLAYNET_KEY}" 'Name' 
-   overlaynet_nm="${__RESULT}"
-   docker_check_network_interface_exists "${overlaynet_nm}"
-   overlaynet_exists="${__RESULT}"
-   
-   if [[ 'true' == "${overlaynet_exists}" ]]
-   then
-      echo 'WARN: the overlay network is already created.'
-      echo 'Before removing any running container should be stopped.'
-      echo 'Removing ...'
-   
-      # If any container is running in the network, the following delete command will throw an error.
-      docker_network_remove "${overlaynet_nm}" 
-   
-      echo 'Overlay network sucessfully removed.'
-    else
-      echo 'Overlay network not found.'
-   fi
-fi
-
-echo "Node swarm mode ${node_mode}"
-
-docker_swarm_status
-swarm_status="${__RESULT}"
-
-if [[ 'inactive' != "${swarm_status}" ]]
-then
-   echo 'WARN: the node is already part of a swarm, leaving ...'
- 
-   docker_swarm_leave
-fi
-
-if [[ 'manager' == "${node_mode}" ]]
-then
-   get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'JoinTokenName'
-   swarm_token_nm="${__RESULT}"
-   consul_get_key "${swarm_token_nm}" 
-   swarm_token="${__RESULT}"
-   
-   if [[ -n "swarm_token" ]]
-   then
-      echo 'WARN: found swarm token, deleting ...'
-      
-      consul_remove_key "${swarm_token_nm}"
-      
-      echo 'Swarm token deleted.'
-   fi
-fi
-
 ####
 echo "Creating overlay network ..."
 ####
+
+get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'NodeMode'
+node_mode="${__RESULT}"
 
 if [[ 'manager' == "${node_mode}" ]]
 then       
@@ -112,9 +60,18 @@ else
    
    get_datacenter_application "${INSTANCE_KEY}" "${SWARM_KEY}" 'JoinTokenName'
    swarm_token_nm="${__RESULT}"
+   
+   consul_check_key_exists "${swarm_token_nm}" 
+   token_exists="${__RESULT}"
+   
+   if [[ 'false' == "${token_exists}" ]]
+   then
+      echo 'ERROR: swarm join token not found.'
+      exit 1
+   fi
+   
    consul_get_key "${swarm_token_nm}" 
    swarm_token="${__RESULT}"   
-   
    get_datacenter_application_advertise_interface "${INSTANCE_KEY}" "${SWARM_KEY}" 'Ip'
    advertise_addr="${__RESULT}"
    get_datacenter_application_port "${INSTANCE_KEY}" "${SWARM_KEY}" 'ClusterPort'

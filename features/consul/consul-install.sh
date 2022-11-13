@@ -26,6 +26,7 @@ set +o xtrace
 REMOTE_DIR='SEDremote_dirSED'
 # shellcheck disable=SC2034
 LIBRARY_DIR='SEDlibrary_dirSED'	
+# shellcheck disable=SC2034
 CONSTANTS_DIR='SEDconstants_dirSED'
 INSTANCE_KEY='SEDinstance_keySED'
 NGINX_KEY='SEDnginx_keySED'

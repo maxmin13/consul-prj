@@ -455,9 +455,14 @@ function docker_run_container()
    
    get_service_dns_interface "${service_key}" 'Name'
    local dns_interface_nm="${__RESULT}"
-   ip_check_network_interface_exists "${dns_interface_nm}"
-   local dns_interface_exists="${__RESULT}"
-
+   local out="$(ip address | awk -v nm="${dns_interface_nm}" '$2~nm {print $2}')"
+   local dns_interface_exists='false'
+   
+   if [[ -n "${out}" ]]
+   then
+      dns_interface_exists='true'
+   fi
+  
    if [[ 'true' == "${dns_interface_exists}" ]]
    then
       get_service_dns_interface "${service_key}" 'Ip'
