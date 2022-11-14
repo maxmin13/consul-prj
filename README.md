@@ -56,8 +56,10 @@ redis = Redis.new(:host => address, :port => port)
 ```
 
 <br/> 
+
 # Deployment
 ## Required
+
 <br/> 
 
 ```
@@ -68,14 +70,18 @@ jq-1.6
 ```
 
 <br/> 
+
 ## Configure
+
 <br/> 
 
 ```
 Edit datacenter_consts.json, set Region and Az values.
 ```
 <br/> 
+
 ## Istall
+
 <br/> 
 
 ```
@@ -84,7 +90,9 @@ amazon/run/make.sh
 ```
 
 <br/> 
+
 ## Delete
+
 <br/> 
 
 ```
@@ -93,7 +101,9 @@ amazon/run/delete.sh
 ```
 
 <br/> 
+
 # Sinatra application
+
 <br/> 
 Ruby-based web application with a Redis back end. 
 The incoming URL parameters are stored in the Redis database and they are returned as a Json file when requested.</br>
@@ -108,12 +118,16 @@ The two apps communicate in this network.
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/overlay.png)
 
 </br>
+
 # Nginx website
+
 <br/> 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
 ***<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>***
-<br/> 
+<br/>
+ 
 # Jenkins pipeline
+
 <br/> 
 Standalone web application, attached to the defaul Docker bridge network.
 ***<pre>  http://${jenkins-instance-public-ip}:80/jenkins</pre>***
