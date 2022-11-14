@@ -10,7 +10,7 @@ Nginx server, Sinatra server, Redis database, Jenkins pipeline.
 <br/> 
 The Admin instance acts as a jumpbox. Dockerfiles are uploaded to it and the images for each service are built
 and uploaded to AWS ECR registry. Each instance downloads the image from the registry and runs a container from it.
-<br/><br/>  
+<br/><br/>
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/ecr.png)
 
@@ -20,7 +20,7 @@ A cluster of Consul agensts is run in the datacenter.
 The admin instance acts as Consul server agent, each other instance as Consul client agent.
 <br/> 
 Consul web ui is published at the address:
-** *<pre>  http://${admin-instance-public-ip}/ui/consul</pre>* ** 
+**<pre>  http://${admin-instance-public-ip}/ui/consul</pre>* ** 
 In each instance Consul is configured to bind its HTTP, CLI RPC, and DNS services to the 169.254.1.1 address.
 <br/> 
 The cluster gossip is exchanged in the 10.0.10.0/24 network.
@@ -29,16 +29,16 @@ dnsmaq acts as DNS service for the instance and the containers. It passes querie
 all the remaining queries are passed to the AWS DNS service at 10.0.0.2.
 <br/>
 A Registrator container in each instance automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.
-<br/><br/>  
+<br/><br/>
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
 
 <br/> 
 
 In each AWS instance or in each container, Consul services can be queried by calling:
-** *<pre>  curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty</pre>* ** 
+**<pre>  curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty</pre>* ** 
 where CONSUL_HTTP_ADDR is an environment variable.<br/><br/>
-** *<pre>  dig jenkins.maxmin.it.node.consul</pre>* **
+**<pre>  dig jenkins.maxmin.it.node.consul</pre>* **
 In an application running in a Ruby container, 
 an example of the code to retrieve the database address and port may be:
 
@@ -98,11 +98,11 @@ amazon/run/delete.sh
 <br/> 
 Ruby-based web application with a Redis back end. 
 The incoming URL parameters are stored in the Redis database and they are returned as a Json file when requested.</br>
-** *<pre>  http://${sinatra-instance-public-ip}:4567/info</pre>* **
-** *<pre>  curl -i -H 'Accept: application/json' -d 'name=Foo33&status=Bar33' http://${sinatra-instance-public-ip}:4567/json</pre>* **
-** *<pre>  curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}:4567/json</pre>* **
+**<pre>  http://${sinatra-instance-public-ip}:4567/info</pre>* **
+**<pre>  curl -i -H 'Accept: application/json' -d 'name=Foo33&status=Bar33' http://${sinatra-instance-public-ip}:4567/json</pre>* **
+**<pre>  curl -i -H 'Accept: application/json' http://${sinatra-instance-public-ip}:4567/json</pre>* **
 The Sinatra web application and Redis database are run in Docker containers on different AWS instances/Docker engines.</br>
-Their host instances partecipate in a Docker swarm with the Admin AWS instance. On top of the swarm has been laid a Docker overlay network, ** *sinnet3* **.
+Their host instances partecipate in a Docker swarm with the Admin AWS instance. On top of the swarm has been laid a Docker overlay network, **sinnet3* **.
 The two apps communicate in this network.
 <br/><br/> 
 
@@ -112,13 +112,13 @@ The two apps communicate in this network.
 
 <br/> 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
-** *<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>* **
+**<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>* **
  
 ## Jenkins pipeline
 
 <br/> 
 Standalone web application, attached to the defaul Docker bridge network.
-** *<pre>  http://${jenkins-instance-public-ip}:80/jenkins</pre>* **
+**<pre>  http://${jenkins-instance-public-ip}:80/jenkins</pre>* **
 <br/> 
 
 
