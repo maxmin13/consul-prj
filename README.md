@@ -102,7 +102,7 @@ amazon/run/delete.sh
 
 <br/> 
 
-# Sinatra application
+## Sinatra application
 
 <br/> 
 Ruby-based web application with a Redis back end. 
@@ -119,14 +119,14 @@ The two apps communicate in this network.
 
 </br>
 
-# Nginx website
+## Nginx website
 
 <br/> 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
 ***<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>***
 <br/>
  
-# Jenkins pipeline
+## Jenkins pipeline
 
 <br/> 
 Standalone web application, attached to the defaul Docker bridge network.
