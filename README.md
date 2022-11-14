@@ -1,6 +1,6 @@
 
 # Consul datacenter
-<br/> 
+ 
 Amazon AWS datacenter that runs AWS EC2 instances with Linux 2 os. Every instance runs a Docker service:
 Nginx server, Sinatra server, Redis database, Jenkins pipeline.
 <br/><br/> 
