@@ -22,6 +22,7 @@ source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/auth.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh
 
+rm -rf "${TMP_DIR:?}"/*   
 mkdir -p "${LOGS_DIR}"
 
 ## Datacenter ##
@@ -82,4 +83,4 @@ mkdir -p "${LOGS_DIR}"
 . "${PROJECT_DIR}"/amazon/box/provision/consul/make.sh 'jenkins-instance'
 . "${PROJECT_DIR}"/amazon/box/provision/service/make.sh 'jenkins-instance' 'jenkins-service'
 
-
+rm -rf "${TMP_DIR:?}"/*   

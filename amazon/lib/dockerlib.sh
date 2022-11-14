@@ -1,11 +1,13 @@
 #!/usr/bin/bash
 
+# shellcheck disable=SC1091
+
 set -o errexit
-## turn on -e in subshells
-## shopt -s inherit_errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
+
+source "${LIBRARY_DIR}"/network.sh
 
 #===============================================================================
 #          FILE: docker.sh
@@ -454,15 +456,10 @@ function docker_run_container()
    # Configure containers to use the dummy IP address as their DNS resolver and Consul server.
    
    get_service_dns_interface "${service_key}" 'Name'
-   local dns_interface_nm="${__RESULT}"
-   local out="$(ip address | awk -v nm="${dns_interface_nm}" '$2~nm {print $2}')"
-   local dns_interface_exists='false'
-   
-   if [[ -n "${out}" ]]
-   then
-      dns_interface_exists='true'
-   fi
-  
+   local dns_interface_nm="${__RESULT}"  
+   ip_check_protocol_address_exists "${dns_interface_nm}"  
+   local dns_interface_exists="${__RESULT}"
+
    if [[ 'true' == "${dns_interface_exists}" ]]
    then
       get_service_dns_interface "${service_key}" 'Ip'

@@ -222,6 +222,7 @@ do
    scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/"${service_key}" \
        "${LIBRARY_DIR}"/service_consts_utils.sh \
        "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
+       "${LIBRARY_DIR}"/network.sh \
        "${LIBRARY_DIR}"/dockerlib.sh \
        "${LIBRARY_DIR}"/registry.sh \
        "${temporary_dir}"/"${service_key}"/"${service_key}"-build.sh \

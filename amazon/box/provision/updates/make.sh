@@ -36,7 +36,12 @@ if [[ 'true' == "${is_running}" ]]
 then
    echo "* ${instance_key} box ready (${instance_st})."
 else
-   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   if [[ -n "${instance_st}" ]]
+   then
+      echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   else
+      echo "* WARN: ${instance_key} box is not ready."
+   fi
       
    return 0
 fi
@@ -120,6 +125,7 @@ sed -e "s/SEDremote_dirSED/$(escape "${remote_dir}"/updates)/g" \
 echo 'awscli-update.sh ready.'   
 
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/updates \
+    "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${temporary_dir}"/docker-install.sh \
     "${temporary_dir}"/awscli-update.sh \

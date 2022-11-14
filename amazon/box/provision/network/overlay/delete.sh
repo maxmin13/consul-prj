@@ -40,7 +40,12 @@ if [[ 'true' == "${is_running}" ]]
 then
    echo "* ${instance_key} box ready (${instance_st})."
 else
-   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   if [[ -n "${instance_st}" ]]
+   then
+      echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   else
+      echo "* WARN: ${instance_key} box is not ready."
+   fi
       
    return 0
 fi
@@ -130,6 +135,7 @@ echo 'overlaynet-remove.sh ready.'
 scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${remote_dir}"/overlaynet \
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
+    "${LIBRARY_DIR}"/network.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/consul.sh \
     "${temporary_dir}"/overlaynet-remove.sh \

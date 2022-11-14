@@ -22,6 +22,7 @@ source "${LIBRARY_DIR}"/dockerlib.sh
 source "${LIBRARY_DIR}"/auth.sh
 source "${LIBRARY_DIR}"/secretsmanager.sh
 
+rm -rf "${TMP_DIR:?}"/*   
 mkdir -p "${LOGS_DIR}"
 
 ## Docker base images ##
@@ -62,6 +63,8 @@ mkdir -p "${LOGS_DIR}"
 
 ## Datacenter ##
 
-. "${PROJECT_DIR}"/amazon/datacenter/delete.sh 'mm-network'     
+. "${PROJECT_DIR}"/amazon/datacenter/delete.sh 'mm-network' 
+
+rm -rf "${TMP_DIR:?}"/*    
 
 echo

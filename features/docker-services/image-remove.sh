@@ -14,9 +14,8 @@ set +o xtrace
 
 LIBRARY_DIR='SEDlibrary_dirSED'
 # shellcheck disable=SC2034
-LIBRARY_DIR='SEDlibrary_dirSED'	
-# shellcheck disable=SC2034
 CONSTANTS_DIR='SEDconstants_dirSED'
+SERVICE_KEY='SEDservice_keySED'
 
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh

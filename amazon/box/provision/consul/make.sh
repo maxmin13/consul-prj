@@ -48,7 +48,12 @@ if [[ 'true' == "${is_running}" ]]
 then
    echo "* ${instance_key} box ready (${instance_st})."
 else
-   echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   if [[ -n "${instance_st}" ]]
+   then
+      echo "* WARN: ${instance_key} box is not ready (${instance_st})."
+   else
+      echo "* WARN: ${instance_key} box is not ready."
+   fi
       
    return 0
 fi
@@ -269,13 +274,13 @@ is_sm_policy_associated="${__RESULT}"
 
 if [[ 'true' == "${is_sm_policy_associated}" ]]
 then
-   echo 'Detaching secretsmangers permission policy from role ...'
+   echo 'Detaching secretsmanger permission policy from role ...'
  
    iam_detach_permission_policy_from_role "${role_nm}" "${SECRETSMANAGER_POLICY_NM}"
       
    echo 'Secretsmangers permission policy detached from role.'
 else
-   echo 'WARN: secretsmangers permission policy already detached from role.'
+   echo 'WARN: secretsmanger permission policy already detached from role.'
 fi
 
 ## 
