@@ -10,7 +10,7 @@ Nginx server, Sinatra server, Redis database, Jenkins pipeline.
 <br/> 
 The Admin instance acts as a jumpbox. Dockerfiles are uploaded to it and the images for each service are built
 and uploaded to AWS ECR registry. Each instance downloads the image from the registry and runs a container from it.
-<br/> 
+<br/><br/>  
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/ecr.png)
 
@@ -29,7 +29,7 @@ dnsmaq acts as DNS service for the instance and the containers. It passes querie
 all the remaining queries are passed to the AWS DNS service at 10.0.0.2.
 <br/>
 A Registrator container in each instance automatically registers and deregisters with Consul services for any Docker container by inspecting containers as they come online.
-<br/> 
+<br/><br/>  
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/consul-admin.png)
 
