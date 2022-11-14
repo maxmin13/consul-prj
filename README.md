@@ -55,8 +55,6 @@ port = JSON.parse(body)[0]['ServicePort']
 redis = Redis.new(:host => address, :port => port)
 ```
 
-<br/> 
-
 # Deployment
 ## Required
 
@@ -67,9 +65,7 @@ Fedora
 AWS account
 aws-cli/2.7.34
 jq-1.6
-```
-
-<br/> 
+``` 
 
 ## Configure
 
@@ -77,8 +73,7 @@ jq-1.6
 
 ```
 Edit datacenter_consts.json, set Region and Az values.
-```
-<br/> 
+``` 
 
 ## Istall
 
@@ -89,8 +84,6 @@ cd consul-prj
 amazon/run/make.sh
 ```
 
-<br/> 
-
 ## Delete
 
 <br/> 
@@ -99,8 +92,6 @@ amazon/run/make.sh
 cd consul-prj
 amazon/run/delete.sh
 ```
-
-<br/> 
 
 ## Sinatra application
 
@@ -113,18 +104,15 @@ The incoming URL parameters are stored in the Redis database and they are return
 The Sinatra web application and Redis database are run in Docker containers on different AWS instances/Docker engines.</br>
 Their host instances partecipate in a Docker swarm with the Admin AWS instance. On top of the swarm has been laid a Docker overlay network, ***sinnet3***.
 The two apps communicate in this network.
-<br/> 
+<br/><br/> 
 
 ![alt text](https://github.com/maxmin13/consul-prj/blob/master/img/overlay.png)
-
-</br>
 
 ## Nginx website
 
 <br/> 
 Standalone web application that displays a single static page, attached to the defaul Docker bridge network.
 ***<pre>  http://${nginx-instance-public-ip}:80/welcome</pre>***
-<br/>
  
 ## Jenkins pipeline
 
