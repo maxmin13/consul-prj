@@ -54,36 +54,44 @@ address = JSON.parse(body)[0]['ServiceAddress']
 port = JSON.parse(body)[0]['ServicePort']
 redis = Redis.new(:host => address, :port => port)
 ```
+
 <br/> 
 # Deployment
 ## Required
 <br/> 
+
 ```
 Fedora
 AWS account
 aws-cli/2.7.34
 jq-1.6
 ```
+
 <br/> 
 ## Configure
 <br/> 
+
 ```
 Edit datacenter_consts.json, set Region and Az values.
 ```
 <br/> 
 ## Istall
 <br/> 
+
 ```
 cd consul-prj
 amazon/run/make.sh
 ```
+
 <br/> 
 ## Delete
 <br/> 
+
 ```
 cd consul-prj
 amazon/run/delete.sh
 ```
+
 <br/> 
 # Sinatra application
 <br/> 
