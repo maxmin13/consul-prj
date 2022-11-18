@@ -1,0 +1,16 @@
+
+Just know that subnetting is logical network division through addressing. 
+Subnetting alone DOES NOT equal segmentation. 
+
+Network segmentation is the practice of dividing a network into individual network segments, 
+generally through the use of Virtual Local Area Networks (VLANs).
+
+
+
+
+
+A LAN is a group of computers or other devices in the same place -- e.g., the same building or campus -- that share the same physical network. A LAN is usually associated with an Ethernet (Layer 2) broadcast domain, which is the set of network devices an Ethernet broadcast packet can reach.
+
+Computers on the LAN connect to the same network switch, either directly or through wireless access points (APs) connected to the same switch. Computers can also connect to one of a set of interconnected switches, such as a set of access switches that all connect up to a backbone switch. Once traffic crosses a router and engages Layer 3 (IP-related) functions, it is not considered to be on the same LAN, even if everything stays in the same building or floor. As a result, a location could have many interconnected LANs.
+
+A VLAN, like the LAN it sits atop, operates at Layer 2 of the network, the Ethernet level. VLANs partition a single switched network into a set of overlaid virtual networks that can meet different functional and security requirements. This partitioning avoids the need to have multiple, distinct physical networks for different use cases.

@@ -1,92 +1,202 @@
 
- mkdir -p /etc/systemd/system/docker.service.d
- /etc/systemd/system/docker.service.d/consul.conf
- 
-[Service]
-Environment="DOCKER_OPTS=-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --cluster-advertise eth0:2375 --cluster-store consul://52.209.115.124:8500"
 
+##########
+# Consul #
+##########
 
+enable firewall 8500 tcp 2376 udp/tcp 
 
-/lib/systemd/system/docker.service
+yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+yum -y install consul
 
-ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock $OPTIONS $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES $DOCKER_OPTS
+consul.service:
 
- 
+ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -server -dev -ui -client 0.0.0.0
+sudo systemctl daemon-reload
+sudo systemctl restart consul
+
+http://54.74.149.173:8500/ui
+
+##########
+# Docker #
+##########
+
+ExecStart=/usr/bin/dockerd -H fd:// --cluster-store=consul://10.0.10.34:8500 --cluster-advertise=eth0:2376 --containerd=/run/containerd/containerd.sock $OPTIONS $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES
+
 sudo systemctl daemon-reload
 sudo systemctl restart docker
- 
-sudo systemctl show --property=Environment docker
 
+#######################################
+# ((1)) Overlay with Docker command
+#######################################
 
-
-On any Docker Host connected to the Consul Key-Value store (i.e. Docker Host 2 to 4), 
-create the overlay network by using the overlay driver, and define your own subnet and subnet mask.
-
-
-docker network create -d overlay --subnet=192.168.3.0/24 my-overlay
+docker network create --driver overlay --subnet 192.168.0.0/24 demonet
 docker network ls
 
-docker exec 77b97d803d8c ping 172.16.16.131
+##############################
+# Run container in overlay
+##############################
 
-***************************************************************************************************************************************
-***************************
+aws iam attach-role-policy --role-name "AdminAWSrole" --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+aws iam attach-role-policy --role-name "RedisAWSrole" --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+aws iam attach-role-policy --role-name "SinatraAWSrole" --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+
+login_pwd=$(aws ecr get-login-password --region "eu-west-1")
+echo $"${login_pwd}" | sudo docker login --username 'AWS' --password-stdin "955230900736.dkr.ecr.eu-west-1.amazonaws.com" 
+sudo docker run --name demo1 -d --net=overlay "955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1"  sleep 3600 
+
+############################
+# Network analysis
+############################
+
+-----------------------
+-- CONTAINER INTERFACES
+-----------------------
+
+   sudo docker exec demo1 ip -details link show
+   docker exec demo1 ip addr show eth0
+   docker exec demo1 ip addr show eth1
+
+-----------------------
+-- ROUTING CONFIG
+-----------------------
+
+   docker exec demo1 ip route show
+
+-----------------------
+-- CONTAINER NAMESPACES
+-----------------------
+
+   docker network inspect demonet -f {{.Id}} ---->>> the string should contain the overlay ns id at the beginning
+   
+   containerNS=$(sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}}) 
+   
+   sudo ls -1 /var/run/docker/netns
+   overlayNS='/var/run/docker/netns/2-8f1277da1f'
+   containerNS='/var/run/docker/netns/a871883d90ea'
+   
+-----------------------
+-- PEERED veth INTERFACE
+-----------------------
+
+   sudo nsenter --net=$containerNS ip --details link show 
+   sudo nsenter --net=$containerNS ethtool -S eth0  
+   sudo nsenter --net=$containerNS ethtool -S eth1     
+
+   ---->>> get the index and first check in the interfaces in the host:
+   ip -details link show
+   
+   ---->>> eth1 is peered with the veth in the host, wich should be attached to a bridge with icc=false, ip_masquerade=true 
+   docker network ls
+   docker network inspect docker_gwbridge
+   
+   ?????? how do you know that the brige is attached to the host interface eth0 ????????, why there is NAT in the picture ??????
+   the bridge is attached to the default gateway 172.18.0.1 wich forward through host eth0
+
+   ---->>>>> The interface peered with eth0 is not in the host network namespace.
+   ---->>>>> check in the other namespace overlayNS
+   sudo nsenter --net=$overlayNS ip --details link show
+
+   ---->>>> 'veth0' attached to 'br0' attached to 'vxlan0'
+   
+   sudo nsenter --net=$containerNS ethtool -S eth0
+   
+   ----->>>> eth0 in the container ns is peered to veth0 in the overlay ns
+
+##############################################
+# https://github.com/lbernail/dockeroverlays
+##############################################
+
+# create an network namespace 
+
+sudo ip netns add overns
+ip netns list
+
+# create a bridge in this namespace, give it an IP address and bring the interface up
+
+sudo ip netns exec overns ip link add dev br0 type bridge
+sudo ip netns exec overns ip addr add dev br0 192.168.0.1/24
+sudo ip netns exec overns ip link set br0 up
+sudo ip netns exec overns ip link show
 
 
+# create a VXLAN interface and attach it to the bridge.
+# tunnel traffic on the standard VXLAN port.
+# he proxy option allows the vxlan interface to answer ARP queries.
+# we did not create the VXLAN interface inside the namespace but on the host and then moved it to the namespace. 
+# This is necessary so the VXLAN interface can keep a link with our main host interface and send traffic over the network. 
+# If we had created the interface inside the namespace (like we did for br0) we would not have been able to send traffic outside the namespace.
 
+sudo ip link add dev vxlan1 type vxlan id 42 proxy learning dstport 4789
+sudo ip link set vxlan1 netns overns
+sudo ip netns exec overns ip link set vxlan1 master br0
+sudo ip netns exec overns ip link set vxlan1 up	
+sudo ip netns exec overns ip link show
 
-
-
-Firewall rules for Docker daemons using overlay networks
-
-You need the following ports open to traffic to and from each Docker host participating on an overlay network:
-TCP port 2377 for cluster management communications
-TCP and UDP port 7946 for communication among nodes
-UDP port 4789 for overlay network traffic
-
-Before you can create an overlay network, you need to either initialize your Docker daemon as a swarm manager using docker swarm init or join it to an existing swarm using docker swarm join. Either of these creates the default ingress overlay network which is used by swarm services by default. You need to do this even if you never plan to use swarm services. Afterward, you can create additional user-defined overlay networks.
-
-
-On host1:
-
-	docker swarm init
-
-Note the token that the command output as you will need it later. Host1 becomes the swarm manager.
-
-On host2 and host3:
-
-	 docker swarm join --token <TOKEN> <IP-ADDRESS-OF-MANAGER>:2377
-	 docker swarm join --token SWMTKN-1-2n4dcu2ka7qmo1zvjwa1npk0feskflvypagkv9ovxwst4jhquf-cqwiqast7cffo8lm8nqw6p2i2 10.0.10.33:2377
-
-	 
-On host1 (because it’s the manager), verify that the swarm is ready:
-
-	docker node ls
 	
-On host1 (because it’s the manager), verify the default networks:
 
-	docker network ls
-	
-If you do not need data encryption: 
-On host1 (because it’s the manager), create the overlay network (for instance my_net). The attachable flag is needed to allow standalone containers to connect to my_net:		 
+# path of the network namespace for this container
+ctn_ns_path=$(sudo docker inspect --format="{{ .NetworkSettings.SandboxKey}}" demo)
 
-	docker network create -d overlay my_net
-	
-	
-All swarm management traffic is encrypted by default using AES in GCM mode. 
-To encrypt application data traffic as well add –opt encrypted to the command above. 
-This will build IPSEC tunnels among the docker hosts. 
-Encryption will also use AES-GCM with 12 hour key rotation.
-Overlay encryption is not supported on Windows hosts.	
+# the container has no network connectivity because of the --net=none option.
+# create a veth and move one of its endpoints (veth1) to our overlay network namespace, attach it to the bridge and bring it up.
+#  MTU of 1450 which is necessary due to the overhead added by the VXLAN header.
 
-	docker network create –-opt encrypted -d overlay  my_net
-	
-	
-After all these steps you will have successfully built an overlay network called my_net spanning three docker different hosts.	
-	
-	
-	
-	
-	
-	
-	
-	
+sudo ip link add dev veth1 mtu 1450 type veth peer name veth2 mtu 1450 ## this creates veth1 and veth2 devices
+sudo ip link set dev veth1 netns overns
+sudo ip netns exec overns ip link set veth1 master br0
+sudo ip netns exec overns ip link set veth1 up
+sudo ip netns exec overns ip link show
+
+# configure veth2, send it to our container network namespace and configure it with a MAC address (02:42:c0:a8:00:02) and an IP address (192.168.0.2).
+# We have to do the same on the other hosts with different MAC and IP addresses (02:42:c0:a8:00:03 and 192.168.0.3).
+
+ctn_ns=${ctn_ns_path##*/}
+
+# The symbolic link in /var/run/netns is required so we can use the native ip netns commands (to move the interface to the container network namespace). 
+
+sudo ln -sf $ctn_ns_path /var/run/netns/$ctn_ns
+sudo ip link set dev veth2 netns $ctn_ns
+sudo ip netns exec overns ip link show
+sudo ip netns exec $ctn_ns ip link show
+
+# We used the same addressing schem as Docker: 
+# the last 4 bytes of the MAC address match the IP address of the container and the second one is the VXLAN id.
+
+sudo ip netns exec $ctn_ns ip link set dev veth2 name eth0 address 02:42:c0:a8:00:02
+sudo ip netns exec $ctn_ns ip addr add dev eth0 192.168.0.2/24
+sudo ip netns exec $ctn_ns ip link set dev eth0 up
+
+sudo rm /var/run/netns/$ctn_ns
+
+# populating the ARP and FDB entries in the overlay namespace:
+sudo ip netns exec overns ip neighbor add 192.168.0.3 lladdr 02:42:c0:a8:00:03 dev vxlan1
+
+# configures the forwarding table by telling it the MAC address is accessible using the VXLAN interface, with VXLAN id 42 and on host 10.0.10.30
+sudo ip netns exec overns bridge fdb add 02:42:c0:a8:00:03 dev vxlan1 self dst 10.0.10.30 vni 42 port 4789
+
+
+
+
+
+
+#
+# test connectivity
+#
+
+sudo docker exec -it demo ping 192.168.0.3
+
+#
+# check ARP config in container and overlay ns
+#
+
+sudo docker exec demo ip neighbor show
+sudo ip netns exec overns ip neighbor show
+
+# We can verify that our command is generating an ARP query by running tcpdump in the overlay namespace rerun the ping command from another terminal
+sudo ip netns exec overns tcpdump -i br0
+
+
+
+
+
