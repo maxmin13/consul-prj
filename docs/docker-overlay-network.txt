@@ -9,15 +9,17 @@ https://blog.revolve.team/2017/08/20/deep-dive-3-into-docker-overlay-networks-pa
 
 enable firewall:
 
-TCP 8500 for ui
-TCP port 2377 for cluster management communications
-TCP and UDP port 7946 for communication among nodes
-UDP port 4789 for overlay network traffic
+aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "38142" --cidr "0.0.0.0/0" ## for ssh access
+aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "8500" --cidr "0.0.0.0/0"  ## for ui
+aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "2377" --cidr "0.0.0.0/0"  ## for cluster management communications
+aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
+aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "udp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
+aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "udp" --port "4789" --cidr "0.0.0.0/0"  ## for overlay network traffic
 
-yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-yum -y install consul
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum -y install consul
 
-/usr/lib/systemd/system/consul.service
+sudo vim /usr/lib/systemd/system/consul.service
 
 	ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -server -dev -ui -client 0.0.0.0
 	sudo systemctl daemon-reload
@@ -29,7 +31,7 @@ http://18.202.34.174:8500/ui
 # Docker #
 ##########
 
-/usr/lib/systemd/system/docker.service
+sudo vim /usr/lib/systemd/system/docker.service
 
 	ExecStart=/usr/bin/dockerd -H fd:// --cluster-store=consul://10.0.10.34:8500 --cluster-advertise=eth0:2377 --containerd=/run/containerd/containerd.sock $OPTIONS 	 $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES
 
@@ -41,8 +43,8 @@ sudo systemctl restart docker
 #######################################
 
 ----->>> on sinatra or redis host
-docker network create --driver overlay --subnet 192.168.0.0/24 demonet
-docker network ls
+sudo docker network create --driver overlay --subnet 192.168.0.0/24 demonet
+sudo docker network ls
 
 ##############################
 # Run container in overlay
@@ -56,63 +58,99 @@ login_pwd=$(aws ecr get-login-password --region "eu-west-1")
 echo $"${login_pwd}" | sudo docker login --username 'AWS' --password-stdin "955230900736.dkr.ecr.eu-west-1.amazonaws.com" 
 sudo docker run --name demo1 -d --net=demonet "955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1"  sleep 3600 
 
+sudo docker inspect demo1
+sudo docker network inspect demonet
+
 ############################
 # Network analysis
 ############################
+
+-----------------------
+-- DOCKER NAMESPACES --
+-----------------------
+
+   sudo docker network inspect demonet -f {{.Id}} ---->>> the string should contain the overlay namespace ID at the beginning
+   sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}} ---->>>> container namespace
+   
+   sudo ls -1 /var/run/docker/netns
+   
+   overlayNS='/var/run/docker/netns/1-b2bad74119'
+   containerNS='/var/run/docker/netns/c8014be5f82c'
+   
+   ### or
+   
+   containerNS=$(sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}}) 
+   
+   ######## NB any time a container are restarted the ns ids change ########
 
 --------------------------
 -- CONTAINER INTERFACES --
 --------------------------
 
-   docker exec demo1 ip -details link show
-   docker exec demo1 ip addr show eth0
-   docker exec demo1 ip addr show eth1
+   sudo docker exec demo1 ip -details link show
+   
+   sudo docker exec demo1 ip addr show eth0
+   sudo docker exec demo1 ip addr show eth1
+   
+   sudo docker exec demo1 ip --details link show eth0 --->>> type veth
+   sudo docker exec demo1 ip --details link show eth1 --->>> type veth
+   
+   ## or 
+   sudo nsenter --net=$containerNS ip link sh
+   
+------------------------
+-- OVERLAY INTERFACES --
+------------------------
+
+   sudo nsenter --net=$overlayNS ip --details link sh
+   
+   --->> br0
+   --->> veth0
+   --->> vxlan0
 
 --------------------
 -- ROUTING CONFIG --
 --------------------
 
-   docker exec demo1 ip route show
-
-----------------
--- NAMESPACES --
-----------------
-
-   docker network inspect demonet -f {{.Id}} ---->>> the string should contain the overlay namespace ID at the beginning
-   
-   containerNS=$(sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}}) 
-   
-   sudo ls -1 /var/run/docker/netns
-   overlayNS='/var/run/docker/netns/2-0c6fb61213'
-   containerNS='/var/run/docker/netns/a871883d90ea'
-   
+   sudo docker exec demo1 ip route show
+  
 ---------------------------
 -- PEERED veth INTERFACE --
 ---------------------------
 
    sudo nsenter --net=$containerNS ip --details link show 
-   sudo nsenter --net=$containerNS ethtool -S eth0  
-   sudo nsenter --net=$containerNS ethtool -S eth1     
+   sudo nsenter --net=$containerNS ethtool -S eth0  ---->>>>> peer_ifindex: 7 
+   sudo nsenter --net=$containerNS ethtool -S eth1  ---->>>>> peer_ifindex: 10
 
    ---->>> get the index and first check in the interfaces in the host:
    ip -details link show
    
-   ---->>> eth1 is peered with the veth in the host, wich should be attached to a bridge with icc=false, ip_masquerade=true 
-   docker network ls
-   docker network inspect docker_gwbridge
+   ---->>> eth1 <<<---- 
+   ---->>> is peered with a veth interface in the host, which is attached to a bridge docker_gwbridge 
    
-   ?????? how do you know that the brige is attached to the host interface eth0 ????????, why there is NAT in the picture ??????
-   the bridge is attached to the default gateway 172.18.0.1 wich forward through host eth0
+   ip add show docker_gwbridge 
+   bridge link
+    
+   sudo docker network ls
+   sudo docker network inspect docker_gwbridge 
+   
+   ----->>>>>>  icc=false, ip_masquerade=true
+   
+   --->>>> iproute2: A bridge is a piece of software used to unite two or more network segments. 
+   --->>>> iproute2: A bridge behaves like a virtual network switch, working transparently (the other machines do not need to know about its existence). 
+   --->>>> iproute2: Any real devices (e.g. eth0) and virtual devices (e.g. tap0) can be connected to it.
+   
+   ###### why there is NAT in the picture ??????
+   ###### forward through host eth0
 
-   ---->>>>> The interface peered with eth0 is not in the host network namespace.
-   ---->>>>> check in the other namespace overlayNS
+   ---->>>>> The interface peered with container eth0 is not in the host.
+   ---->>>>> check in the overlay namespace
    sudo nsenter --net=$overlayNS ip --details link show
 
-   ---->>>> 'veth0' attached to 'br0' attached to 'vxlan0'
+   ---->>>> 'veth0' <<<---- 
+   ---->>>> attached to 'br0', attached to 'vxlan0'
    
    sudo nsenter --net=$containerNS ethtool -S eth0
-   
-   ----->>>> eth0 in the container ns is peered to veth0 in the overlay ns
 
 -------------
 -- TCPDUMP --
