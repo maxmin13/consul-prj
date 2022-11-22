@@ -1,27 +1,37 @@
 
+https://blog.revolve.team/2017/04/25/deep-dive-into-docker-overlay-networks-part-1/
+https://blog.revolve.team/2017/05/09/deep-dive-into-docker-overlay-networks-part-2/
+https://blog.revolve.team/2017/08/20/deep-dive-3-into-docker-overlay-networks-part-3/
 
 ##########
 # Consul #
 ##########
 
-enable firewall 8500 tcp 2376 udp/tcp 
+enable firewall:
+
+TCP 8500 for ui
+TCP port 2377 for cluster management communications
+TCP and UDP port 7946 for communication among nodes
+UDP port 4789 for overlay network traffic
 
 yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 yum -y install consul
 
-consul.service:
+/usr/lib/systemd/system/consul.service
 
-ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -server -dev -ui -client 0.0.0.0
-sudo systemctl daemon-reload
-sudo systemctl restart consul
-
-http://54.74.149.173:8500/ui
+	ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -server -dev -ui -client 0.0.0.0
+	sudo systemctl daemon-reload
+	sudo systemctl restart consul
+	
+http://18.202.34.174:8500/ui
 
 ##########
 # Docker #
 ##########
 
-ExecStart=/usr/bin/dockerd -H fd:// --cluster-store=consul://10.0.10.34:8500 --cluster-advertise=eth0:2376 --containerd=/run/containerd/containerd.sock $OPTIONS $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES
+/usr/lib/systemd/system/docker.service
+
+	ExecStart=/usr/bin/dockerd -H fd:// --cluster-store=consul://10.0.10.34:8500 --cluster-advertise=eth0:2377 --containerd=/run/containerd/containerd.sock $OPTIONS 	 $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES
 
 sudo systemctl daemon-reload
 sudo systemctl restart docker
@@ -30,6 +40,7 @@ sudo systemctl restart docker
 # ((1)) Overlay with Docker command
 #######################################
 
+----->>> on sinatra or redis host
 docker network create --driver overlay --subnet 192.168.0.0/24 demonet
 docker network ls
 
@@ -43,41 +54,41 @@ aws iam attach-role-policy --role-name "SinatraAWSrole" --policy-arn "arn:aws:ia
 
 login_pwd=$(aws ecr get-login-password --region "eu-west-1")
 echo $"${login_pwd}" | sudo docker login --username 'AWS' --password-stdin "955230900736.dkr.ecr.eu-west-1.amazonaws.com" 
-sudo docker run --name demo1 -d --net=overlay "955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1"  sleep 3600 
+sudo docker run --name demo1 -d --net=demonet "955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1"  sleep 3600 
 
 ############################
 # Network analysis
 ############################
 
------------------------
--- CONTAINER INTERFACES
------------------------
+--------------------------
+-- CONTAINER INTERFACES --
+--------------------------
 
-   sudo docker exec demo1 ip -details link show
+   docker exec demo1 ip -details link show
    docker exec demo1 ip addr show eth0
    docker exec demo1 ip addr show eth1
 
------------------------
--- ROUTING CONFIG
------------------------
+--------------------
+-- ROUTING CONFIG --
+--------------------
 
    docker exec demo1 ip route show
 
------------------------
--- CONTAINER NAMESPACES
------------------------
+----------------
+-- NAMESPACES --
+----------------
 
-   docker network inspect demonet -f {{.Id}} ---->>> the string should contain the overlay ns id at the beginning
+   docker network inspect demonet -f {{.Id}} ---->>> the string should contain the overlay namespace ID at the beginning
    
    containerNS=$(sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}}) 
    
    sudo ls -1 /var/run/docker/netns
-   overlayNS='/var/run/docker/netns/2-8f1277da1f'
+   overlayNS='/var/run/docker/netns/2-0c6fb61213'
    containerNS='/var/run/docker/netns/a871883d90ea'
    
------------------------
--- PEERED veth INTERFACE
------------------------
+---------------------------
+-- PEERED veth INTERFACE --
+---------------------------
 
    sudo nsenter --net=$containerNS ip --details link show 
    sudo nsenter --net=$containerNS ethtool -S eth0  
@@ -102,6 +113,31 @@ sudo docker run --name demo1 -d --net=overlay "955230900736.dkr.ecr.eu-west-1.am
    sudo nsenter --net=$containerNS ethtool -S eth0
    
    ----->>>> eth0 in the container ns is peered to veth0 in the overlay ns
+
+-------------
+-- TCPDUMP --
+-------------
+
+sudo nsenter --net=$containerNS tcpdump -i eth0
+
+## or (container must be running)
+
+ctn_ns_path=$(sudo docker inspect --format="{{ .NetworkSettings.SandboxKey}}" demo1)
+ctn_ns=${ctn_ns_path##*/}
+sudo ln -sf $ctn_ns_path /var/run/netns/$ctn_ns
+sudo ip netns exec $ctn_ns ip link show
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##############################################
 # https://github.com/lbernail/dockeroverlays
