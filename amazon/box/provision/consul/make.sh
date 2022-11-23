@@ -187,7 +187,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${LIBRARY_DIR}"/general_utils.sh \
     "${LIBRARY_DIR}"/service_consts_utils.sh \
     "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
-    "${LIBRARY_DIR}"/secretsmanager.sh \
+    "${LIBRARY_DIR}"/secretsmanager_auth.sh \
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${LIBRARY_DIR}"/network.sh \

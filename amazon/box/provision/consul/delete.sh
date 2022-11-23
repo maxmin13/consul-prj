@@ -265,7 +265,7 @@ scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${user_nm}" "${re
     "${PROVISION_DIR}"/dns/dhclient.conf \
     "${LIBRARY_DIR}"/consul.sh \
     "${LIBRARY_DIR}"/network.sh \
-    "${LIBRARY_DIR}"/secretsmanager.sh \
+    "${LIBRARY_DIR}"/secretsmanager_auth.sh \
     "${LIBRARY_DIR}"/dockerlib.sh \
     "${temporary_dir}"/consul-remove.sh \
     "${CONSTANTS_DIR}"/datacenter_consts.json \

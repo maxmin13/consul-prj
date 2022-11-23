@@ -15,12 +15,12 @@ source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/ssh_utils.sh
 source "${LIBRARY_DIR}"/general_utils.sh
-source "${LIBRARY_DIR}"/datacenter.sh
-source "${LIBRARY_DIR}"/registry.sh
+source "${LIBRARY_DIR}"/ec2_datacenter.sh
+source "${LIBRARY_DIR}"/ecr_registry.sh
+source "${LIBRARY_DIR}"/iam_auth.sh
+source "${LIBRARY_DIR}"/secretsmanager_auth.sh
 source "${LIBRARY_DIR}"/network.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
-source "${LIBRARY_DIR}"/auth.sh
-source "${LIBRARY_DIR}"/secretsmanager.sh
 
 rm -rf "${TMP_DIR:?}"/*   
 mkdir -p "${LOGS_DIR}"

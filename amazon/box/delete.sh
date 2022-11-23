@@ -47,8 +47,7 @@ subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo '* ERROR: subnet not found.'
-   exit 1
+   echo '* WARN: subnet not found.'
 else
    echo "* subnet ID: ${subnet_id}."
 fi

@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 #===============================================================================
-#          FILE: auth.sh
+#          FILE: iam_auth.sh
 #   DESCRIPTION: The script contains functions that use AWS client to make 
 #                calls to AWS Identity and Access Management (IAM).
 #       GLOBALS: None

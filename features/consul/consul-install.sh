@@ -41,7 +41,7 @@ source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/network.sh
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
-source "${LIBRARY_DIR}"/secretsmanager.sh
+source "${LIBRARY_DIR}"/secretsmanager_auth.sh
 source "${LIBRARY_DIR}"/consul.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
 

@@ -26,7 +26,7 @@ source "${LIBRARY_DIR}"/general_utils.sh
 source "${LIBRARY_DIR}"/service_consts_utils.sh
 source "${LIBRARY_DIR}"/datacenter_consts_utils.sh
 source "${LIBRARY_DIR}"/dockerlib.sh
-source "${LIBRARY_DIR}"/registry.sh
+source "${LIBRARY_DIR}"/ecr_registry.sh
 
 yum update -y
 

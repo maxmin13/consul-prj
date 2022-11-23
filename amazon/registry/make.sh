@@ -224,7 +224,7 @@ do
        "${LIBRARY_DIR}"/datacenter_consts_utils.sh \
        "${LIBRARY_DIR}"/network.sh \
        "${LIBRARY_DIR}"/dockerlib.sh \
-       "${LIBRARY_DIR}"/registry.sh \
+       "${LIBRARY_DIR}"/ecr_registry.sh \
        "${temporary_dir}"/"${service_key}"/"${service_key}"-build.sh \
        "${CONSTANTS_DIR}"/datacenter_consts.json \
        "${CONSTANTS_DIR}"/service_consts.json

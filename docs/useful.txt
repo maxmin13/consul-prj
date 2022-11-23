@@ -2,14 +2,15 @@ sed -i 's/\r$//g' *.sh
 sed -i 's/\r$//g' Dockerfile
 
 
-find ./ -type f -name "*.sh" -exec sed -i 's/secretsmangers/secretsmanger/g' {} \;
+find ./ -type f -name "*.sh" -exec sed -i 's/secretsmanager.sh/secretsmanager_auth.sh/g' {} \;
+
 
 
 
    sudo docker events
    sudo docker logs <container id>
 
-
+iam_iam_auth
 
  eval `ssh-agent -s`
   ssh-add ~/.ssh/docker-prj

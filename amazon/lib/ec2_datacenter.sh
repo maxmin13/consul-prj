@@ -8,7 +8,7 @@ set -o nounset
 set +o xtrace
 
 #===============================================================================
-#          FILE: datacenter.sh
+#          FILE: ec2_datacenter.sh
 #   DESCRIPTION: the script contains functions that use AWS client to make 
 #                calls to Amazon Elastic Compute Cloud (Amazon EC2).
 #       GLOBALS: None
@@ -723,9 +723,9 @@ function ec2_get_security_group_id()
 # Globals:
 #  None
 # Arguments:
-# +dtc_id        -- the data center identifier.
-# +sgp_nm        -- the security group name.
-# +sgp_desc      -- the security group description.
+# +dtc_id   -- the data center identifier.
+# +sgp_nm   -- the security group name.
+# +sgp_desc -- the security group description.
 # Returns:      
 #  none.  
 #===============================================================================

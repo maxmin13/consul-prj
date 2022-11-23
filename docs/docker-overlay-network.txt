@@ -9,12 +9,14 @@ https://blog.revolve.team/2017/08/20/deep-dive-3-into-docker-overlay-networks-pa
 
 enable firewall:
 
-aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "38142" --cidr "0.0.0.0/0" ## for ssh access
-aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "8500" --cidr "0.0.0.0/0"  ## for ui
-aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "2377" --cidr "0.0.0.0/0"  ## for cluster management communications
-aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "tcp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
-aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "udp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
-aws ec2 authorize-security-group-ingress --group-id "sg-04602097ed29d4711" --protocol "udp" --port "4789" --cidr "0.0.0.0/0"  ## for overlay network traffic
+sgr_id='sg-009a7d340e2c2b556'
+
+aws ec2 authorize-security-group-ingress --group-id "${sgr_id}" --protocol "tcp" --port "38142" --cidr "0.0.0.0/0" ## for ssh access
+aws ec2 authorize-security-group-ingress --group-id "${sgr_id}" --protocol "tcp" --port "8500" --cidr "0.0.0.0/0"  ## for ui
+aws ec2 authorize-security-group-ingress --group-id "${sgr_id}" --protocol "tcp" --port "2377" --cidr "0.0.0.0/0"  ## for cluster management communications
+aws ec2 authorize-security-group-ingress --group-id "${sgr_id}" --protocol "tcp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
+aws ec2 authorize-security-group-ingress --group-id "${sgr_id}" --protocol "udp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
+aws ec2 authorize-security-group-ingress --group-id "${sgr_id}" --protocol "udp" --port "4789" --cidr "0.0.0.0/0"  ## for overlay network traffic
 
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 sudo yum -y install consul
@@ -22,10 +24,11 @@ sudo yum -y install consul
 sudo vim /usr/lib/systemd/system/consul.service
 
 	ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -server -dev -ui -client 0.0.0.0
-	sudo systemctl daemon-reload
-	sudo systemctl restart consul
 	
-http://18.202.34.174:8500/ui
+sudo systemctl daemon-reload
+sudo systemctl restart consul
+	
+http://54.78.199.72:8500/ui
 
 ##########
 # Docker #
@@ -43,6 +46,7 @@ sudo systemctl restart docker
 #######################################
 
 ----->>> on sinatra or redis host
+
 sudo docker network create --driver overlay --subnet 192.168.0.0/24 demonet
 sudo docker network ls
 
@@ -114,9 +118,9 @@ sudo docker network inspect demonet
 
    sudo docker exec demo1 ip route show
   
----------------------------
--- PEERED veth INTERFACE --
----------------------------
+----------------------------
+-- PEERED veth INTERFACES --
+----------------------------
 
    sudo nsenter --net=$containerNS ip --details link show 
    sudo nsenter --net=$containerNS ethtool -S eth0  ---->>>>> peer_ifindex: 7 
@@ -140,11 +144,8 @@ sudo docker network inspect demonet
    --->>>> iproute2: A bridge behaves like a virtual network switch, working transparently (the other machines do not need to know about its existence). 
    --->>>> iproute2: Any real devices (e.g. eth0) and virtual devices (e.g. tap0) can be connected to it.
    
-   ###### why there is NAT in the picture ??????
-   ###### forward through host eth0
-
-   ---->>>>> The interface peered with container eth0 is not in the host.
-   ---->>>>> check in the overlay namespace
+   ---->>> The interface peered with container eth0 is not in the host.
+   ---->>> check in the overlay namespace
    sudo nsenter --net=$overlayNS ip --details link show
 
    ---->>>> 'veth0' <<<---- 

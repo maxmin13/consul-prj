@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 #===============================================================================
-#          FILE: registry.sh
+#          FILE: ecr_registry.sh
 #   DESCRIPTION: Amazon  Elastic  Container Registry (Amazon ECR) is a managed 
 #                container image registry service.
 #       GLOBALS: None

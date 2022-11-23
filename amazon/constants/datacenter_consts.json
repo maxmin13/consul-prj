@@ -52,7 +52,7 @@
          },
          {
             "Key":"admin-instance",
-            "Name":"admin-box",
+            "Name":"admin-box22",
             "UserName":"awsadmin",
             "UserPassword":"awsadmin",
             "PrivateIP":"10.0.10.34",
@@ -149,7 +149,7 @@
          },
          {
             "Key":"redis-instance",
-            "Name":"redis-box",
+            "Name":"redis-box22",
             "UserName":"awsadmin",
             "UserPassword":"awsadmin",
             "PrivateIP":"10.0.10.30",
@@ -231,7 +231,7 @@
          },
          {
             "Key":"sinatra-instance",
-            "Name":"sinatra-box",
+            "Name":"sinatra-box22",
             "UserName":"awsadmin",
             "UserPassword":"awsadmin",
             "PrivateIP":"10.0.10.31",
