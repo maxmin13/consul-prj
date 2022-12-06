@@ -1,0 +1,359 @@
+
+https://blog.revolve.team/2017/04/25/deep-dive-into-docker-overlay-networks-part-1/
+https://blog.revolve.team/2017/05/09/deep-dive-into-docker-overlay-networks-part-2/
+https://blog.revolve.team/2017/08/20/deep-dive-3-into-docker-overlay-networks-part-3/
+https://vincent.bernat.ch/en/blog/2017-vxlan-linux
+
+##########
+# Consul #
+##########
+
+enable firewall:
+
+sgp_id='sg-00533f48ad2a3e669'
+
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "tcp" --port "38142" --cidr "0.0.0.0/0" ## for ssh access
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "tcp" --port "8500" --cidr "0.0.0.0/0"  ## for ui
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "tcp" --port "2377" --cidr "0.0.0.0/0"  ## for cluster management communications
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "tcp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "udp" --port "7946" --cidr "0.0.0.0/0"  ## for communication among nodes
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "udp" --port "4789" --cidr "0.0.0.0/0"  ## for overlay network traffic
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "tcp" --port "7497" --cidr "0.0.0.0/0"  ## serf bind
+aws ec2 authorize-security-group-ingress --group-id "${sgp_id}" --protocol "tcp" --port "7373" --cidr "0.0.0.0/0"  ## serf rpc
+
+## admin instance:
+
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum -y install consul
+
+sudo vim /usr/lib/systemd/system/consul.service
+
+	ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -server -dev -ui -client 0.0.0.0
+	
+sudo systemctl daemon-reload
+sudo systemctl restart consul
+	
+http://52.213.181.51:8500/ui
+
+##########
+# Docker #
+##########
+
+## sinatra and redis instances:
+
+sudo vim /usr/lib/systemd/system/docker.service
+
+	ExecStart=/usr/bin/dockerd -H fd:// --cluster-store=consul://10.0.10.34:8500 --cluster-advertise=eth0:2377 --containerd=/run/containerd/containerd.sock $OPTIONS 	 $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES
+
+	sudo systemctl daemon-reload
+	sudo systemctl restart docker
+
+############################################
+# ((1)) Overlay network with Docker command
+############################################
+
+----->>> on sinatra or redis host
+
+sudo docker network create --driver overlay --subnet 192.168.0.0/24 demonet
+sudo docker network ls
+
+##############################
+# Run container in overlay
+##############################
+
+aws iam attach-role-policy --role-name "RedisAWSrole" --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+aws iam attach-role-policy --role-name "SinatraAWSrole" --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+
+login_pwd=$(aws ecr get-login-password --region "eu-west-1")
+echo $"${login_pwd}" | sudo docker login --username 'AWS' --password-stdin "955230900736.dkr.ecr.eu-west-1.amazonaws.com" 
+sudo docker run --name demo1 -d --net=demonet "955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1"  sleep 3600 
+
+sudo docker inspect demo1
+sudo docker network inspect demonet
+
+############################
+# Network analysis
+############################
+
+-----------------------
+-- DOCKER NAMESPACES --
+-----------------------
+
+   sudo docker network inspect demonet -f {{.Id}} ---->>> the string should contain the overlay namespace ID at the beginning
+   sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}} ---->>>> container namespace
+   
+   sudo ls -1 /var/run/docker/netns
+   
+   overNs='/var/run/docker/netns/1-b2bad74119'
+   containerNS='/var/run/docker/netns/c8014be5f82c'
+   
+   ### or
+   
+   containerNS=$(sudo docker inspect demo1 -f {{.NetworkSettings.SandboxKey}}) 
+   
+   ######## NB any time a container are restarted the ns ids change ########
+
+--------------------------
+-- CONTAINER INTERFACES --
+--------------------------
+
+   sudo docker exec demo1 ip -details link show
+   
+   sudo docker exec demo1 ip addr show eth0
+   sudo docker exec demo1 ip addr show eth1
+   
+   sudo docker exec demo1 ip --details link show eth0 --->>> type veth
+   sudo docker exec demo1 ip --details link show eth1 --->>> type veth
+   
+   ## or 
+   sudo nsenter --net=$containerNS ip link sh
+   
+------------------------
+-- OVERLAY INTERFACES --
+------------------------
+
+   sudo nsenter --net=$overNs ip --details link sh
+   
+   --->> br0
+   --->> veth0
+   --->> vxlan0
+
+--------------------
+-- ROUTING CONFIG --
+--------------------
+
+   sudo docker exec demo1 ip route show
+  
+----------------------------
+-- PEERED veth INTERFACES --
+----------------------------
+
+   sudo nsenter --net=$containerNS ip --details link show 
+   sudo nsenter --net=$containerNS ethtool -S eth0  ---->>>>> peer_ifindex: 7 
+   sudo nsenter --net=$containerNS ethtool -S eth1  ---->>>>> peer_ifindex: 10
+
+   ---->>> get the index and first check in the interfaces in the host:
+   ip -details link show
+   
+   ---->>> eth1 <<<---- 
+   ---->>> is peered with a veth interface in the host, which is attached to a bridge docker_gwbridge 
+   
+   ip add show docker_gwbridge 
+   bridge link
+    
+   sudo docker network ls
+   sudo docker network inspect docker_gwbridge 
+   
+   ----->>>>>>  icc=false, ip_masquerade=true
+   
+   --->>>> iproute2: A bridge is a piece of software used to unite two or more network segments. 
+   --->>>> iproute2: A bridge behaves like a virtual network switch, working transparently (the other machines do not need to know about its existence). 
+   --->>>> iproute2: Any real devices (e.g. eth0) and virtual devices (e.g. tap0) can be connected to it.
+   
+   ---->>> The interface peered with container eth0 is not in the host.
+   ---->>> check in the overlay namespace
+   sudo nsenter --net=$overNs ip --details link show
+
+   ---->>>> 'veth0' <<<---- 
+   ---->>>> attached to 'br0', attached to 'vxlan0'
+   
+   sudo nsenter --net=$containerNS ethtool -S eth0
+
+#############
+## TCPDUMP ##
+#############
+
+sudo nsenter --net=$containerNS tcpdump -i eth0
+
+## or (container must be running)
+
+ctn_ns_path=$(sudo docker inspect --format="{{ .NetworkSettings.SandboxKey}}" demo1)
+ctn_ns=${ctn_ns_path##*/}
+sudo ln -sf $ctn_ns_path /var/run/netns/$ctn_ns
+sudo ip netns exec $ctn_ns ip link show
+
+###########
+## VXLAN ##
+###########
+
+----------------------
+-- PACKETS ANALYSIS --
+----------------------
+
+---->>>>> in sinatra host:
+---->>>>> ping interface in redis host's container
+
+sudo docker exec demo2 ping -c 10 192.168.0.2 
+
+in redis host:
+
+sudo tcpdump -pni eth0 port 4789
+
+---->>>>> IP 10.0.10.31.40452 > 10.0.10.30.4789: VXLAN, flags [I] (0x08), vni 256
+---->>>>> IP 192.168.0.3 > 192.168.0.2: ICMP echo request, id 4, seq 9, length 64
+
+---->>>>> IP 10.0.10.30.46400 > 10.0.10.31.4789: VXLAN, flags [I] (0x08), vni 256
+---->>>>> IP 192.168.0.2 > 192.168.0.3: ICMP echo reply, id 4, seq 9, length 64
+
+-----------------------
+-- OVERLAY NAMESPACE --
+-----------------------	
+
+---->>>>> run containers interactively with --rm option to have an clean ARP table at each login
+
+sudo docker run --rm -it --name demo1 --network demonet 955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1 /bin/bash ## redis host
+sudo docker run --rm -it --name demo2 --network demonet 955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1 /bin/bash ## sinatra host
+
+ls /var/run/docker/netns
+overNs=/var/run/docker/netns/3-53449f1a35
+
+---->>>>> from one container ping the other container:
+ping 192.168.0.2
+
+---->>>>> ARP TRAFFIC:
+
+sudo nsenter --net=$overNs tcpdump -pni any arp
+
+---->>>>> ARP TABLES:
+
+sudo nsenter --net=$overNs ip neighbour show
+
+---->>>>> BRIDGE FORWARDING DATABASE:
+
+sudo nsenter --net=$overNs bridge fdb show 
+sudo nsenter --net=$overNs bridge fdb show |grep 02:42:c0:a8:00:02
+
+---->>>>> both overlay namespaces have ARP traffic (who has the other container's ip address?)
+---->>>>> both overlay namespaces have an ARP record with the other dev vxlan0 mac address.
+
+---->>>>> 192.168.0.3 dev vxlan0 lladdr 02:42:c0:a8:00:64 PERMANENT
+---->>>>> PERMANENT means it is static and was “manually” added and not the result of an ARP discovery.
+---->>>>> it is added automatically even if no ping request is sent, when a container starts in the network
+---->>>>> Docker is automatically populating the ARP entries in the overlay namespace and that the vxlan interface is acting as a proxy to answer ARP queries.
+---->>>>> see the configuration of the vxlan interface:
+
+sudo nsenter --net=$overNs ip --details link show vxlan0 |grep proxy
+
+---->>>>> We can see that the MAC addresses for our two containers on docker0 are in the database with a permanent flag. 
+---->>>>> This information is also dynamically populated by Docker.
+
+-------------------------
+-- SERF GOSSIP INSPECT --
+-------------------------
+
+---->>>>> Consul is used as a reference store for all static information. 
+---->>>>> However, it is not enough to dynamically notify all hosts when a container is created. 
+---->>>>> It turns out that Docker uses Serf and its Gossip protocol to achieve this. 
+ 
+---->>>>> install serf binary in Redis host and subscribe to serf events on the Sinatra host:
+
+	wget https://releases.hashicorp.com/serf/0.8.0/serf_0.8.0_linux_amd64.zip
+	unzip *
+	sudo cp serf /usr/bin/
+    
+vim serf.sh
+
+	echo "New event: ${SERF_EVENT}"
+	while read line; do
+	    printf "${line}\n"
+	done
+	
+sudo serf agent -node demo -bind 0.0.0.0:17946 -join 10.0.10.31:7946 -log-level=debug -event-handler=./serf.sh
+
+---->>>>> if you create a container in Sinatra host, Redis host is notified.
+
+###########################################
+# ((2)) Overlay network with Linux command
+###########################################
+
+---->>>>> in redis an sinatra hosts
+---->>>>> create an network namespace 
+
+sudo ip netns add overns
+ip netns list
+
+---->>>>> create a bridge in this namespace, give it an IP address and bring the interface up
+
+sudo ip netns exec overns ip link add dev br0 type bridge
+sudo ip netns exec overns ip addr add dev br0 192.168.0.1/24
+sudo ip netns exec overns ip link set br0 up
+sudo ip netns exec overns ip link show
+
+---->>>>> create a VXLAN interface and attach it to the bridge.
+---->>>>> tunnel traffic on the standard VXLAN port.
+---->>>>> the proxy option allows the vxlan interface to answer ARP queries.
+---->>>>> we did not create the VXLAN interface inside the namespace but on the host and then moved it to the namespace. 
+---->>>>> This is necessary so the VXLAN interface can keep a link with our main host interface and send traffic over the network. 
+---->>>>> If we had created the interface inside the namespace (like we did for br0) we would not have been able to send traffic outside the namespace.
+
+sudo ip link add dev vxlan1 type vxlan id 42 proxy learning dstport 4789
+sudo ip link set vxlan1 netns overns
+sudo ip netns exec overns ip link set vxlan1 master br0
+sudo ip netns exec overns ip link set vxlan1 up	
+sudo ip netns exec overns ip -details link show
+
+---->>>>> create a container with no network connectivity (see above log into AWS registry first)
+
+sudo docker run --name demo1 -d --net=none "955230900736.dkr.ecr.eu-west-1.amazonaws.com/maxmin13/centos8:v1"  sleep 3600 
+
+---->>>>> path of the network namespace for this container
+
+ctn_ns_path=$(sudo docker inspect --format="{{ .NetworkSettings.SandboxKey}}" demo)
+
+---->>>>> the container has no network connectivity because of the --net=none option.
+---->>>>> create a veth and move one of its endpoints (veth1) to our overlay network namespace, attach it to the bridge and bring it up.
+---->>>>> MTU of 1450 which is necessary due to the overhead added by the VXLAN header.
+
+sudo ip link add dev veth1 mtu 1450 type veth peer name veth2 mtu 1450 ## this creates veth1 and veth2 devices
+sudo ip link set dev veth1 netns overns
+sudo ip netns exec overns ip link set veth1 master br0
+sudo ip netns exec overns ip link set veth1 up
+sudo ip netns exec overns ip link show
+
+---->>>>> configure veth2, send it to our container network namespace and configure it with a MAC address (02:42:c0:a8:00:02) and an IP address (192.168.0.2).
+---->>>>> We have to do the same on the other hosts with different MAC and IP addresses (02:42:c0:a8:00:03 and 192.168.0.3).
+
+ctn_ns=${ctn_ns_path##*/}
+
+---->>>>> The symbolic link in /var/run/netns is required so we can use the native ip netns commands (to move the interface to the container network namespace). 
+
+sudo ln -sf $ctn_ns_path /var/run/netns/$ctn_ns
+sudo ip link set dev veth2 netns $ctn_ns
+sudo ip netns exec overns ip link show
+sudo ip netns exec $ctn_ns ip link show
+
+---->>>>> We use the same addressing scheme as Docker: 
+---->>>>> the last 4 bytes of the MAC address match the IP address of the container and the second one is the VXLAN id.
+
+sudo ip netns exec $ctn_ns ip link set dev veth2 name eth0 address 02:42:c0:a8:00:02
+sudo ip netns exec $ctn_ns ip addr add dev eth0 192.168.0.2/24
+sudo ip netns exec $ctn_ns ip link set dev eth0 up
+
+sudo rm /var/run/netns/$ctn_ns
+
+---->>>>> populate the ARP in the overlay namespace:
+
+sudo ip netns exec overns ip neighbor add 192.168.0.3 lladdr 02:42:c0:a8:00:03 dev vxlan1
+
+---->>>>> populate the FDB entries in the overlay namespace:
+---->>>>> configures the forwarding table by telling it the MAC address is accessible using the VXLAN interface, with VXLAN id 42 and on host 10.0.10.30
+
+sudo ip netns exec overns bridge fdb add 02:42:c0:a8:00:03 dev vxlan1 self dst 10.0.10.30 vni 42 port 4789
+
+---->>>>> test connectivity
+
+sudo docker exec -it demo ping 192.168.0.3
+
+---->>>>> check ARP config in container and overlay ns
+
+sudo docker exec demo ip neighbor show
+sudo ip netns exec overns ip neighbor show
+
+---->>>>> We can verify that our command is generating an ARP query by running tcpdump in the overlay namespace rerun the ping command from another terminal
+
+sudo ip netns exec overns tcpdump -i br0
+
+
+
+
+

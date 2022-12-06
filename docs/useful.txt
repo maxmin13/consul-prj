@@ -1,39 +1,11 @@
-sed -i 's/\r$//g' *.sh
-sed -i 's/\r$//g' Dockerfile
+
 
 
 find ./ -type f -name "*.sh" -exec sed -i 's/secretsmanager.sh/secretsmanager_auth.sh/g' {} \;
+ 
 
-
-
-
-   sudo docker events
-   sudo docker logs <container id>
-
-iam_iam_auth
-
- eval `ssh-agent -s`
-  ssh-add ~/.ssh/docker-prj
-  
-  
-find . -type f -exec chmod 644 -- {} +
 find . -type f -name *.sh -exec chmod 644 -- {} +
 find . -type f -name Dockerfile -exec chmod 644 -- {} +
 
-     aws secretsmanager delete-secret --force-delete-without-recovery \
+aws secretsmanager delete-secret --force-delete-without-recovery \
       --secret-id "consulkey" --region 'eu-west-1'
-      
-  dig jenkins.maxmin.it.node.consul    
-  curl http://${CONSUL_HTTP_ADDR}/v1/catalog/service/jenkins?pretty
-      
-docker exec -it jenkins-service /bin/bash
-
-docker run -d --name mycentos centos:centos8
-
-docker run -it --name mycentos centos:centos8 /bin/bash
-
-docker exec sinatra-service ip addr show
-docker exec sinatra-service ip -details link show eth0
-
-
-docker exec sinatra-service ip route show
