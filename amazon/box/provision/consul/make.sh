@@ -4,10 +4,10 @@
 
 ##########################################################################################################
 # Consul is a datacenter runtime that provides service discovery, configuration, and orchestration.
-# The script installs Consul in the Admin instance, as a server or client, depending on the ConsulMode 
-# set in the ec2_consts.json configuration file.
-# The cluster is composed by a Consul server that runs in the Admin instance and a Consul client installed
-# in every host in the network.
+# The script installs Consul in the instance, as a server or client, depending on the Mode field value 
+# set in the datacenter_consts.json configuration file.
+# The Consul cluster is composed by a server that runs in the Admin instance and a client installed in 
+# every host in the network.
 ##########################################################################################################
 
 set -o errexit
@@ -257,7 +257,7 @@ do
              
                 wait 30
              else
-                echo 'ERROR: installing Consul'
+                echo 'ERROR: installing Consul.'
                 exit 1
              fi
           fi
@@ -422,8 +422,7 @@ then
       echo "WARN: access already granted ${nginx_port} tcp 0.0.0.0/0."
    fi 
 fi 
- 
-# Removing old files
+
 # shellcheck disable=SC2115
 rm -rf  "${temporary_dir:?}" 
 

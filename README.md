@@ -76,12 +76,22 @@ jq-1.6
 ## Configure
 
 <br/> 
+Install and configure AWS cli.
+<br/> 
 
 ```
-Edit datacenter_consts.json, set Region and Az values.
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install
+# download the access key from IAM management console.
+# configure the AWS client by running: 
+aws configure 
+# enter access key, secret access key, default region.
 ``` 
 
-## Istall
+Edit datacenter_consts.json, set Region and Az values corresponding to those in the AWS account.
+
+## Create the datacenter:
 
 <br/> 
 

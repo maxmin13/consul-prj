@@ -2,10 +2,9 @@
 
 # shellcheck disable=SC2015
 
-#####################################################
-# Creates an EC2 Linux EC2 box that inherits from 
-# the Shared image.
-#####################################################
+##########################################################################################################
+# Creates an EC2 Linux EC2 box that inherits from the Shared image.
+##########################################################################################################
 
 set -o errexit
 set -o pipefail
@@ -93,7 +92,7 @@ else
    echo 'WARN: the security group is already created.'
 fi
 
-# Enable ping
+# Enable ICMP ping.
 ec2_check_access_is_granted "${sgp_id}" "-1" 'icmp' '0.0.0.0/0'
 is_granted="${__RESULT}"
 
