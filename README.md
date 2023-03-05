@@ -77,7 +77,7 @@ jq-1.6
 
 <br/> 
 Install and configure AWS cli.
-<br/> 
+<br/><br/> 
 
 ```
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
