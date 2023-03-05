@@ -91,7 +91,7 @@ aws configure
 
 Edit datacenter_consts.json, set Region and Az values corresponding to those in the AWS account.
 
-## Create the datacenter:
+## Create the datacenter
 
 <br/> 
 
@@ -100,7 +100,7 @@ cd consul-prj
 amazon/run/make.sh
 ```
 
-## Delete
+## Delete the datacenter
 
 <br/> 
 
